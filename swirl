@@ -1,6 +1,6 @@
 #!/usr/bin/env escript
 %% -*- tab-width: 4;erlang-indent-level: 4;indent-tabs-mode: nil -*-
-%%! -pa ./ebin -smp -setcookie swerl -sname swerl -sasl errlog_type error +K true +A 16 -config ./swerl.config
+%%! -pa ./ebin -smp -setcookie swirl -sname swirl -sasl errlog_type error +K true +A 16 -config ./swirl.config
 
 % Licensed under the Apache License, Version 2.0 (the "License"); you may not
 % use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,6 @@
 
 main(_) ->
     sync:go(), %% too lazy to recompile my own code
-    swerl_app:start().
+    swirl_app:start().
 
 %% ex: ft=erlang ts=4 sw=4 et

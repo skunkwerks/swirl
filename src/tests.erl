@@ -11,14 +11,14 @@
 % the License.
 
 %% @author Dave Cottlehuber <dch@jsonified.com>
-%% @doc Library for PPSPP over UDP, aka swerl protocol
+%% @doc Library for PPSPP over UDP
 %% <p>This module implements a library of functions necessary to
 %% handle the wire-protocol of PPSPP over UDP, including
 %% functions for encoding and decoding.</p>
 %% @end
 
 -module(tests).
--include("swerl.hrl").
+-include("swirl.hrl").
 
 -ifdef(TEST).
 -include_lib("proper/include/proper.hrl").

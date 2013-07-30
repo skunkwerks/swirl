@@ -10,8 +10,8 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
--module(swerl_app).
--include("swerl.hrl").
+-module(swirl_app).
+-include("swirl.hrl").
 
 -behaviour(application).
 
@@ -23,26 +23,26 @@
 %% Application callbacks
 %% ===================================================================
 
-start(?SWERL_APP, Port) ->
-    start_link(?SWERL_APP, Port).
+start(?SWIRL_APP, Port) ->
+    start_link(?SWIRL_APP, Port).
 
 stop(_State) ->
    stop().
 
-%% TODO move to swerl_sup and support multiple ports/peers/files
+%% TODO move to swirl_sup and support multiple ports/peers/files
 
 start() ->
-    start(?SWERL_APP, ?SWERL_PORT).
+    start(?SWIRL_APP, ?SWIRL_PORT).
 
 start_link(App, Port) ->
     Instance = instance(App, Port),
     register(Instance, Pid=spawn_link(ppspp_peer, start, [Port])),
-    io:format("swerl: PPSPP release ~s~n", [?PPSPP_RELEASE]),
-    io:format("swerl: peer on ~p registered as ~p~n", [Port, Instance]),
+    io:format("swirl: PPSPP release ~s~n", [?PPSPP_RELEASE]),
+    io:format("swirl: peer on ~p registered as ~p~n", [Port, Instance]),
     Pid.
 
 stop() ->
-    Instance = instance(?SWERL_APP, ?SWERL_PORT),
+    Instance = instance(?SWIRL_APP, ?SWIRL_PORT),
     stop(instance, Instance).
 
 stop(instance, Instance) ->

@@ -11,7 +11,7 @@
 % the License.
 
 -module(ppspp_peer).
--include("swerl.hrl").
+-include("swirl.hrl").
 
 -export([start/1, stop/1]).
 

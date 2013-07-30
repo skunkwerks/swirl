@@ -11,13 +11,13 @@
 % the License.
 
 -include("ppspp.hrl").
--ifndef(SWERL_PORT).
+-ifndef(SWIRL_PORT).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% application macros
--define(SWERL_PORT, 7777).
--define(SWERL_APP, swerl).
+-define(SWIRL_PORT, 7777).
+-define(SWIRL_APP, swirl).
 
--define(DEBUG_SWERL(Where, What), io:format("~s ~p~n", [Where, What])).
+-define(DEBUG_SWIRL(Where, What), io:format("~s ~p~n", [Where, What])).
 
 -define(BIN2STR(Binary), helper:binary_to_string(Binary)).
 -define(CHAN2STR(Binary), helper:binary_to_string( <<Binary:?PPSPP_CHANNEL_SIZE>> )).

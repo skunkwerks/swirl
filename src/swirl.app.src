@@ -10,7 +10,7 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
-{application, swerl,
+{application, swirl,
  [
   {description, ""},
   {vsn, "1"},
@@ -20,6 +20,6 @@
                   stdlib,
                   crypto
                  ]},
-  {mod, { swerl_app, []}},
+  {mod, { swirl_app, []}},
   {env, []}
  ]}.

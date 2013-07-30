@@ -18,7 +18,7 @@
 %% @end
 
 -module(ppspp_datagram).
--include("swerl.hrl").
+-include("swirl.hrl").
 
 -ifdef(TEST).
 -include_lib("proper/include/proper.hrl").

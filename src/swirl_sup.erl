@@ -10,7 +10,7 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
--module(swerl_sup).
+-module(swirl_sup).
 
 -behaviour(supervisor).
 
