@@ -33,7 +33,7 @@
 %% <ul>
 %% <li>orddict for Transport</li>
 %% <li>list of Messages</li>
-%% <li>orddict for Options</li>
+%% <li>orddict for Options, within a handshake message</li>
 %% <ul>
 %% A single datagram MAY contain multiple PPSPP messages; these will be handled
 %% recursively as needed.
@@ -43,7 +43,6 @@
 %% packet() = [
 %% TODO revisit specs
 %% {transport, ppspp_transport()},
-%% {options, ppspp_options()},
 %% {messages, ppspp_messages()}
 %% ].
 
@@ -58,6 +57,6 @@ unpack(Transport, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Messages/binary>> ) ->
     {ok, Datagram}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-handle(_) -> {ok, state}.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pack(_) -> ok.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+handle(_) -> {ok, state}.

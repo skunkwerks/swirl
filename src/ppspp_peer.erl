@@ -13,7 +13,7 @@
 -module(ppspp_peer).
 -include("swirl.hrl").
 
--export([start/1, stop/1]).
+-export([start/1, stop/1, handle_packet_sync/4]).
 
 stop(_Peer) ->
     % TODO assuming _Peer is actually going to be Port instead
@@ -31,11 +31,14 @@ loop(Socket) ->
     inet:setopts(Socket, [{active, once}]),
     receive
         {udp, Socket, Peer, Port, << Maybe_Datagram/binary >> } ->
-            handle_packet(udp, Peer, Port, Maybe_Datagram),
+            handle_packet_async(udp, Peer, Port, Maybe_Datagram),
         loop(Socket)
     end.
 
-handle_packet(udp, Peer, Port, Maybe_Datagram ) ->
+handle_packet_async(udp, Peer, Port, Maybe_Datagram) ->
+    spawn(?MODULE, handle_packet_sync, [udp, Peer, Port, Maybe_Datagram]).
+
+handle_packet_sync(udp, Peer, Port, Maybe_Datagram ) ->
     %% TODO move this to handle_cast/async to
     %% avoid refc binaries and increase throughput
     Endpoint = ?ENDPOINT2STR(Peer, Port),
