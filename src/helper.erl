@@ -33,7 +33,7 @@ nibble_to_hex(Nibble) when Nibble < 16, Nibble >= 0 ->
             Nibble + $0;
         Nibble when Nibble < 16 ->
             Nibble + $W
-        end.
+    end.
 
 byte_to_hex(Byte) when Byte < 256, Byte >= 0 ->
     [nibble_to_hex(Byte bsr 4),

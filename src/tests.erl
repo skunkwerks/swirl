@@ -35,28 +35,29 @@ random_channel()    -> crypto:strong_rand_bytes(4). %% random peer channel
 initiator_channel() -> << 16#77777777:32/big>>. %% initiator peer channel
 responder_channel() -> << 16#88888888:32/big>>. %% responder peer channel
 
-chairman_miaow_hash() -> <<
-    102,161,8,98,186,
-    238,189,255,132,98,
-    231,69,162,222,24,
-    207,156,225,26,229 >>.
+chairman_miaow_hash() -> <<102,161,8,98,186,
+                           238,189,255,132,98,
+                           231,69,162,222,24,
+                           207,156,225,26,229 >>.
 
-handshake_options(packed) -> Cat_hash = chairman_miaow_hash(),
-<<  ?PPSPP_VERSION,                     1, %% ppspp version
-    ?PPSPP_MINIMUM_VERSION,             1, %% ppspp max version
-    ?PPSPP_SWARM_ID_LENGTH,      20:?WORD, %% swarm id length (160 bits)
-    Cat_hash/binary                      , %% the merkle hash requested
-    ?PPSPP_INTEGRITY_CHECK_METHOD,      1, %% optional integrity check method
-    ?PPSPP_MERKLE_HASH_FUNCTION,        0, %% merkle please
-    ?PPSPP_CHUNK_ADDRESSING_METHOD,     2, %% chunk addressing method 2
-    ?PPSPP_END_OPTION >>; %% end options
+handshake_options(packed) ->
+    Cat_hash = chairman_miaow_hash(),
+    <<  ?PPSPP_VERSION,                     1, %% ppspp version
+        ?PPSPP_MINIMUM_VERSION,             1, %% ppspp max version
+        ?PPSPP_SWARM_ID_LENGTH,      20:?WORD, %% swarm id length (160 bits)
+        Cat_hash/binary                      , %% the merkle hash requested
+        ?PPSPP_INTEGRITY_CHECK_METHOD,      1, %% optional integrity check method
+        ?PPSPP_MERKLE_HASH_FUNCTION,        0, %% merkle please
+        ?PPSPP_CHUNK_ADDRESSING_METHOD,     2, %% chunk addressing method 2
+        ?PPSPP_END_OPTION >>; %% end options
 handshake_options(unpacked) ->
     [{ppspp_chunking_method,ppspp_32bit_chunks},
-        {ppspp_content_integrity_check_method,ppspp_merkle_hash_tree},
-        {ppspp_merkle_hash_function,ppspp_sha1},
-        {ppspp_minimum_version,1},
-        {ppspp_swarm_id, chairman_miaow_hash()},
-        {ppspp_version,1}].
+     {ppspp_content_integrity_check_method,ppspp_merkle_hash_tree},
+     {ppspp_merkle_hash_function,ppspp_sha1},
+     {ppspp_minimum_version,1},
+     {ppspp_swarm_id, chairman_miaow_hash()},
+     {ppspp_version,1}].
+
 %% UDP wire format as passed to handle_packet_sync from gen_udp socket
 packet0(raw) -> [udp, {127,0,0,1} , 52021, dgram0()];
 %% and as sent to ppspp_datagram::unpack()
@@ -84,18 +85,18 @@ dgram0() ->
     << ?PPSPP_UNKNOWN_CHANNEL, Msg0/binary >>.
 
 msg0() -> Type = ?HANDSHAKE,
-    Channel = random_channel(),
-    Options = handshake_options(packed),
-    << Type/binary, %% handshake
-    Channel/binary,    %% initiator peer channel
-    Options/binary >>.
+          Channel = random_channel(),
+          Options = handshake_options(packed),
+          << Type/binary, %% handshake
+             Channel/binary,    %% initiator peer channel
+             Options/binary >>.
 
 msg1() -> Type = ?HANDSHAKE,
-    Channel = random_channel(),
-    Options = handshake_options(packed),
-    << Type/binary, %% handshake
-    Channel/binary,    %% initiator peer channel
-    Options/binary >>.
+          Channel = random_channel(),
+          Options = handshake_options(packed),
+          << Type/binary, %% handshake
+             Channel/binary,    %% initiator peer channel
+             Options/binary >>.
 
 start_farm(Workers) when is_integer(Workers), Workers > 0 ->
     [spawn(ppspp_peer,start, [Worker + 4000]) || Worker <- lists:seq(0,Workers)].

@@ -32,7 +32,7 @@ loop(Socket) ->
     receive
         {udp, Socket, Peer, Port, << Maybe_Datagram/binary >> } ->
             handle_packet_async(udp, Peer, Port, Maybe_Datagram),
-        loop(Socket)
+            loop(Socket)
     end.
 
 handle_packet_async(udp, Peer, Port, Maybe_Datagram) ->

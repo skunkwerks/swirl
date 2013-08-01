@@ -58,73 +58,73 @@ unpack(Maybe_Options) ->
     [{ok, Options}, Maybe_Messages].
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_VERSION,
-            Version:?BYTE,
-            Maybe_Options/binary >>, Options0) ->
+          Version:?BYTE,
+          Maybe_Options/binary >>, Options0) ->
     Options = orddict:store(ppspp_version, Version, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_MINIMUM_VERSION,
-            Version:?BYTE,
-            Maybe_Options/binary >>, Options0) ->
+          Version:?BYTE,
+          Maybe_Options/binary >>, Options0) ->
     Options = orddict:store(ppspp_minimum_version, Version, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_SWARM_ID_LENGTH,
-            Length:?WORD,
-            Swarm_ID:Length/binary,
-            Maybe_Options/binary >>, Options0) ->
+          Length:?WORD,
+          Swarm_ID:Length/binary,
+          Maybe_Options/binary >>, Options0) ->
     Options = orddict:store(ppspp_swarm_id, Swarm_ID, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_INTEGRITY_CHECK_METHOD,
-            Maybe_Method:?BYTE,
-            Maybe_Options/binary >>, Options0) ->
+          Maybe_Method:?BYTE,
+          Maybe_Options/binary >>, Options0) ->
     Method = case Maybe_Method of
-        0 -> ppspp_no_integrity_protection;
-        1 -> ppspp_merkle_hash_tree;
-        2 -> ppspp_sign_all;
-        3 -> ppspp_unified_merkle_hash_tree;
-        _ -> ppspp_invalid_content_integrity_protection_method
-    end,
+                 0 -> ppspp_no_integrity_protection;
+                 1 -> ppspp_merkle_hash_tree;
+                 2 -> ppspp_sign_all;
+                 3 -> ppspp_unified_merkle_hash_tree;
+                 _ -> ppspp_invalid_content_integrity_protection_method
+             end,
     Options = orddict:store(ppspp_content_integrity_check_method, Method, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_MERKLE_HASH_FUNCTION,
-            Maybe_Function:?BYTE,
-            Maybe_Options/binary >>, Options0) ->
+          Maybe_Function:?BYTE,
+          Maybe_Options/binary >>, Options0) ->
     Function = case Maybe_Function of
-        0 -> ppspp_sha1;
-        1 -> ppspp_sha224;
-        2 -> ppspp_sha256;
-        3 -> ppspp_sha384;
-        4 -> ppspp_sha512;
-        _ -> ppspp_merkle_hash_function_invalid
-    end,
+                   0 -> ppspp_sha1;
+                   1 -> ppspp_sha224;
+                   2 -> ppspp_sha256;
+                   3 -> ppspp_sha384;
+                   4 -> ppspp_sha512;
+                   _ -> ppspp_merkle_hash_function_invalid
+               end,
     Options = orddict:store(ppspp_merkle_hash_function, Function, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_LIVE_SIGNATURE_ALGORITHM,
-            Maybe_Algorithm:?BYTE,
-            Maybe_Options/binary >>, Options0) ->
+          Maybe_Algorithm:?BYTE,
+          Maybe_Options/binary >>, Options0) ->
     Algorithm = case Maybe_Algorithm of
-    %% TODO we can parse this yet but need normative algorithm names
-        _ -> ppspp_live_signature_algorithm_not_yet_implemented;
-        _ -> ppspp_live_signature_algorithm_invalid
-    end,
+                    %% TODO we can parse this yet but need normative algorithm names
+                    _ -> ppspp_live_signature_algorithm_not_yet_implemented;
+                    _ -> ppspp_live_signature_algorithm_invalid
+                end,
     Options = orddict:store(ppspp_merkle_hash_algorithm, Algorithm, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_CHUNK_ADDRESSING_METHOD,
-            Maybe_Method:?BYTE,
-            Maybe_Options/binary >>, Options0) ->
+          Maybe_Method:?BYTE,
+          Maybe_Options/binary >>, Options0) ->
     Method = case Maybe_Method of
-        0 -> ppspp_chunking_32bit_bins;
-        1 -> ppspp_chunking_64bit_bytes;
-        2 -> ppspp_chunking_32bit_chunks;
-        3 -> ppspp_chunking_64bit_bins;
-        4 -> ppspp_chunking_64bit_chunks;
-        _ -> ppspp_chunking_invalid
-    end,
+                 0 -> ppspp_chunking_32bit_bins;
+                 1 -> ppspp_chunking_64bit_bytes;
+                 2 -> ppspp_chunking_32bit_chunks;
+                 3 -> ppspp_chunking_64bit_bins;
+                 4 -> ppspp_chunking_64bit_chunks;
+                 _ -> ppspp_chunking_invalid
+             end,
     Options = orddict:store(ppspp_chunking_method, Method, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -134,34 +134,34 @@ unpack( <<?PPSPP_CHUNK_ADDRESSING_METHOD,
 %% so the requirement here is that these are specified in the already-
 %% parsed options. Serendipitously we have those in the accumulator.
 unpack( <<?PPSPP_LIVE_DISCARD_WINDOW, Maybe_Discard_Window/binary>>,
-            Options0) ->
+        Options0) ->
     Length = case orddict:fetch(ppspp_chunking_method, Options0) of
-        ppspp_chunking_32bit_bins   -> 32;
-        ppspp_chunking_64bit_bytes  -> 64;
-        ppspp_chunking_32bit_chunks -> 32;
-        ppspp_chunking_64bit_bins   -> 64;
-        ppspp_chunking_64bit_chunks -> 64;
-        _ -> ppspp_live_discard_window_missing_or_invalid_chunking_method
-    end,
+                 ppspp_chunking_32bit_bins   -> 32;
+                 ppspp_chunking_64bit_bytes  -> 64;
+                 ppspp_chunking_32bit_chunks -> 32;
+                 ppspp_chunking_64bit_bins   -> 64;
+                 ppspp_chunking_64bit_chunks -> 64;
+                 _ -> ppspp_live_discard_window_missing_or_invalid_chunking_method
+             end,
     << Window0:Length/big, Maybe_Options/binary >> = Maybe_Discard_Window,
     Window = case Window0 of
-        16#ffffffff         -> ppspp_live_discard_window_keep_all_chunks;
-        16#ffffffffffffffff -> ppspp_live_discard_window_keep_all_chunks;
-        _ -> Window0
-    end,
+                 16#ffffffff         -> ppspp_live_discard_window_keep_all_chunks;
+                 16#ffffffffffffffff -> ppspp_live_discard_window_keep_all_chunks;
+                 _ -> Window0
+             end,
     Options = orddict:store(ppspp_,live_discard_window, Window, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_SUPPORTED_MESSAGES,
-            Length:?BYTE,
-            Maybe_Supported_Message_Types:Length/big,
-            Maybe_Options/binary >>, Options0) ->
+          Length:?BYTE,
+          Maybe_Supported_Message_Types:Length/big,
+          Maybe_Options/binary >>, Options0) ->
     Supported_Message_Types = case Maybe_Supported_Message_Types of
-    %% TODO probably needs a custom bitmatching parser
-        _ -> ppspp_supported_messages_not_yet_implemented
-    end,
+                                  %% TODO probably needs a custom bitmatching parser
+                                  _ -> ppspp_supported_messages_not_yet_implemented
+                              end,
     Options = orddict:store(ppspp_supported_message_types,
-        Supported_Message_Types, Options0),
+                            Supported_Message_Types, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_END_OPTION, Maybe_Messages/binary>>, Options) ->

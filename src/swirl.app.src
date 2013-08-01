@@ -11,15 +11,15 @@
 % the License.
 
 {application, swirl,
- [
-  {description, ""},
-  {vsn, "1"},
-  {registered, []},
-  {applications, [
-                  kernel,
-                  stdlib,
-                  crypto
-                 ]},
-  {mod, { swirl_app, []}},
-  {env, []}
- ]}.
+    [
+    {description, ""},
+    {vsn, "1"},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib,
+        crypto
+            ]},
+    {mod, { swirl_app, []}},
+    {env, []}
+    ]}.

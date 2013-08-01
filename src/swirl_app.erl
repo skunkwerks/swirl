@@ -27,7 +27,7 @@ start(?SWIRL_APP, Port) ->
     start_link(?SWIRL_APP, Port).
 
 stop(_State) ->
-   stop().
+    stop().
 
 %% TODO move to swirl_sup and support multiple ports/peers/files
 

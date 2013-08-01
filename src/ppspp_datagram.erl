@@ -53,7 +53,7 @@ unpack(Transport, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Messages/binary>> ) ->
     {ok, Parsed_Messages} = ppspp_message:unpack(Maybe_Messages),
     ?DEBUG_DGRAM_PARSE_OK(Channel),
     Datagram = orddict:store(messages, Parsed_Messages,
-        orddict:store(channel, Channel, Transport)),
+                             orddict:store(channel, Channel, Transport)),
     {ok, Datagram}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

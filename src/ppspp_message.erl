@@ -75,25 +75,27 @@ pack(_) -> ok.
 %% internal functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%-spec unpack(binary() -> ppspp_message_type()).
-validate_message_type(Maybe_Message_Type) when is_integer(Maybe_Message_Type), Maybe_Message_Type < ?PPSPP_MAXIMUM_MESSAGE_TYPE ->
+validate_message_type(Maybe_Message_Type) 
+  when is_integer(Maybe_Message_Type), 
+       Maybe_Message_Type < ?PPSPP_MAXIMUM_MESSAGE_TYPE ->
     %% message types in the current spec version
     Message_Type = case <<Maybe_Message_Type:?PPSPP_MESSAGE_SIZE>> of
-        ?HANDSHAKE -> handshake;
-        ?DATA -> data;
-        ?ACK -> ack;
-        ?HAVE -> have;
-        ?INTEGRITY -> integrity;
-        %?PEX_RESv4 -> pex_resv4;
-        %?PEX_REQ -> pex_req;
-        %?SIGNED_INTEGRITY -> signed_integrity;
-        ?REQUEST -> request;
-        ?CANCEL -> cancel;
-        ?CHOKE -> choke;
-        ?UNCHOKE -> unchoke;
-        %?PEX_RESv6 -> pex_resv6;
-        %?PEX_REScert -> pex_rescert;
-        _  -> ppspp_message_type_not_yet_implemented
-    end,
+                       ?HANDSHAKE -> handshake;
+                       ?DATA -> data;
+                       ?ACK -> ack;
+                       ?HAVE -> have;
+                       ?INTEGRITY -> integrity;
+                       %?PEX_RESv4 -> pex_resv4;
+                       %?PEX_REQ -> pex_req;
+                       %?SIGNED_INTEGRITY -> signed_integrity;
+                       ?REQUEST -> request;
+                       ?CANCEL -> cancel;
+                       ?CHOKE -> choke;
+                       ?UNCHOKE -> unchoke;
+                       %?PEX_RESv6 -> pex_resv6;
+                       %?PEX_REScert -> pex_rescert;
+                       _  -> ppspp_message_type_not_yet_implemented
+                   end,
     ?DEBUG_SWIRL("parser: valid message type ", Message_Type),
     {ok, Message_Type};
 %% message types that are not acceptable eg peer is using more recent spec
