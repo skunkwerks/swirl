@@ -57,6 +57,26 @@ handshake_options(unpacked) ->
         {ppspp_minimum_version,1},
         {ppspp_swarm_id, chairman_miaow_hash()},
         {ppspp_version,1}].
+%% UDP wire format as passed to handle_packet_sync from gen_udp socket
+packet0(raw) -> [udp, {127,0,0,1} , 52021, dgram0()];
+%% and as sent to ppspp_datagram::unpack()
+packet0(parsed) -> [transport(), dgram0()].
+
+%% transport info is an orddict of properties relating to the endpoint
+%% that the PPSPP transport layer uses. It may or may not be UDP; check
+%% the transport property for more info. There should also be a plaintext
+%% field for pretty-printing the transport peer address out in future
+%% when the standard is specified. e.g.;
+%%  endpoint today contains "127.0.0.1:52021"
+%% but in future could equally be;
+%%  udp://ppspp.peer.org:7777?channel=12345,name=chairman_miaow.png
+%%  udp://ppspp.peer.org:7777?channel=12345,hash=66a10862baeebdff8462e745a2de18cf9ce11ae5
+%% beam://swirl_7777?hash=66a10862baeebdff8462e745a2de18cf9ce11ae5
+%% The beam transport uses the Erlang VM's clustering services, and
+%% assumes the existence of a registered service `swirl_7777` somewhere.
+transport() -> orddict:from_list([{peer,{127,0,0,1}},
+                                  {port,52021},
+                                  {transport,udp}]).
 
 %% requester is even #, responder is odd #
 dgram0() ->
