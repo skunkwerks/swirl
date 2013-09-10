@@ -25,23 +25,10 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([nibble_to_hex/1, byte_to_hex/1, binary_to_hex/1, binary_to_string/1]).
-
-nibble_to_hex(Nibble) when Nibble < 16, Nibble >= 0 ->
-    case Nibble of
-        Nibble when Nibble < 10 ->
-            Nibble + $0;
-        Nibble when Nibble < 16 ->
-            Nibble + $W
-    end.
-
-byte_to_hex(Byte) when Byte < 256, Byte >= 0 ->
-    [nibble_to_hex(Byte bsr 4),
-     nibble_to_hex(Byte band 15)].
+-export([binary_to_hex/1, binary_to_string/1]).
 
 binary_to_hex(Binary) when is_binary(Binary) ->
-    Byte_fun = fun(Byte) -> ?MODULE:byte_to_hex(Byte) end,
-    lists:flatmap(Byte_fun, binary_to_list(Binary)).
+    lists:flatten([io_lib:format("~2.16.0b",[N]) || <<N>> <= Binary]).
 
 binary_to_string(Binary) when is_binary(Binary) ->
     lists:flatten(["0x", binary_to_hex(Binary)]).
