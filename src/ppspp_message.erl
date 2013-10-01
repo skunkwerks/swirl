@@ -14,7 +14,7 @@
 %% @doc Library for PPSPP over UDP, aka Swift protocol
 %% <p>This module implements a library of functions necessary to
 %% handle the wire-protocol of PPSPP over UDP, including
-%% functions for encoding and decoding.</p>
+%% functions for encoding and decoding messages.</p>
 %% @end
 
 -module(ppspp_message).
@@ -25,7 +25,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([unpack/1, pack/1,validate_message_type/1]).
+-export([unpack/1, pack/1,validate_message_type/1, handle/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% external API
@@ -66,8 +66,6 @@ unpack(<<Maybe_Message_Type:?PPSPP_MESSAGE_SIZE, Rest/binary>>, Parsed_Messages)
     unpack(Maybe_More_Messages, [Parsed_Message | Parsed_Messages]);
 unpack(_Maybe_Messages, _Rest) -> {error, ppspp_invalid_message}.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-handle(_) -> {ok, state}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pack(_) -> ok.
 
@@ -143,3 +141,10 @@ parse(ppspp_message_type_not_yet_implemented, _Rest) ->
 %% TODO confirm we shouldn't be able to get here by using -spec()
 parse(_, _Rest) ->
     {error, ppspp_message_type_not_parsable}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%-spec ... handle takes a parsed orddict message and returns either
+%%    {error, something} or tagged tuple for the unpacked message
+%%    {ok, reply} where reply is probably an orddict to be sent to the
+%%    alternate peer.
+handle(Message) -> {ok, reply}.
