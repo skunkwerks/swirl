@@ -28,6 +28,11 @@
 -compile([debug_info, export_all]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+unpack_datagram() ->
+    [udp, Peer, Port, Maybe_Datagram] = packet0(raw),
+    ppspp_peer:handle_packet_sync(udp, Peer, Port, Maybe_Datagram).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% test data from spec and wire via tribler swift client
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
