@@ -49,9 +49,9 @@
 %%-spec unpack(ppspp_transport(), packet() -> ppspp_datagram()).
 
 unpack(Transport, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Messages/binary>> ) ->
-    ?DEBUG_DGRAM_RECV(Channel),
+    ?DEBUG_SWIRL("dgram: recv on channel", ?CHAN2STR(Channel)),
     {ok, Parsed_Messages} = ppspp_message:unpack(Maybe_Messages),
-    ?DEBUG_DGRAM_PARSE_OK(Channel),
+    ?DEBUG_SWIRL("dgram: parse ok on channel", ?CHAN2STR(Channel)),
     Datagram = orddict:store(messages, Parsed_Messages,
                              orddict:store(channel, Channel, Transport)),
     {ok, Datagram}.

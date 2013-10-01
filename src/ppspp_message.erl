@@ -73,8 +73,8 @@ pack(_) -> ok.
 %% internal functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%-spec unpack(binary() -> ppspp_message_type()).
-validate_message_type(Maybe_Message_Type) 
-  when is_integer(Maybe_Message_Type), 
+validate_message_type(Maybe_Message_Type)
+  when is_integer(Maybe_Message_Type),
        Maybe_Message_Type < ?PPSPP_MAXIMUM_MESSAGE_TYPE ->
     %% message types in the current spec version
     Message_Type = case <<Maybe_Message_Type:?PPSPP_MESSAGE_SIZE>> of
@@ -94,11 +94,11 @@ validate_message_type(Maybe_Message_Type)
                        %?PEX_REScert -> pex_rescert;
                        _  -> ppspp_message_type_not_yet_implemented
                    end,
-    ?DEBUG_SWIRL("parser: valid message type ", Message_Type),
+    ?DEBUG_SWIRL("parser: valid message type", Message_Type),
     {ok, Message_Type};
 %% message types that are not acceptable eg peer is using more recent spec
 validate_message_type(_Maybe_Message_Type) ->
-    ?DEBUG_SWIRL("parser: invalid message type ", _Maybe_Message_Type),
+    ?DEBUG_SWIRL("parser: invalid message type", _Maybe_Message_Type),
     {error, ppspp_message_type_not_recognised}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

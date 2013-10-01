@@ -22,9 +22,6 @@
 -define(BIN2STR(Binary), helper:binary_to_string(Binary)).
 -define(CHAN2STR(Binary), helper:binary_to_string( <<Binary:?PPSPP_CHANNEL_SIZE>> )).
 
--define(DEBUG_DGRAM_RECV(Channel), io:format("dgram: recv on channel ~s~n", [?CHAN2STR(Channel)])).
--define(DEBUG_DGRAM_PARSE_OK(Channel), io:format("dgram: parse ok on channel ~s~n", [?CHAN2STR(Channel)])).
-
 -define(IP2STR(Host), [inet_parse:ntoa(Host)]).
 -define(ENDPOINT2STR(Host,Port), lists:flatten([?IP2STR(Peer), $:, integer_to_list(Port)])).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
