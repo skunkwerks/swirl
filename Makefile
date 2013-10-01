@@ -8,7 +8,9 @@ clean:
 	rebar clean
 
 dev:
-	erl -pa ./ebin -I ./include -s sync -s crypto -smp -setcookie swirl -sname swirl +K true +A 16
+	erl -pa ./ebin -I ./include -s crypto -smp -setcookie swirl -s sync \
+		-sname swirl +K true +A 16 -s swirl_app
 
 run:
-	erl -pa ./ebin -I ./include -s crypto -smp -setcookie swirl -sname swirl +K true +A 16 -s swirl_app
+	erl -pa ./ebin -I ./include -s crypto -smp -setcookie swirl \
+		-sname swirl +K true +A 16 -s swirl_app
