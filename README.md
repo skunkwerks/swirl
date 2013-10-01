@@ -12,7 +12,7 @@ or even patches would make my day/week/year.
 - a modern UNIX system, although `swirl` will likely run on Windows the
     compile-time dependencies are more complicated. Consider using cygwin
     or mingw shells to provide `make` support
-- `Erlang/OTP R16B01` or higher, the most recent release available
+- `Erlang/OTP R16B02` or higher, the most recent release available
 - Build and install Erlang's [rebar] build tool from source
 - A reasonable level of Erlang and PPSPP knowledge is anticipated.
 
