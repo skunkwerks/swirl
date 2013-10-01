@@ -90,9 +90,9 @@ unpack( <<?PPSPP_INTEGRITY_CHECK_METHOD,
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_MERKLE_HASH_FUNCTION,
-          Maybe_Function:?BYTE,
+          Maybe_Hash_Function:?BYTE,
           Maybe_Options/binary >>, Options0) ->
-    Function = case Maybe_Function of
+    Hash_Function = case Maybe_Hash_Function of
                    0 -> ppspp_sha1;
                    1 -> ppspp_sha224;
                    2 -> ppspp_sha256;
@@ -100,7 +100,7 @@ unpack( <<?PPSPP_MERKLE_HASH_FUNCTION,
                    4 -> ppspp_sha512;
                    _ -> ppspp_merkle_hash_function_invalid
                end,
-    Options = orddict:store(ppspp_merkle_hash_function, Function, Options0),
+    Options = orddict:store(ppspp_merkle_hash_function, Hash_Function, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_LIVE_SIGNATURE_ALGORITHM,
