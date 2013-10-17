@@ -47,6 +47,7 @@
 %% {options, ppspp_options()},
 %% {messages, ppspp_messages()}
 %% ].
+%% TODO add semantic checks Version =< ?SWIRL_MAX_PPSPP_VERSION and similar
 
 %%-spec unpack(binary() -> ppspp_options()).
 %% ppspp_options is an orddict.

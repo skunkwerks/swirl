@@ -17,6 +17,9 @@
 -define(SWIRL_PORT, 7777).
 -define(SWIRL_APP, swirl).
 
+%% maximum PPSP protocol version that swirl supports
+-define(SWIRL_MAX_PPSPP_VERSION, 1).
+
 -define(DEBUG_SWIRL(Where, What), io:format("~s ~p~n", [Where, What])).
 
 -define(BIN2STR(Binary), helper:binary_to_string(Binary)).
