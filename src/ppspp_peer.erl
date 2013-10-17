@@ -30,6 +30,8 @@ start(Port) ->
 loop(Socket) ->
     inet:setopts(Socket, [{active, once}]),
     receive
+        %% TODO maybe its more efficient to pass {udp, ...} along already
+        %% packed up into something sensible, tuple or orddict.
         {udp, Socket, Peer, Port, << Maybe_Datagram/binary >> } ->
             handle_packet_async(udp, Peer, Port, Maybe_Datagram),
             loop(Socket)
