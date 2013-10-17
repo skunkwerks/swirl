@@ -56,7 +56,8 @@
 
 unpack(Maybe_Options) ->
     [Options, Maybe_Messages] = unpack(Maybe_Options, orddict:new()),
-    [{ok, Options}, Maybe_Messages].
+    Options_in_a_Dict = orddict:store(options, Options, orddict:new()),
+    [{ok, Options_in_a_Dict }, Maybe_Messages].
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_VERSION,
           Version:?BYTE,

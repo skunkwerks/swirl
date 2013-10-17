@@ -62,7 +62,7 @@ unpack( <<>>, Parsed_Messages) ->
 %% to be rejected.
 unpack(<<Maybe_Message_Type:?PPSPP_MESSAGE_SIZE, Rest/binary>>, Parsed_Messages) ->
     {ok, Type} = validate_message_type(Maybe_Message_Type),
-    [{Type, Parsed_Message}, Maybe_More_Messages] = parse(Type, Rest),
+    [{ok, Parsed_Message}, Maybe_More_Messages] = parse(Type, Rest),
     unpack(Maybe_More_Messages, [Parsed_Message | Parsed_Messages]);
 unpack(_Maybe_Messages, _Rest) -> {error, ppspp_invalid_message}.
 
@@ -103,12 +103,12 @@ validate_message_type(_Maybe_Message_Type) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%-spec ... parse takes a msg_type, _data, and returns
-%%    {error, something} or tagged tuple for the unpacked message
+%%    {error, something} or {ok. {key, orddict }}for the unpacked message
 %%    [{Type, Parsed_Message}, Maybe_More_Messages]
 %% TODO parse should probably be unpack/2 and then drop validate_message_type/1
 parse(handshake, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Options/binary>>) ->
     [{ok, Options}, Maybe_Messages] = ppspp_options:unpack(Maybe_Options),
-    [{handshake, orddict:store(channel, Channel, Options) }, Maybe_Messages];
+    [{ok, {handshake, orddict:store(channel, Channel, Options) }}, Maybe_Messages];
 
 parse(data, _Rest) ->
     [{data, parsed_msg}, _Rest];
@@ -147,4 +147,5 @@ parse(_, _Rest) ->
 %%    {error, something} or tagged tuple for the unpacked message
 %%    {ok, reply} where reply is probably an orddict to be sent to the
 %%    alternate peer.
-handle(Message) -> {ok, reply}.
+handle(Message) ->     ?DEBUG_SWIRL("message: handler", Message),
+    {ok, reply}.
