@@ -48,6 +48,7 @@
 
 %%-spec unpack(ppspp_transport(), packet() -> ppspp_datagram()).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack(Transport, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Messages/binary>> ) ->
     ?DEBUG_SWIRL("dgram: recv on channel", ?CHAN2STR(Channel)),
     {ok, Parsed_Messages} = ppspp_message:unpack(Maybe_Messages),
@@ -58,5 +59,44 @@ unpack(Transport, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Messages/binary>> ) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pack(_) -> ok.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-handle(_) -> {ok, state}.
+% example parsed datagram, containing a single HANDSHAKE message
+% dgram:handle is an orddict containing transport properties, and a list of
+% messages, each of which is a tuple {Message_type, Message_body}:
+% [{channel,0},
+%  {endpoint,"127.0.0.1:54181"},
+%  {messages,
+%    [{handshake,
+%       [{channel,1107349116},
+%        {options,
+%          [{ppspp_chunking_method,
+%             ppspp_chunking_32bit_chunks},
+%           {ppspp_content_integrity_check_method,
+%             ppspp_merkle_hash_tree},
+%           {ppspp_merkle_hash_function,ppspp_sha1},
+%           {ppspp_minimum_version,1},
+%           {ppspp_swarm_id,
+%             <<102,161,8,98,186,238,189,255,132,98,231,
+%             69,162,222,24,207,156,225,26,229>>},
+%           {ppspp_version,1}]}]}]},
+%  {peer,{127,0,0,1}},
+%  {port,54181},
+%  {transport,udp}]
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+handle(Datagram) ->
+    is_valid(Datagram),
+    %% it might be necessary to pass stuff like transport through
+    %% to message handlers so that we know where to send stuff
+    %% and how to update it.
+    _Transport = orddict:fetch(transport, Datagram),
+    lists:foreach(
+        fun(Message) -> ppspp_message:handle(Message) end,
+        orddict:fetch(messages,Datagram)),
+    {ok, Datagram}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+is_valid(Datagram) when is_list(Datagram) ->
+    ?DEBUG_SWIRL("dgram: handle", Datagram),
+    ok.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -103,7 +103,7 @@ validate_message_type(_Maybe_Message_Type) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%-spec ... parse takes a msg_type, _data, and returns
-%%    {error, something} or {ok. {key, orddict }}for the unpacked message
+%%    {error, something} or {ok, {key, orddict}} for the unpacked message
 %%    [{Type, Parsed_Message}, Maybe_More_Messages]
 %% TODO parse should probably be unpack/2 and then drop validate_message_type/1
 parse(handshake, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Options/binary>>) ->
