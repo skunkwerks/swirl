@@ -143,9 +143,13 @@ parse(_, _Rest) ->
     {error, ppspp_message_type_not_parsable}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%-spec ... handle takes a parsed orddict message and returns either
+%%-spec ... handle takes a tuple of {type, message_body} where body is a
+%%    parsed orddict message and returns either
 %%    {error, something} or tagged tuple for the unpacked message
 %%    {ok, reply} where reply is probably an orddict to be sent to the
 %%    alternate peer.
-handle(Message) ->     ?DEBUG_SWIRL("message: handler", Message),
-    {ok, reply}.
+handle({handshake, Body}) ->
+    {ok, reply};
+handle(Message) ->
+    ?DEBUG_SWIRL("message: handler", Message),
+    {ok, ppspp_message_handler_not_yet_implemented}.
