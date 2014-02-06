@@ -25,7 +25,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([unpack/1, pack/1,validate_message_type/1, handle/1]).
+-export([unpack/1, pack/1, validate_message_type/1, handle/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% external API
@@ -148,8 +148,16 @@ parse(_, _Rest) ->
 %%    {error, something} or tagged tuple for the unpacked message
 %%    {ok, reply} where reply is probably an orddict to be sent to the
 %%    alternate peer.
-handle({handshake, Body}) ->
-    {ok, reply};
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The payload of the HANDSHAKE message is a channel ID (see
+%  Section 3.11) and a sequence of protocol options.  Example options
+%  are the content integrity protection scheme used and an option to
+%  specify the swarm identifier.  The complete set of protocol options
+%  are specified in Section 7.
+handle({handshake, _Body}) ->
+    {ok, ppspp_message_handler_not_yet_implemented};
+
 handle(Message) ->
     ?DEBUG_SWIRL("message: handler", Message),
     {ok, ppspp_message_handler_not_yet_implemented}.
