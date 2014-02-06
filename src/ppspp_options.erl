@@ -151,7 +151,7 @@ unpack( <<?PPSPP_LIVE_DISCARD_WINDOW, Maybe_Discard_Window/binary>>,
                  16#ffffffffffffffff -> ppspp_live_discard_window_keep_all_chunks;
                  _ -> Window0
              end,
-    Options = orddict:store(ppspp_,live_discard_window, Window, Options0),
+    Options = orddict:store(ppspp_live_discard_window, Window, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_SUPPORTED_MESSAGES,
