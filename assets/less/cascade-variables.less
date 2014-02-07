@@ -1,0 +1,136 @@
+// 
+// Key Variables
+// -------------------------------------------------
+
+@logo:          techy;             // friendly, fashion-italic, fashion-caps, script, ultralight,
+                                      // block, sans, serif, slab, fat-serif, techy
+
+@font-pairing:  techy_slab;        // sans, friendly_sans, fat-serif_serif, serif, sans_serif
+                                      // fat-serif_sans, fashion_serif, slab_sans, techy_slab
+
+@color-scheme:  primaries;                // primaries, muted, blues, golden, greengray, neon, cold, retro
+
+@box-bg:        blur-a;               // blur-a, blur-b, grainy-a, grainy-b
+
+
+// Button
+// -------------------------
+
+@btn-shape:   round;      // round, square, pill
+@btn-fill:    gradient;   // gradient, solid
+
+
+// Logo
+// -------------------------
+// See Docs & logo-effects.less.
+
+@logo-text-shadow:  double;             // false, glow, double, extrude, hard, ghost
+@logo-icon:         fa-refresh;        // false, or icon-reference.html
+@logo-gradient:     false;              // true, false
+@logo-stroke:       false;              // true, false
+
+
+// 
+// Minor Variables
+// -------------------------------------------------
+
+@img-path:                  "../img/"; // relative to location of compiled CSS
+@base-module-padding:       50px;
+@module-padding:            @base-module-padding 0;
+@short-module-padding:      20px 0;
+@merged-module-padding:     @base-module-padding 0 0;
+
+// Flat design; disable shadows and gradients except logo and button.
+// (Logo and buttons have separate variables for gradients and shadows.)
+@flat: false;
+
+
+// 
+// Bootstrap Variables
+// -------------------------------------------------
+// Duplicated here so you don't have to use Bootstrap LESS to compile Cascade.
+
+// Media queries breakpoints
+// -------------------------
+
+// Extra small screen / phone
+@screen-xs:                  480px;
+@screen-phone:               @screen-xs;
+
+// Small screen / tablet
+@screen-sm:                  768px;
+@screen-tablet:              @screen-sm;
+
+// Medium screen / desktop
+@screen-md:                  992px;
+@screen-desktop:             @screen-md;
+
+// Large screen / wide desktop
+@screen-lg:                  1200px;
+@screen-lg-desktop:          @screen-lg;
+
+// So media queries don't overlap when required, provide a maximum
+@screen-xs-max:              (@screen-sm - 1);
+@screen-sm-max:              (@screen-md - 1);
+@screen-md-max:              (@screen-lg - 1);
+
+
+// Grid system
+// -------------------------
+
+// Number of columns in the grid system
+@grid-columns:              12;
+// Padding, to be divided by two and applied to the left and right of all columns
+@grid-gutter-width:         30px;
+// Point at which the navbar stops collapsing
+@grid-float-breakpoint:     @screen-tablet;
+
+// Container sizes
+// -------------------------
+
+// Small screen / tablet
+@container-tablet:            ((720px + @grid-gutter-width));
+
+// Medium screen / desktop
+@container-desktop:           ((940px + @grid-gutter-width));
+
+// Large screen / wide desktop
+@container-lg-desktop:        ((1140px + @grid-gutter-width));
+
+// Forms
+// -------------------------
+
+@input-height-base:              (@line-height-computed + (@padding-base-vertical * 2) + 2);
+@input-height-large:             (floor(@font-size-large * @line-height-large) + (@padding-large-vertical * 2) + 2);
+@input-height-small:             (floor(@font-size-small * @line-height-small) + (@padding-small-vertical * 2) + 2);
+
+
+// 
+// Bootstrap Adjustments
+// -------------------------------------------------
+
+// Grid system
+// -------------------------
+// Effectively disable the largest max-width for grid .container
+// Prevents poor readability from too many characters per line of text
+
+@container-lg-desktop:   @container-desktop;
+
+// Components
+// -------------------------
+
+@padding-base-vertical:          6px;
+@padding-base-horizontal:        12px;
+
+@padding-large-vertical:         10px;
+@padding-large-horizontal:       16px;
+
+@padding-small-vertical:         5px;
+@padding-small-horizontal:       10px;
+
+@line-height-large:              1.33;
+@line-height-small:              1.5;
+
+@border-radius-base:    5px;
+@border-radius-large:   10px;
+@border-radius-small:   3px;
