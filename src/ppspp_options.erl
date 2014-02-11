@@ -10,7 +10,6 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
-%% @author Dave Cottlehuber <dch@jsonified.com>
 %% @doc Library for PPSPP over UDP, aka Swift protocol
 %% <p>This module implements a library of functions necessary to
 %% handle parsing PPSPP options wire-protocol of PPSPP over UDP, including
