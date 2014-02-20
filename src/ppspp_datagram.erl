@@ -49,9 +49,10 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack(Transport, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Messages/binary>> ) ->
-    ?DEBUG_SWIRL("dgram: recv on channel", ?CHAN2STR(Channel)),
+    Channel_Name = convert:channel_to_string(Channel),
+    ?DEBUG_SWIRL("dgram: received on channel", Channel_Name),
     {ok, Parsed_Messages} = ppspp_message:unpack(Maybe_Messages),
-    ?DEBUG_SWIRL("dgram: parse ok on channel", ?CHAN2STR(Channel)),
+    ?DEBUG_SWIRL("dgram: parsed ok on channel", Channel_Name),
     Datagram = orddict:store(messages, Parsed_Messages,
                              orddict:store(channel, Channel, Transport)),
     {ok, Datagram}.

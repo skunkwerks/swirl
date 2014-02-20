@@ -21,11 +21,5 @@
 -define(SWIRL_MAX_PPSPP_VERSION, 1).
 
 -define(DEBUG_SWIRL(Where, What), io:format("~s ~p~n", [Where, What])).
-
--define(BIN2STR(Binary), helper:binary_to_string(Binary)).
--define(CHAN2STR(Binary), helper:binary_to_string( <<Binary:?PPSPP_CHANNEL_SIZE>> )).
-
--define(IP2STR(Host), [inet_parse:ntoa(Host)]).
--define(ENDPOINT2STR(Host,Port), lists:flatten([?IP2STR(Peer), $:, integer_to_list(Port)])).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -endif.
