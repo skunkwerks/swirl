@@ -1,5 +1,5 @@
 all:
-	rebar compile
+	rebar compile escriptize
 
 get-deps:
 	rebar get-deps

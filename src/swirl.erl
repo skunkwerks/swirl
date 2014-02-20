@@ -1,7 +1,5 @@
-#!/usr/bin/env escript
 %% -*- tab-width: 4;erlang-indent-level: 4;indent-tabs-mode: nil -*-
-%%! -pa ./ebin -smp -setcookie swirl -sname swirl -sasl errlog_type error +K true +A 16 -config ./swirl.config
-
+%% ex: ft=erlang ts=4 sw=4 et
 % Licensed under the Apache License, Version 2.0 (the "License"); you may not
 % use this file except in compliance with the License. You may obtain a copy of
 % the License at
@@ -14,10 +12,21 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
--compile(debug_info).
+%% @doc Library for PPSPP over UDP, aka Swift protocol
+%% <p>Wrapper to support running directly from escript.</p>
+%% @end
+
+-module(swirl).
+-include("swirl.hrl").
+
+-ifdef(TEST).
+-include_lib("proper/include/proper.hrl").
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
+-export([main/1]).
 
 main(_) ->
-    sync:go(), %% too lazy to recompile my own code
-    swirl_app:start().
-
-%% ex: ft=erlang ts=4 sw=4 et
+    swirl_app:start(),
+    io:format("^C to exit~n", []),
+    timer:sleep(infinity).
