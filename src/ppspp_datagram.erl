@@ -52,9 +52,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack(Transport, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Messages/binary>> ) ->
     Channel_Name = convert:channel_to_string(Channel),
-    ?DEBUG_SWIRL("dgram: received on channel", Channel_Name),
+    ?DEBUG("dgram: received on channel", Channel_Name),
     {ok, Parsed_Messages} = ppspp_message:unpack(Maybe_Messages),
-    ?DEBUG_SWIRL("dgram: parsed ok on channel", Channel_Name),
+    ?DEBUG("dgram: parsed ok on channel", Channel_Name),
     Datagram = orddict:store(messages, Parsed_Messages,
                              orddict:store(channel, Channel, Transport)),
     {ok, Datagram}.
@@ -99,6 +99,6 @@ handle(Datagram) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 is_valid(Datagram) when is_list(Datagram) ->
-    ?DEBUG_SWIRL("dgram: handle", Datagram),
+    ?DEBUG("dgram: handle", Datagram),
     ok.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

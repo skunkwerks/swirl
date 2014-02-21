@@ -26,7 +26,7 @@ stop(_Peer) ->
 
 start(Port) ->
     {ok, Socket} = gen_udp:open(Port, [binary, {active, false} ]),
-    ?DEBUG_SWIRL("peer: listening on udp", Port),
+    ?DEBUG("peer: listening on udp", Port),
     loop(Socket).
 
 loop(Socket) ->
@@ -46,7 +46,7 @@ handle_packet_sync(udp, Peer, Port, Maybe_Datagram ) ->
     %% TODO move this to handle_cast/async to
     %% avoid refc binaries and increase throughput
     Endpoint = convert:endpoint_to_string(Peer, Port),
-    ?DEBUG_SWIRL("peer: recv udp from", Endpoint),
+    ?DEBUG("peer: recv udp from", Endpoint),
     Transport = orddict:from_list([ {peer, Peer},
                                     {port, Port},
                                     {endpoint, Endpoint},
