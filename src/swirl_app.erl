@@ -1,3 +1,5 @@
+%% -*- tab-width: 4;erlang-indent-level: 4;indent-tabs-mode: nil -*-
+%% ex: ft=erlang ts=4 sw=4 et
 % Licensed under the Apache License, Version 2.0 (the "License"); you may not
 % use this file except in compliance with the License. You may obtain a copy of
 % the License at
@@ -16,37 +18,35 @@
 -behaviour(application).
 
 %% Application callbacks
--export([start/2, stop/1]).
--export([start/0, stop/0]).
+-export([start/2,
+         stop/1,
+         launch/2]).
 
 %% ===================================================================
 %% Application callbacks
 %% ===================================================================
 
-start(?SWIRL_APP, Port) ->
-    start_link(?SWIRL_APP, Port).
+%% used by application:start/1
+start(_Type, _Start_Args) ->
+    start_link().
 
-stop(_State) ->
-    stop().
+start_link() ->
+    launch(?SWIRL_APP, ?SWIRL_PORT).
 
 %% TODO move to swirl_sup and support multiple ports/peers/files
 
-start() ->
-    start(?SWIRL_APP, ?SWIRL_PORT),
-    ok.
-
-start_link(App, Port) ->
+launch(App, Port) ->
     Instance = instance(App, Port),
     register(Instance, Pid=spawn_link(ppspp_peer, start, [Port])),
     io:format("swirl: PPSPP release ~s~n", [?PPSPP_RELEASE]),
-    io:format("swirl: peer on ~p registered as ~p~n", [Port, Instance]),
-    Pid.
+    io:format("swirl: peer ~p on ~p registered as ~p~n", [Pid, Port, Instance]),
+    {ok, Pid}.
 
-stop() ->
+stop(_State) ->
     Instance = instance(?SWIRL_APP, ?SWIRL_PORT),
-    stop(instance, Instance).
+    terminate(instance, Instance).
 
-stop(instance, Instance) ->
+terminate(instance, Instance) ->
     exit(whereis(Instance), shutdown).
 
 instance(App, Port) when is_integer(Port), is_atom(App) ->

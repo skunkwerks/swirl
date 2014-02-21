@@ -109,7 +109,7 @@ unpack( <<?PPSPP_LIVE_SIGNATURE_ALGORITHM,
           Maybe_Options/binary >>, Options0) ->
     Algorithm = case Maybe_Algorithm of
                     %% TODO we can parse this yet but need normative algorithm names
-                    _ -> ppspp_live_signature_algorithm_not_yet_implemented;
+                    0 -> ppspp_live_signature_algorithm_not_yet_implemented;
                     _ -> ppspp_live_signature_algorithm_invalid
                 end,
     Options = orddict:store(ppspp_merkle_hash_algorithm, Algorithm, Options0),

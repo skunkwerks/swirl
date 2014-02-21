@@ -82,15 +82,15 @@ validate_message_type(Maybe_Message_Type)
                        ?ACK -> ack;
                        ?HAVE -> have;
                        ?INTEGRITY -> integrity;
-                       %?PEX_RESv4 -> pex_resv4;
-                       %?PEX_REQ -> pex_req;
-                       %?SIGNED_INTEGRITY -> signed_integrity;
+                       ?PEX_RESv4 -> pex_resv4;
+                       ?PEX_REQ -> pex_req;
+                       ?SIGNED_INTEGRITY -> signed_integrity;
                        ?REQUEST -> request;
                        ?CANCEL -> cancel;
                        ?CHOKE -> choke;
                        ?UNCHOKE -> unchoke;
-                       %?PEX_RESv6 -> pex_resv6;
-                       %?PEX_REScert -> pex_rescert;
+                       ?PEX_RESv6 -> pex_resv6;
+                       ?PEX_REScert -> pex_rescert;
                        _  -> ppspp_message_type_not_yet_implemented
                    end,
     ?DEBUG_SWIRL("message: parser got valid message type", Message_Type),

@@ -24,9 +24,14 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([main/1]).
+-export([main/1, start/0]).
 
+%% for erl and swirl from terminal
+start() ->
+    application:start(?MODULE).
+
+%% for escript support
 main(_) ->
-    swirl_app:start(),
+    start(),
     io:format("^C to exit~n", []),
     timer:sleep(infinity).

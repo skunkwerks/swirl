@@ -1,5 +1,4 @@
-all:
-	rebar compile escriptize
+all: clean compile dialyze
 
 get-deps:
 	rebar get-deps
@@ -7,10 +6,22 @@ get-deps:
 clean:
 	rebar clean
 
-dev:
-	erl -pa ./ebin -I ./include -s crypto -smp -setcookie swirl -s sync \
-		-sname swirl +K true +A 16 -s swirl_app
+compile:
+	rebar compile escriptize
 
-run:
+dialyze:
+	dialyzer -pa ./ebin -I ./include -r ebin \
+		-Werror_handling -Wrace_conditions
+
+dialyzer-setup:
+	dialyzer --build_plt --apps erts kernel stdlib crypto mnesia \
+		sasl common_test eunit compiler
+
+dev: all
+	erl -pa ./ebin -I ./include -s crypto -smp -setcookie swirl -s sync \
+        	-sname swirl +K true +A 16 -s swirl
+
+run: all
 	erl -pa ./ebin -I ./include -s crypto -smp -setcookie swirl \
-		-sname swirl +K true +A 16 -s swirl_app
+		-sname swirl +K true +A 16 -s swirl -noshell -noinput
+
