@@ -1,3 +1,5 @@
+%% -*- tab-width: 4;erlang-indent-level: 4;indent-tabs-mode: nil -*-
+%% ex: ft=erlang ts=4 sw=4 et
 -module(merkle_lazy).
 %% @author Paris Carbone
 %% @doc In-memory merkle hash tree implementation using ordered sets
