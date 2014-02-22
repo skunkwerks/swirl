@@ -27,6 +27,7 @@
 
 -export([bin_to_hex/1,
          bin_to_string/1,
+         hex_string_to_padded_binary/1,
          endpoint_to_string/2,
          channel_to_string/1]).
 
@@ -41,3 +42,8 @@ endpoint_to_string(Peer, Port) ->
 
 channel_to_string(Channel) when is_integer(Channel) ->
     bin_to_string(<<Channel:?PPSPP_CHANNEL_SIZE>>).
+
+hex_string_to_padded_binary(String) when is_list(String) ->
+    Bytes_Length = (length(String) + 1) div 2,
+    {ok, [Int], []} = io_lib:fread("~16u", String),
+    <<Int:Bytes_Length/big-unsigned-integer-unit:8>>.
