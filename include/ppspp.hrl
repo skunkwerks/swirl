@@ -13,7 +13,7 @@
 -ifndef(PPSPP_RELEASE).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% PPSPP_RELEASE must only change wrt IETF RFC status
--define(PPSPP_RELEASE, "d-06").
+-define(PPSPP_RELEASE, "d-08").
 
 %% useful bits and bytes
 -define(QWORD, 64/big).
