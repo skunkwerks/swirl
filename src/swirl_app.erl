@@ -38,7 +38,8 @@ start_link() ->
 launch(App, Port) ->
     Instance = instance(App, Port),
     register(Instance, Pid=spawn_link(ppspp_peer, start, [Port])),
-    io:format("swirl: PPSPP release ~s~n", [?PPSPP_RELEASE]),
+    {ok, Version} = application:get_key(swirl, vsn),
+    io:format("swirl: version ~s running PPSPP release ~s~n", [Version, ?PPSPP_RELEASE]),
     io:format("swirl: peer ~p on ~p registered as ~p~n", [Pid, Port, Instance]),
     {ok, Pid}.
 

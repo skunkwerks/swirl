@@ -14,8 +14,8 @@
 
 {application, swirl,
     [
-    {description, ""},
-    {vsn, "1"},
+    {description, "PPSP Protocol Streaming Peer Transport"},
+    {vsn, git},
     {registered, []},
     {applications, [
         kernel,
