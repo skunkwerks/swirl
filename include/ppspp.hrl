@@ -39,7 +39,9 @@
 -define(PPSPP_SUPPORTED_MESSAGES,	8:?BYTE). %%% MUST unless all supported
                                                   %%% length:8, messages:length
 -define(PPSPP_END_OPTION,             255:?BYTE). %%% 0. The key is sufficient
+%% values used within the option parers
 -define(PPSPP_DEFAULT_CHUNK_SIZE,          1024). %%%
+-define(PPSPP_CURRENT_VERSION,                1). %%%
 
 %% PPSPP Datagram Fields -- section 8.4
 -define(PPSPP_CHANNEL_SIZE,      ?DWORD).

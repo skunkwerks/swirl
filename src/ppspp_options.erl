@@ -27,7 +27,10 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([unpack/1, pack/1]).
+-export([unpack/1,
+         pack/1,
+         defaults/1,
+         get/2]).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc unpack a UDP packet into a PPSPP datagram using erlang term format
 %% <p>  Deconstruct PPSPP UDP datagram into multiple erlang terms, including
@@ -96,13 +99,13 @@ unpack( <<?PPSPP_MERKLE_HASH_FUNCTION,
           Maybe_Hash_Function:?BYTE,
           Maybe_Options/binary >>, Options0) ->
     Hash_Function = case Maybe_Hash_Function of
-                   0 -> ppspp_sha1;
-                   1 -> ppspp_sha224;
-                   2 -> ppspp_sha256;
-                   3 -> ppspp_sha384;
-                   4 -> ppspp_sha512;
-                   _ -> ppspp_merkle_hash_function_invalid
-               end,
+                        0 -> ppspp_sha1;
+                        1 -> ppspp_sha224;
+                        2 -> ppspp_sha256;
+                        3 -> ppspp_sha384;
+                        4 -> ppspp_sha512;
+                        _ -> ppspp_merkle_hash_function_invalid
+                    end,
     Options = orddict:store(ppspp_merkle_hash_function, Hash_Function, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -171,6 +174,50 @@ unpack( <<?PPSPP_END_OPTION, Maybe_Messages/binary>>, Options) ->
     [Options, Maybe_Messages];
 %% if PPPSPP_END_OPTION is not present in the binary, bad things** happen
 unpack( <<>>, _Options) -> {error, ppspp_options_invalid}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc get/2 extracts a given parameter from the opaque options
+%% <p> Provide a clean interface for other modules to retrieve PPSP options.
+%% The options are:
+%% <ul>
+%% <li>ppspp_chunking_method</li>
+%% <li>ppspp_content_integrity_check_method</li>
+%% <li>ppspp_merkle_hash_function</li>
+%% <li>ppspp_minimum_version</li>
+%% <li>ppspp_swarm_id</li>
+%% <li>ppspp_version</li>
+%% <ul>
+%% </p>
+%% @end
+%%-spec get(ppspp_options(), orddict()) -> ppspp_options()).
+get(Option, Options) ->
+    orddict:fetch(Option, Options).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc defaults/1 provides the options set within the PPSP draft
+%% <p> Provide a clean interface for other modules to retrieve PPSP options.
+%% Takes 1 parameter, a binary representing the root hash.
+%% The returned options and values are:
+%% <ul>
+%% <li>ppspp_swarm_id: Root_Hash</li>
+%% <li>ppspp_chunking_method: ppspp_chunking_32bit_chunks</li>
+%% <li>ppspp_content_integrity_check_method: ppspp_merkle_hash_tree</li>
+%% <li>ppspp_merkle_hash_function: ppspp_sha1</li>
+%% <li>ppspp_minimum_version: 1</li>
+%% <li>ppspp_version: 1</li>
+%% <ul>
+%% </p>
+%% @end
+%%-spec defaults(ppspp_hash()) -> orddict()).
+
+defaults(Root_Hash) when is_binary(Root_Hash) ->
+    orddict:from_list( [{ppspp_swarm_id, Root_Hash},
+                        {ppspp_chunking_method, ppspp_chunking_32bit_chunks},
+                        {ppspp_chunk_size, ?PPSPP_DEFAULT_CHUNK_SIZE},
+                        {ppspp_content_integrity_check_method, ppspp_merkle_hash_tree},
+                        {ppspp_merkle_hash_function, ppspp_sha1},
+                        {ppspp_minimum_version, ?PPSPP_CURRENT_VERSION},
+                        {ppspp_version, ?PPSPP_CURRENT_VERSION}]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc pack an orddict of ppspp erlang terms into a binary PPSPP message segment
