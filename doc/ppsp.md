@@ -42,6 +42,7 @@ A group of peers that are sharing & transferring a given stream of binary data, 
 
 ### Channels
 
+A channel is a unique, per-peer identifier, that enables multiplexing many individual swarms onto a single IP address / UDP port pair. Note that the channel is unique also for remote peers too.
 
 ### Hash
 
@@ -49,24 +50,13 @@ A cryptographic function that reduces a large chunk to a small digest. In PPSP, 
 
 ### Hash Trees
 
-PPSP uses an enhancement of hashes, called a [Merkle hash tree]. The hash tree is simple:
+PPSP uses a more generalised hashing scheme, called a Merkle signature scheme. The hash tree is simple, shown with this graphic from the [tribler] project:
 
-- split the file into chunks, not necessarily of the same size, but usually the case
-- generate a hash digest, e.g. SHA1, of each chunk
-- arrange these in the same order as the content in the file
-- leave a spare slot (for subsequent hashes) between the chunk SHA1 hashes
-- concatenate each pair of chunk hashes, and hash the resulting data again with SHA1
-- move "up" a row, or level, in the tree-to-be
-- insert the new hash digest in the spare slot between the two hashed chunks
-- repeat across the whole file
-- between each pair of original chunks, there will still be a spare slot left
-- move "up" a level in the tree again
-- this time, hash the hash digests from the second layer, not the bottom layer
-- repeat across the whole file
-- finally, repeat this entire process until there is a single hash digest of the entire file
+![merkle hash tree](https://github.com/skunkwerks/swirl/wiki/images/merkletree-v4.png)
 
 This final hash is known as the Root Hash in PPSPP, and the root hash, along with a select set of hashes as specific nodes further down the tree, is what enables a given peer to determine, without having the entire data stream already downloaded, whether the data sent by the other peer is both valid, and present in this specific swarm's data.
 
+For more details, refer to this project's [merkle] hash tree documentation.
+
 [SHA1]: http://tools.ietf.org/html/rfc3174
-[Merkle]: http://www.merkle.com/merkleDir/papers.html
-[Merkle hash tree]: http://www.tribler.org/trac/wiki/MerkleHashes
+[tribler]: http://www.tribler.org/
