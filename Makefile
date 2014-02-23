@@ -18,10 +18,9 @@ dialyzer-setup:
 		sasl common_test eunit compiler
 
 dev: all
-	erl -pa ./ebin -I ./include -s crypto -smp -setcookie swirl -s sync \
+	erl -pa ./ebin -I ./include -s crypto -smp -setcookie swirl \
         	-sname swirl +K true +A 16 -s swirl
 
 run: all
 	erl -pa ./ebin -I ./include -s crypto -smp -setcookie swirl \
 		-sname swirl +K true +A 16 -s swirl -noshell -noinput
-
