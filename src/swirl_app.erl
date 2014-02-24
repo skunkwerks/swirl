@@ -19,8 +19,7 @@
 
 %% Application callbacks
 -export([start/2,
-         stop/1,
-         launch/2]).
+         stop/1]).
 
 %% ===================================================================
 %% Application callbacks
@@ -28,28 +27,15 @@
 
 %% used by application:start/1
 start(_Type, _Start_Args) ->
-    start_link().
-
-start_link() ->
-    launch(?SWIRL_APP, ?SWIRL_PORT).
-
-%% TODO move to swirl_sup and support multiple ports/peers/files
-
-launch(App, Port) ->
-    Instance = instance(App, Port),
-    register(Instance, Pid=spawn_link(ppspp_peer, start, [Port])),
     {ok, Version} = application:get_key(swirl, vsn),
-    io:format("swirl: version ~s running PPSPP release ~s~n", [Version, ?PPSPP_RELEASE]),
-    io:format("swirl: peer ~p on ~p registered as ~p~n", [Pid, Port, Instance]),
-    {ok, Pid}.
+    ?INFO("swirl: protocol ~s~n", [?PPSPP_RELEASE]),
+    ?INFO("swirl: version #~s~n", [Version]),
+    case swirl_sup:start_link() of
+        {ok, Pid} ->
+            {ok, Pid};
+        Other ->
+            {error, Other}
+    end.
 
 stop(_State) ->
-    Instance = instance(?SWIRL_APP, ?SWIRL_PORT),
-    terminate(instance, Instance).
-
-terminate(instance, Instance) ->
-    exit(whereis(Instance), shutdown).
-
-instance(App, Port) when is_integer(Port), is_atom(App) ->
-    Instance = [atom_to_list(App), $_ , integer_to_list(Port)],
-    list_to_atom(lists:flatten(Instance)).
+    ok.

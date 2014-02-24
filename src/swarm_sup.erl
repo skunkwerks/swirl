@@ -12,7 +12,7 @@
 %% License for the specific language governing permissions and limitations under
 %% the License.
 
--module(swirl_sup).
+-module(swarm_sup).
 -include("swirl.hrl").
 
 -behaviour(supervisor).
@@ -30,6 +30,7 @@
 %% API functions
 %% ===================================================================
 
+-spec start_link() -> {ok, pid()}.
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
@@ -38,14 +39,5 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    Supervisors = [ {peer_sup, {peer_sup, start_link, []},
-         permanent,
-         infinity,
-         supervisor, [peer_sup]},
-        {swarm_sup, {swarm_sup, start_link, []},
-         permanent,
-         infinity,
-         supervisor, [swarm_sup]} ],
-
-    % summon the supervisors
-    {ok, {{one_for_one, 10, 60}, Supervisors}}.
+	Workers = [],
+	{ok, {{one_for_one, 10, 60}, Workers}}.
