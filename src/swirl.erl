@@ -24,14 +24,103 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([main/1, start/0]).
+-export([main/1,
+         help/0,
+         quit/0,
+         start_peer/0,
+         start_peer/1,
+         start_peers/2,
+         stop_peer/0,
+         stop_peer/1,
+         stop_peers/2,
+         start/0,
+         stop/0]).
 
-%% for erl and swirl from terminal
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% @doc Start the swirl application in a stand-alone fashion.
+%% This should only be used for testing and in the erlang shell.
+%% @end
 start() ->
-    application:start(?MODULE).
+    {ok, _} = application:ensure_all_started(?MODULE),
+    ok.
+
+%% @doc Stop the swirl application and all dependent swarms and peers.
+%% end
+stop() ->
+    application:stop(swirl).
+
+%% @doc Stop the swirl application, all dependent swarms and peers, and
+%% the entire BEAM virtual machine too.
+%% @end
+quit() ->
+    stop(),
+    init:stop().
+
+%% @doc start a PPSPP listener (peer) on a given port, or the default port.
+%% @end
+start_peer() ->
+    start_peer(?SWIRL_PORT).
+start_peer(Port) when is_integer(Port), Port > 0, Port < 65535 ->
+    supervisor:start_child(peer_sup, [Port]).
+
+%% @doc start multiple PPSPP listeners (peers) quickly on a given range of
+%% ports. Note there is no guarantee of success nor error checking but it
+%% looks great for demos.
+%% @end
+start_peers(First, Last) when is_integer(First), is_integer(Last), First < Last  ->
+    Ports = lists:seq(First, Last),
+    lists:map(fun(Port) ->
+                      {start_peer(Port), Port}
+              end,
+              Ports).
+
+%% @doc stop a PPSPP peer on a given port, or the default port.
+%% @end
+stop_peer() ->
+    stop_peer(?SWIRL_PORT).
+stop_peer(Port) when is_integer(Port), Port > 0, Port < 65535 ->
+    Worker_pid = whereis(convert:port_to_atom(Port)),
+    supervisor:terminate_child(peer_sup, Worker_pid).
+
+
+%% @doc stop multiple PPSPP peers on a given range of ports.
+%% @end
+stop_peers(First, Last) when is_integer(First), is_integer(Last), First < Last  ->
+    Ports = lists:seq(First, Last),
+    lists:map(fun(Port) ->
+                      {stop_peer(Port), Port} end,
+              Ports).
+
+%% @doc help for console users
+%% Provides a summary of available commands options within the erlang console
+%% @end
+help() ->
+    io:format("~s: online help~n", [?SWIRL_APP]),
+    Help =[
+           "help()                   these help notes",
+           "start()                  starts the swirl application, but no peers or swarms",
+           "stop()                   stops the swirl application, active peers and swarms",
+           "start_peer()             starts a single peer on the default port",
+           "start_peer(Port)         starts a single peer on the given port, e.g. 7777",
+           "start_peers(First, Last) starts peers on consecutive ports from First to Last",
+           "stop_peer()              stops a single peer on the default port",
+           "stop_peer(Port)          stops a single peer on the given port, e.g. 7777",
+           "stop_peers(First, Last)  stops peers on consecutive ports from First to Last",
+           "quit()                   terminates *immediately* the entire BEAM vm",
+           "",
+           "use ^c to exit, or type `swirl:quit().`",
+           ""],
+
+    lists:foreach(fun(Line) ->
+                          io:format("~s~n", [Line])
+                  end,
+                  Help),
+    ok.
 
 %% for escript support
 main(_) ->
+    help(),
     start(),
-    io:format("^C to exit~n", []),
+    start_peer(),
     timer:sleep(infinity).

@@ -18,20 +18,26 @@
 -behaviour(application).
 
 %% api
+-export([version/0]).
+
+%% callbacks
 -export([start/2,
          stop/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% api
 
+version() ->
+    {ok, Version} = application:get_key(swirl, vsn),
+    {?PPSPP_RELEASE, Version}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks
 
 %% used by application:start/1
 start(_Type, _Start_Args) ->
-    {ok, Version} = application:get_key(swirl, vsn),
-    ?INFO("swirl: protocol ~s~n", [?PPSPP_RELEASE]),
+    {Protocol, Version} = version(),
+    ?INFO("swirl: protocol ~s~n", [Protocol]),
     ?INFO("swirl: version #~s~n", [Version]),
     case swirl_sup:start_link() of
         {ok, Pid} ->
