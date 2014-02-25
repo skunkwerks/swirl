@@ -22,12 +22,10 @@
 %% maximum PPSP protocol version that swirl supports
 -define(SWIRL_MAX_PPSPP_VERSION, 1).
 
--define(DEBUG(Where, What), io:format("~s ~p~n", [Where, What])).
-%-define(DEBUG(Where, What), io_lib:format("~p: ~p~n", [Where, What])).
-%-define(DEBUG(Format, Args), error_logger:debug_msg(Format,   Args)).
-%-define(ERROR(Format, Args), error_logger:error_msg(Format,   Args)).
-%-define(WARN(Format, Args),  error_logger:warning_msg(Format, Args)).
-%-define(INFO(Format, Args),  error_logger:info_msg(Format,    Args)).
+-define(DEBUG(Format, Args), error_logger:info_msg(Format,    Args)).
+-define(ERROR(Format, Args), error_logger:error_msg(Format,   Args)).
+-define(WARN(Format, Args),  error_logger:warning_msg(Format, Args)).
+-define(INFO(Format, Args),  error_logger:info_msg(Format,    Args)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -endif.

@@ -99,6 +99,6 @@ handle(Datagram) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 is_valid(Datagram) when is_list(Datagram) ->
-    ?DEBUG("dgram: handle", Datagram),
+    ?DEBUG("dgram: handle ~s~n", [Datagram]),
     ok.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
