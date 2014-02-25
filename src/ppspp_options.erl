@@ -27,10 +27,12 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
+%% api
 -export([unpack/1,
          pack/1,
          defaults/1,
          get/2]).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc unpack a UDP packet into a PPSPP datagram using erlang term format
 %% <p>  Deconstruct PPSPP UDP datagram into multiple erlang terms, including

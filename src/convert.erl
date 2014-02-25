@@ -25,11 +25,17 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
+%% api
 -export([bin_to_hex/1,
          bin_to_string/1,
          hex_string_to_padded_binary/1,
+         port_to_atom/1,
          endpoint_to_string/2,
          channel_to_string/1]).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% api
 
 bin_to_hex(Binary) when is_binary(Binary) ->
     lists:flatten([io_lib:format("~2.16.0b",[N]) || <<N>> <= Binary]).

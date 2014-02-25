@@ -17,27 +17,21 @@
 
 -behaviour(supervisor).
 
-%% API
+%% api
 -export([start_link/0]).
 
-%% Supervisor callbacks
+%% callbacks
 -export([init/1]).
 
-%% Helper macro for declaring children of supervisor
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
-
-%% ===================================================================
-%% API functions
-%% ===================================================================
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% api
 -spec start_link() -> {ok, pid()}.
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
-%% ===================================================================
-%% Supervisor callbacks
-%% ===================================================================
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% callbacks
 init([]) ->
-	Workers = [],
-	{ok, {{one_for_one, 10, 60}, Workers}}.
+    Workers = [],
+    {ok, {{one_for_one, 10, 60}, Workers}}.
+

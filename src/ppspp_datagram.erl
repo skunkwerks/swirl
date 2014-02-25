@@ -26,41 +26,29 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([handle/1, unpack/2, pack/1]).
+%% api
+-export([handle/6,
+         handle/1,
+         unpack/2,
+         pack/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc unpack a UDP packet into a PPSPP datagram using erlang term format
-%% <p>  Deconstruct PPSPP UDP datagram into multiple erlang terms, including
-%% <ul>
-%% <li>orddict for Transport</li>
-%% <li>list of Messages</li>
-%% <li>orddict for Options, within a handshake message</li>
-%% <ul>
-%% A single datagram MAY contain multiple PPSPP messages; these will be handled
-%% recursively as needed.
-%% </p>
+%% @doc receives datagram from peer_worker, parses & delivers to matching channel
+%% @spec handle_datagram() -> ok
 %% @end
+handle(udp, Socket, Peer, Port, Maybe_Datagram, State) ->
+    Endpoint = convert:endpoint_to_string(Peer, Port),
+    ?DEBUG("dgram: received udp from ~s~n", [Endpoint]),
+    Transport = orddict:from_list([ {peer, Peer},
+                                    {port, Port},
+                                    {endpoint, Endpoint},
+                                    {transport, udp},
+                                    {socket, Socket},
+                                    {state, State}]),
+    {ok, Datagram} = unpack(Transport, Maybe_Datagram),
+    % NB usually called from spawned process, so return values are ignored
+    handle(Datagram).
 
-%% packet() = [
-%% TODO revisit specs
-%% {transport, ppspp_transport()},
-%% {messages, ppspp_messages()}
-%% ].
-
-%%-spec unpack(ppspp_transport(), packet() -> ppspp_datagram()).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-unpack(Transport, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Messages/binary>> ) ->
-    Channel_Name = convert:channel_to_string(Channel),
-    ?DEBUG("dgram: received on channel", Channel_Name),
-    {ok, Parsed_Messages} = ppspp_message:unpack(Maybe_Messages),
-    ?DEBUG("dgram: parsed ok on channel", Channel_Name),
-    Datagram = orddict:store(messages, Parsed_Messages,
-                             orddict:store(channel, Channel, Transport)),
-    {ok, Datagram}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pack(_) -> ok.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % example parsed datagram, containing a single HANDSHAKE message
@@ -85,7 +73,7 @@ pack(_) -> ok.
 %  {peer,{127,0,0,1}},
 %  {port,54181},
 %  {transport,udp}]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 handle(Datagram) ->
     is_valid(Datagram),
     %% it might be necessary to pass stuff like transport through
@@ -93,12 +81,41 @@ handle(Datagram) ->
     %% and how to update it.
     _Transport = orddict:fetch(transport, Datagram),
     lists:foreach(
-        fun(Message) -> ppspp_message:handle(Message) end,
-        orddict:fetch(messages,Datagram)),
+      fun(Message) -> ppspp_message:handle(Message) end,
+      orddict:fetch(messages,Datagram)),
     {ok, Datagram}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc unpack a UDP packet into a PPSPP datagram using erlang term format
+%% <p>  Deconstruct PPSPP UDP datagram into multiple erlang terms, including
+%% <ul>
+%% <li>orddict for Transport</li>
+%% <li>list of Messages</li>
+%% <li>orddict for Options, within a handshake message</li>
+%% <ul>
+%% A single datagram MAY contain multiple PPSPP messages; these will be handled
+%% recursively as needed.
+%% </p>
+%% @end
+
+%% packet() = [
+%% TODO revisit specs
+%% {transport, ppspp_transport()},
+%% {messages, ppspp_messages()}
+%% ].
+
+%%-spec unpack(ppspp_transport(), packet() -> ppspp_datagram()).
+unpack(Transport, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Messages/binary>> ) ->
+    Channel_Name = convert:channel_to_string(Channel),
+    ?DEBUG("dgram: received on channel ~p~n", [Channel_Name]),
+    {ok, Parsed_Messages} = ppspp_message:unpack(Maybe_Messages),
+    ?DEBUG("dgram: parsed ok on channel ~p~n", [Channel_Name]),
+    Datagram = orddict:store(messages, Parsed_Messages,
+                             orddict:store(channel, Channel, Transport)),
+    {ok, Datagram}.
+
+pack(_) -> ok.
+
 is_valid(Datagram) when is_list(Datagram) ->
-    ?DEBUG("dgram: handle ~s~n", [Datagram]),
+    ?DEBUG("dgram: handle ~p~n", [Datagram]),
     ok.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

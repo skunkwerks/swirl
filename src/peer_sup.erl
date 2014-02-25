@@ -48,7 +48,7 @@ init([])->
     Type = worker,
 
     Worker = {peer_worker, {peer_worker, start_link, []},
-	      Restart,
+              Restart,
               Shutdown,
               Type,
               [peer_worker]},

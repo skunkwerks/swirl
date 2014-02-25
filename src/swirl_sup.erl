@@ -17,35 +17,30 @@
 
 -behaviour(supervisor).
 
-%% API
+%% api
 -export([start_link/0]).
 
-%% Supervisor callbacks
+%% callbacks
 -export([init/1]).
 
-%% Helper macro for declaring children of supervisor
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
-
-%% ===================================================================
-%% API functions
-%% ===================================================================
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% api
 
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
-%% ===================================================================
-%% Supervisor callbacks
-%% ===================================================================
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% callbacks
 
 init([]) ->
     Supervisors = [ {peer_sup, {peer_sup, start_link, []},
-         permanent,
-         infinity,
-         supervisor, [peer_sup]},
-        {swarm_sup, {swarm_sup, start_link, []},
-         permanent,
-         infinity,
-         supervisor, [swarm_sup]} ],
+                     permanent,
+                     infinity,
+                     supervisor, [peer_sup]},
+                    {swarm_sup, {swarm_sup, start_link, []},
+                     permanent,
+                     infinity,
+                     supervisor, [swarm_sup]} ],
 
     % summon the supervisors
     {ok, {{one_for_one, 10, 60}, Supervisors}}.

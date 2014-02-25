@@ -13,15 +13,15 @@
 %% the License.
 
 {application, swirl,
-    [
-    {description, "PPSP Protocol Streaming Peer Transport"},
-    {vsn, git},
-    {registered, [swirl_sup, peer_sup, swarm_sup]},
-    {applications, [
-        kernel,
-        stdlib,
-        crypto
-            ]},
-    {mod, { swirl_app, []}},
-    {env, []}
-    ]}.
+ [
+  {description, "PPSP Protocol Streaming Peer Transport"},
+  {vsn, git},
+  {registered, [swirl_sup, peer_sup, swarm_sup]},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  crypto
+                 ]},
+  {mod, { swirl_app, []}},
+  {env, []}
+ ]}.

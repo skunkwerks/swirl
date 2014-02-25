@@ -26,11 +26,14 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([unpack/1, pack/1, validate_message_type/1, handle/1]).
+%% api
+-export([unpack/1, 
+         pack/1,
+         validate_message_type/1, 
+         handle/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% external API
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% api
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc unpack a datagram segment into a PPSPP message using erlang term format
 %% <p>  Deconstruct PPSPP UDP datagram into multiple erlang terms, including
@@ -71,8 +74,7 @@ unpack(_Maybe_Messages, _Rest) -> {error, ppspp_invalid_message}.
 pack(_) -> ok.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% internal functions
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% private
 %%-spec unpack(binary() -> ppspp_message_type()).
 validate_message_type(Maybe_Message_Type)
   when is_integer(Maybe_Message_Type),
