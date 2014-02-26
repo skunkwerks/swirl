@@ -28,10 +28,15 @@
 
 -compile([debug_info, export_all]).
 
+-record(state, {port :: non_neg_integer(),
+                socket :: port()}).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack_datagram() ->
     [udp, Peer, Port, Maybe_Datagram] = packet0(raw),
-    ppspp_peer:handle_packet_sync(udp, Peer, Port, Maybe_Datagram).
+    ok.
+    %State = #state{port = Port, socket = Peer} ,
+    %peer_worker:handle_datagram(udp, Peer, Port, Maybe_Datagram, State).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% test data from spec and wire via tribler swift client
@@ -105,4 +110,4 @@ msg1() -> Type = ?HANDSHAKE,
              Options/binary >>.
 
 start_farm(Workers) when is_integer(Workers), Workers > 0 ->
-    [spawn(ppspp_peer,start, [Worker + 4000]) || Worker <- lists:seq(0,Workers)].
+    [spawn(peer_worker,start, [Worker + 4000]) || Worker <- lists:seq(0,Workers)].
