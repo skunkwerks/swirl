@@ -25,19 +25,111 @@ or even patches would make my day/week/year.
 
 ## Usage
 
-- Use `make` to build, and `make run` to start a default implementation
-    on `localhost:7777`.
+- Use `make all` to build, and `./swirl` to start a default implementation
+    on `localhost:7777`, without console access.
 - `make dev` loads appropriate erlang apps but you'll need to specify
-    either `swirl_app:start().` for a single instance, or use
-    `tests:start_farm(Nodes).` where `Nodes` will be the additional ports
-    > 4000 to run a PPPSPP peer farm.
-- `ctrl-G q` to quit as usual.
+    either `swirl:start_peer().` for a single instance, or read the
+    console help via `swirl:help().` to see how to start multiple peers.
+
+## Example Usage
+
+From a clean git checkout of `git://github.com/skunkwerks/swirl.git`,
+just run:
+
+    make all dev
+    # erlang console is automatically launched
+    swirl:start_peer().
+    swirl:quit().
+
+And here's what a sample session looks like from the above commands:
+
+```
+🌈  dch@akai % git clone  && cd swirl
+🌈  dch@akai % make all dev
+rebar clean
+==> git (clean)
+rebar get-deps update-deps
+==> git (get-deps)
+==> git (update-deps)
+
+rebar compile escriptize
+==> git (compile)
+Compiled src/peer_sup.erl
+Compiled src/ppspp_datagram.erl
+Compiled src/ppspp_options.erl
+Compiled src/swirl_app.erl
+Compiled src/swirl.erl
+Compiled src/peer_worker.erl
+Compiled src/swirl_sup.erl
+Compiled src/convert.erl
+Compiled src/ppspp_message.erl
+Compiled src/swarm_sup.erl
+
+==> git (escriptize)
+dialyzer -pa ./ebin -I ./include -r ebin \
+		-Werror_handling -Wrace_conditions
+  Checking whether the PLT /Users/dch/.dialyzer_plt is up-to-date... yes
+  Proceeding with analysis... done in 0m1.02s
+done (passed successfully)
+
+erl -pa ./ebin -I ./include -s crypto -smp \
+		-setcookie swirl -sname swirl \
+		+K true +A 16 \
+		-s swirl -s swirl help
+
+Erlang/OTP 17 [erts-6.0] [source] [64-bit] [smp:8:8] [async-threads:16] [hipe] [kernel-poll:true] [dtrace]
+
+Eshell V6.0  (abort with ^G)
+(swirl@akai)1>
+
+=INFO REPORT==== 28-Feb-2014::12:23:29 ===
+swirl: protocol d-08
+
+=INFO REPORT==== 28-Feb-2014::12:23:29 ===
+swirl: version #f87b4e4
+swirl: online help
+use any of these commands, prefixed by `swirl:` to run:
+
+help().                   these help notes
+start().                  starts the swirl application, but no peers or swarms
+stop().                   stops the swirl application, active peers and swarms
+start_peer().             starts a single peer on the default port
+start_peer(Port).         starts a single peer on the given port, e.g. 7777
+start_peers(First, Last). starts peers on consecutive ports from First to Last
+stop_peer().              stops a single peer on the default port
+stop_peer(Port).          stops a single peer on the given port, e.g. 7777
+stop_peers(First, Last).  stops peers on consecutive ports from First to Last
+quit().                   terminates *immediately* the entire BEAM vm
+
+use ^c to exit, or type `swirl:quit().`
+
+
+(swirl@akai)1> swirl:start_peer().
+
+=INFO REPORT==== 28-Feb-2014::12:23:40 ===
+peer: <0.50.0> listening on udp:7777
+{ok,<0.50.0>}
+
+(swirl@akai)2> swirl:quit().
+
+=INFO REPORT==== 28-Feb-2014::12:23:49 ===
+peer: <0.50.0> terminating port 7777, using 2856 bytes, due to reason: shutdown
+
+=INFO REPORT==== 28-Feb-2014::12:23:49 ===
+    application: swirl
+    exited: stopped
+    type: temporary
+ok
+(swirl@akai)3>
+
+🌈  dch@akai %
+```
 
 ## Images
 
 The [Swirl Project] uses a number of stunning images of the Messier M74
 Spiral Galaxy, also known as NGC 628. These images are in the [public domain],
-and you can see more of them at the [hubblesite], or on its [mobile] version.
+and you can see more of them at the [hubblesite], and on their [mobile] site.
 
 ![Swirl Mascot, Messier Spiral Galaxy M74, also known as NGC 628][swirl_m74_large]
 
