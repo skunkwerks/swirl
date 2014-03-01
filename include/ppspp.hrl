@@ -24,26 +24,26 @@
 -define(BYTE,   8/big).
 
 %% PPSP Protocol Options -- section 7.0
--define(PPSPP_VERSION,                  0:?BYTE). %%% MUST, version 1:8
--define(PPSPP_MINIMUM_VERSION,          1:?BYTE). %%% MUST, version 1:8
--define(PPSPP_SWARM_ID_LENGTH,          2:?BYTE). %%% MUST for initiator,
-                                                  %%% MAY for peer,
-                                                  %%% length:16, swarm_id:length
--define(PPSPP_INTEGRITY_CHECK_METHOD,   3:?BYTE). %%% MAY, method:8
--define(PPSPP_MERKLE_HASH_FUNCTION,     4:?BYTE). %%% MUST if Merkle tree is used
-                                                  %%% function:8
--define(PPSPP_LIVE_SIGNATURE_ALGORITHM, 5:?BYTE). %%% MUST if CIPM is sign_all
-                                                  %%% or unified merkle_tree
-                                                  %%% algorithm:8
--define(PPSPP_CHUNK_ADDRESSING_METHOD,  6:?BYTE). %%% MAY, chunking:8
--define(PPSPP_LIVE_DISCARD_WINDOW,      7:?BYTE). %%% MUST for live swarms,
-                                                  %%% window: QWORD/DWORD*
--define(PPSPP_SUPPORTED_MESSAGES,       8:?BYTE). %%% MUST unless all supported
-                                                  %%% length:8, messages:length
--define(PPSPP_END_OPTION,             255:?BYTE). %%% 0. The key is sufficient
-%% values used within the option parers
--define(PPSPP_DEFAULT_CHUNK_SIZE,          1024). %%%
--define(PPSPP_CURRENT_VERSION,                1). %%%
+-define(PPSPP_VERSION,                  0:?BYTE). %% MUST, version 1:8
+-define(PPSPP_MINIMUM_VERSION,          1:?BYTE). %% MUST, version 1:8
+-define(PPSPP_SWARM_ID_LENGTH,          2:?BYTE). %% MUST for initiator,
+%                                                 %% MAY for peer,
+%                                                 %% length:16, swarm_id:length
+-define(PPSPP_INTEGRITY_CHECK_METHOD,   3:?BYTE). %% MAY, method:8
+-define(PPSPP_MERKLE_HASH_FUNCTION,     4:?BYTE). %% MUST if Merkle tree is used
+%                                                 %% function:8
+-define(PPSPP_LIVE_SIGNATURE_ALGORITHM, 5:?BYTE). %% MUST if CIPM is sign_all
+%                                                 %% or unified merkle_tree
+%                                                 %% algorithm:8
+-define(PPSPP_CHUNK_ADDRESSING_METHOD,  6:?BYTE). %% MAY, chunking:8
+-define(PPSPP_LIVE_DISCARD_WINDOW,      7:?BYTE). %% MUST for live swarms,
+%                                                 %% window: QWORD/DWORD*
+-define(PPSPP_SUPPORTED_MESSAGES,       8:?BYTE). %% MUST unless all supported
+%                                                 %% length:8, messages:length
+-define(PPSPP_END_OPTION,             255:?BYTE). %% 0. The key is sufficient
+%% values used within the option parser
+-define(PPSPP_DEFAULT_CHUNK_SIZE,          1024). %%
+-define(PPSPP_CURRENT_VERSION,                1). %% match IETF protocol version
 
 %% PPSPP Datagram Fields -- section 8.4
 -define(PPSPP_CHANNEL_SIZE,      ?DWORD).
