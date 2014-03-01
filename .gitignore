@@ -1,0 +1,8 @@
+*.beam
+*.swp
+deps/
+ebin/*.app
+logs/*
+.eunit
+erl_crash.dump
+/swirl
