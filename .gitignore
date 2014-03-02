@@ -2,6 +2,7 @@
 *.swp
 deps/
 ebin/*.app
+ebin/*.beam
 logs/*
 .eunit
 erl_crash.dump
