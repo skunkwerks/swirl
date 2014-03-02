@@ -30,8 +30,14 @@
 %% api
 -export([unpack/1,
          pack/1,
-         defaults/1,
-         get/2]).
+         get/2,
+         get_chunking_method/1,
+         get_content_integrity_check_method/1,
+         get_merkle_hash_function/1,
+         get_minimum_version/1,
+         get_swarm_id/1,
+         get_maximum_version/1,
+         use_default_options/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc unpack a UDP packet into a PPSPP datagram using erlang term format
@@ -179,7 +185,7 @@ unpack( <<>>, _Options) -> {error, ppspp_options_invalid}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc get/2 extracts a given parameter from the opaque options
-%% <p> Provide a clean interface for other modules to retrieve PPSP options.
+%% <p> Provides a clean interface for other modules to retrieve PPSP options.
 %% The options are:
 %% <ul>
 %% <li>ppspp_chunking_method</li>
@@ -195,9 +201,58 @@ unpack( <<>>, _Options) -> {error, ppspp_options_invalid}.
 get(Option, Options) ->
     orddict:fetch(Option, Options).
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc defaults/1 provides the options set within the PPSP draft
-%% <p> Provide a clean interface for other modules to retrieve PPSP options.
+%% @doc get_chunking_method/1 returns chunking method for the provided swarm
+%% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
+%% @end
+%%-spec get(ppspp_options(), orddict()) -> ppspp_options()).
+get_chunking_method(Options) ->
+    get(ppspp_chunking_method, Options).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc content_integrity_check_method/1 returns CIPM for the provided swarm
+%% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
+%% @end
+%%-spec get(ppspp_options(), orddict()) -> ppspp_options()).
+get_content_integrity_check_method(Options) ->
+    get(ppspp_content_integrity_check_method, Options).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc get_merkle_hash_function/1 returns the hash function for the provided swarm
+%% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
+%% @end
+%%-spec get(ppspp_options(), orddict()) -> ppspp_options()).
+get_merkle_hash_function(Options) ->
+    get(ppspp_merkle_hash_function, Options).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc get_minimum_version/1 returns the lowest accepted PPSP version for the swarm
+%% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
+%% @end
+%%-spec get(ppspp_options(), orddict()) -> ppspp_options()).
+get_minimum_version(Options) ->
+    get(ppspp_minimum_version, Options).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc get_swarm_id/1 returns the lowest accepted PPSP version for the swarm
+%% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
+%% @end
+%%-spec get(ppspp_options(), orddict()) -> ppspp_options()).
+get_swarm_id(Options) ->
+    get(ppspp_swarm_id, Options).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc get_maximum_version/1 returns the highest accepted PPSP version for the swarm
+%% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
+%% @end
+%%-spec get(ppspp_options(), orddict()) -> ppspp_options()).
+get_maximum_version(Options) ->
+    get(ppspp_version, Options).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc use_default_options/1 provides the options set within the PPSP draft
+%% <p> Provides a clean interface for other modules to retrieve PPSP options.
 %% Takes 1 parameter, a binary representing the root hash.
 %% The returned options and values are:
 %% <ul>
@@ -212,7 +267,7 @@ get(Option, Options) ->
 %% @end
 %%-spec defaults(ppspp_hash()) -> orddict()).
 
-defaults(Root_Hash) when is_binary(Root_Hash) ->
+use_default_options(Root_Hash) when is_binary(Root_Hash) ->
     orddict:from_list( [{ppspp_swarm_id, Root_Hash},
                         {ppspp_chunking_method, ppspp_chunking_32bit_chunks},
                         {ppspp_chunk_size, ?PPSPP_DEFAULT_CHUNK_SIZE},
