@@ -27,7 +27,7 @@
 -endif.
 
 %% api
--export([handle/6,
+-export([handle/2,
          handle/1,
          unpack/2,
          pack/1]).
@@ -36,16 +36,15 @@
 %% @doc receives datagram from peer_worker, parses & delivers to matching channel
 %% @spec handle_datagram() -> ok
 %% @end
-handle(udp, Socket, Peer, Port, Maybe_Datagram, State) ->
-    Endpoint = convert:endpoint_to_string(Peer, Port),
-    ?DEBUG("dgram: received udp from ~s~n", [Endpoint]),
-    Transport = orddict:from_list([ {peer, Peer},
-                                    {port, Port},
-                                    {endpoint, Endpoint},
-                                    {transport, udp},
-                                    {socket, Socket},
-                                    {state, State}]),
-    {ok, Datagram} = unpack(Transport, Maybe_Datagram),
+handle({udp, Socket, Peer, Port, Maybe_Datagram}, State) ->
+    Pretty_Endpoint = convert:endpoint_to_string(Peer, Port),
+    Peer = orddict:from_list([{peer, Peer},
+                                {port, Port},
+                                {endpoint, Pretty_Endpoint},
+                                {transport, udp},
+                                {socket, Socket} ]),
+    ?DEBUG("dgram: received udp from ~s~n", [Pretty_Endpoint]),
+    {ok, Datagram} = unpack(Maybe_Datagram, Peer, State),
     % NB usually called from spawned process, so return values are ignored
     handle(Datagram).
 
