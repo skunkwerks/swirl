@@ -29,7 +29,7 @@
 %% api
 -export([handle/2,
          handle/1,
-         unpack/2,
+         unpack/3,
          pack/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -54,7 +54,11 @@ handle({udp, Socket, Peer, Port, Maybe_Datagram}, State) ->
 % dgram:handle is an orddict containing transport properties, and a list of
 % messages, each of which is a tuple {Message_type, Message_body}:
 % [{channel,0},
-%  {endpoint,"127.0.0.1:54181"},
+%  {peer,
+%    [{endpoint,"127.0.0.1:54181"},
+%     {peer,{127,0,0,1}},
+%     {port,54181},
+%     {transport,udp}]},
 %  {messages,
 %    [{handshake,
 %       [{channel,1107349116},
@@ -68,16 +72,9 @@ handle({udp, Socket, Peer, Port, Maybe_Datagram}, State) ->
 %           {ppspp_swarm_id,
 %             <<102,161,8,98,186,238,189,255,132,98,231,
 %             69,162,222,24,207,156,225,26,229>>},
-%           {ppspp_version,1}]}]}]},
-%  {peer,{127,0,0,1}},
-%  {port,54181},
-%  {transport,udp}]
+%           {ppspp_version,1}]}]}]}]
 
 handle(Datagram) ->
-    is_valid(Datagram),
-    %% it might be necessary to pass stuff like transport through
-    %% to message handlers so that we know where to send stuff
-    %% and how to update it.
     _Transport = orddict:fetch(transport, Datagram),
     lists:foreach(
       fun(Message) -> ppspp_message:handle(Message) end,
@@ -104,17 +101,13 @@ handle(Datagram) ->
 %% ].
 
 %%-spec unpack(ppspp_transport(), packet() -> ppspp_datagram()).
-unpack(Transport, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Messages/binary>> ) ->
+unpack(<<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Messages/binary>>, Peer, State ) ->
     Channel_Name = convert:channel_to_string(Channel),
     ?DEBUG("dgram: received on channel ~p~n", [Channel_Name]),
     {ok, Parsed_Messages} = ppspp_message:unpack(Maybe_Messages),
     ?DEBUG("dgram: parsed ok on channel ~p~n", [Channel_Name]),
     Datagram = orddict:store(messages, Parsed_Messages,
-                             orddict:store(channel, Channel, Transport)),
+                             orddict:store(channel, Channel, Peer)),
     {ok, Datagram}.
 
 pack(_) -> ok.
-
-is_valid(Datagram) when is_list(Datagram) ->
-    ?DEBUG("dgram: handle ~p~n", [Datagram]),
-    ok.
