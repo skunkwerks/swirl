@@ -46,17 +46,14 @@ random_channel()    -> crypto:strong_rand_bytes(4). %% random peer channel
 initiator_channel() -> << 16#77777777:32/big>>. %% initiator peer channel
 responder_channel() -> << 16#88888888:32/big>>. %% responder peer channel
 
-chairman_miaow_hash() -> <<102,161,8,98,186,
-                           238,189,255,132,98,
-                           231,69,162,222,24,
-                           207,156,225,26,229 >>.
+m74_hash() -> convert:hex_string_to_padded_binary("c89800bfc82ed01ed6e3bfd5408c51274491f7d4").
 
 handshake_options(packed) ->
-    Cat_hash = chairman_miaow_hash(),
+    M74_hash = m74_hash(),
     <<  ?PPSPP_VERSION,                     1, %% ppspp version
         ?PPSPP_MINIMUM_VERSION,             1, %% ppspp max version
         ?PPSPP_SWARM_ID_LENGTH,      20:?WORD, %% swarm id length (160 bits)
-        Cat_hash/binary                      , %% the merkle hash requested
+        M74_hash/binary                      , %% the merkle hash requested
         ?PPSPP_INTEGRITY_CHECK_METHOD,      1, %% optional integrity check method
         ?PPSPP_MERKLE_HASH_FUNCTION,        0, %% merkle please
         ?PPSPP_CHUNK_ADDRESSING_METHOD,     2, %% chunk addressing method 2
@@ -66,7 +63,7 @@ handshake_options(unpacked) ->
      {ppspp_content_integrity_check_method,ppspp_merkle_hash_tree},
      {ppspp_merkle_hash_function,ppspp_sha1},
      {ppspp_minimum_version,1},
-     {ppspp_swarm_id, chairman_miaow_hash()},
+     {ppspp_swarm_id, m74_hash()},
      {ppspp_version,1}].
 
 %% UDP wire format as passed to handle_packet_sync from gen_udp socket
@@ -81,9 +78,9 @@ packet0(parsed) -> [transport(), dgram0()].
 %% when the standard is specified. e.g.;
 %%  endpoint today contains "127.0.0.1:52021"
 %% but in future could equally be;
-%%  udp://ppspp.peer.org:7777?channel=12345,name=chairman_miaow.png
-%%  udp://ppspp.peer.org:7777?channel=12345,hash=66a10862baeebdff8462e745a2de18cf9ce11ae5
-%% beam://swirl_7777?hash=66a10862baeebdff8462e745a2de18cf9ce11ae5
+%%  udp://ppspp.peer.org:7777?channel=12345,name=m74.jpg
+%%  udp://ppspp.peer.org:7777?channel=12345,hash=c89800bfc82ed01ed6e3bfd5408c51274491f7d4
+%% beam://swirl_7777?hash=c89800bfc82ed01ed6e3bfd5408c51274491f7d4
 %% The beam transport uses the Erlang VM's clustering services, and
 %% assumes the existence of a registered service `swirl_7777` somewhere.
 transport() -> orddict:from_list([{peer,{127,0,0,1}},
