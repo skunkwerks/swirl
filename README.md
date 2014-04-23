@@ -14,14 +14,16 @@ or even patches would make my day/week/year.
 - A modern UNIX system, although `swirl` will likely run on Windows the
     compile-time dependencies are more complicated. Please contact the
     project if you want to build or run on windows support.
-- The most recent release of `Erlang/OTP` available. This is `R16B03-1` at
+- The most recent release of `Erlang/OTP` available. This is `OTP 17.0` at
     time of writing, and is available from [ESL] for most platforms. This
-    is preferred to using a possibly inconsistent version from your OS
-    packaging system.
-- Development will use the OTP 17.0 release as soon as it's available
+    is strongly advised, instead of using a possibly inconsistent version from
+    your OS packaging system.
 - Either build and install Erlang's [rebar] build tool from source, or
     [download] it and put in your path.
 - A reasonable level of Erlang and PPSPP knowledge is anticipated.
+- If you are developing on / with `swirl` you will need a pre-built dialyzer
+    plt. If you don't know what this is, just run `make dialyzer-setup` each
+    time you install/upgrade to a new Erlang/OTP release.
 
 ## Usage
 
