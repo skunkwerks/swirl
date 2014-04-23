@@ -7,3 +7,4 @@ logs/*
 .eunit
 erl_crash.dump
 /swirl
+/.rebar/
