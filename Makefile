@@ -1,4 +1,4 @@
-all: clean compile dialyze
+all: clean compile
 
 deps:
 	rebar get-deps update-deps
