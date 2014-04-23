@@ -9,9 +9,9 @@ clean:
 compile: clean deps
 	rebar compile escriptize
 
-dialyze:
-	dialyzer -pa ./ebin -I ./include -r ebin \
-		-Werror_handling -Wrace_conditions
+dialyze: clean
+	dialyzer -I ./include --src -r ./src \
+		-Werror_handling -Wrace_conditions -Wunderspecs
 
 dialyzer-setup:
 	dialyzer --build_plt --apps erts kernel stdlib crypto \
