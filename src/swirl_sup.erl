@@ -26,12 +26,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% api
 
+-spec start_link() -> {ok, pid()} | {error, _}.
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks
 
+-spec init([]) -> {ok,{{one_for_one, 10,60}, [supervisor:child_spec()] }}.
 init([]) ->
     Supervisors = [ {peer_sup, {peer_sup, start_link, []},
                      permanent,
@@ -44,3 +46,4 @@ init([]) ->
 
     % summon the supervisors
     {ok, {{one_for_one, 10, 60}, Supervisors}}.
+

@@ -41,18 +41,21 @@
 %% @doc Start the swirl application in a stand-alone fashion.
 %% This should only be used for testing and in the erlang shell.
 %% @end
+-spec start() -> ok.
 start() ->
     {ok, _} = application:ensure_all_started(?MODULE),
     ok.
 
 %% @doc Stop the swirl application and all dependent swarms and peers.
 %% end
+-spec stop() -> ok | {error,_}.
 stop() ->
     application:stop(swirl).
 
 %% @doc Stop the swirl application, all dependent swarms and peers, and
 %% the entire BEAM virtual machine too.
 %% @end
+-spec quit() -> no_return().
 quit() ->
     stop(),
     init:stop().
@@ -61,6 +64,8 @@ quit() ->
 %% @end
 start_peer() ->
     start_peer(?SWIRL_PORT).
+
+-spec start_peer(inet:port_number()) -> {ok, pid()} | {error,_}.
 start_peer(Port) when is_integer(Port), Port > 0, Port < 65535 ->
     supervisor:start_child(peer_sup, [Port]).
 
@@ -68,6 +73,8 @@ start_peer(Port) when is_integer(Port), Port > 0, Port < 65535 ->
 %% ports. Note there is no guarantee of success nor error checking but it
 %% looks great for demos.
 %% @end
+-spec start_peers(inet:port_number(), inet:port_number()) ->
+    [ {{ok, pid()}, inet:port_number() | {error,_}}].
 start_peers(First, Last) when is_integer(First), is_integer(Last), First < Last  ->
     Ports = lists:seq(First, Last),
     lists:map(fun(Port) ->
@@ -79,6 +86,7 @@ start_peers(First, Last) when is_integer(First), is_integer(Last), First < Last 
 %% @end
 stop_peer() ->
     stop_peer(?SWIRL_PORT).
+-spec stop_peer(inet:port_number()) -> ok | {error, not_found}.
 stop_peer(Port) when is_integer(Port), Port > 0, Port < 65535 ->
     Worker_pid = whereis(convert:port_to_atom(Port)),
     supervisor:terminate_child(peer_sup, Worker_pid).
@@ -86,6 +94,8 @@ stop_peer(Port) when is_integer(Port), Port > 0, Port < 65535 ->
 
 %% @doc stop multiple PPSPP peers on a given range of ports.
 %% @end
+-spec stop_peers(inet:port_number(), inet:port_number()) ->
+    [{ok | {error, _}, inet:port_number()}].
 stop_peers(First, Last) when is_integer(First), is_integer(Last), First < Last  ->
     Ports = lists:seq(First, Last),
     lists:map(fun(Port) ->
@@ -95,6 +105,7 @@ stop_peers(First, Last) when is_integer(First), is_integer(Last), First < Last  
 %% @doc help for console users
 %% Provides a summary of available commands options within the erlang console
 %% @end
+-spec help() -> ok.
 help() ->
     io:format("~s: online help~n", [?SWIRL_APP]),
     Help =["use any of these commands, prefixed by `swirl:` to run:",
@@ -120,6 +131,7 @@ help() ->
     ok.
 
 %% for escript support
+-spec main(_) -> ok.
 main(_) ->
     help(),
     start(),
