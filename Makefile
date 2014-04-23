@@ -15,7 +15,8 @@ dialyze:
 
 dialyzer-setup:
 	dialyzer --build_plt --apps erts kernel stdlib crypto \
-		sasl common_test eunit compiler
+		sasl common_test eunit compiler \
+		| fgrep -v dialyzer.ignore
 
 dev:
 	erl -pa ./ebin -I ./include -s crypto -smp \
