@@ -31,36 +31,37 @@
          terminate/2, code_change/3]).
 
 %% records
--record(state, {port :: non_neg_integer(),
-                socket :: port()}).
+-record(state, {
+          port :: inet:port_number(),
+          socket :: port()
+         }).
+-type state() :: #state{}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% api
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc start the server
-%%
-%% @spec start_link(Port::non_net_integer()) -> {ok, Pid}
-%% where
-%%  Pid = pid()
-%% @end
-%% @spec start_link() -> {ok, Pid}
-%% @doc Calls `start_link(Port)' using the default port.
+
+-spec start_link(inet:port_number()) -> {error,_} | {ok,pid()}.
 start_link(Port) when is_integer(Port) ->
     start_link(Port, convert:port_to_atom(Port)).
 
-start_link(Port, Name) when is_atom(Name) ->
+-spec start_link(inet:port_number(),atom()) -> {error,_} | {ok,pid()}.
+start_link(Port, Name) when is_atom(Name), is_integer(Port) ->
     gen_server:start_link({local, Name}, ?MODULE, [Port], []).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Stops the server.
-%% @spec stop(port()) -> ok
-%% @end
+
+-spec stop(inet:port_number()) -> ok.
 stop(Port) ->
     gen_server:call(convert:port_to_atom(Port), stop).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks
+
+-spec init(nonempty_string()) -> {ok,[state(), ...]}.
 init([Port]) ->
     process_flag(trap_exit, true),
     {ok, Socket} = gen_udp:open(Port,  [binary,
@@ -69,10 +70,14 @@ init([Port]) ->
     ?INFO("peer: ~p listening on udp:~p~n", [self(), Port]),
     {ok, [#state{port = Port, socket = Socket}] }.
 
+-spec handle_call(_,_,_) ->
+    {stop,{error,{unknown_call,_}},_}.
 handle_call(Message, _From, State) ->
     ?WARN("peer: unexpected call: ~p~n", [Message]),
     {stop, {error, {unknown_call, Message}}, State}.
 
+-spec handle_cast(_,_) ->
+    {stop,normal | {error,{unknown_cast,_}},_}.
 handle_cast(stop, State) ->
     {stop, normal, State};
 handle_cast(Message, State) ->
@@ -80,6 +85,7 @@ handle_cast(Message, State) ->
     {stop, {error, {unknown_cast, Message}}, State}.
 
 
+-spec handle_info(_,_) -> {noreply,_} | {stop,{error,{unknown_info,_}},_}.
 handle_info(Packet={udp, _Socket, _Peer, _Port, _Maybe_Datagram}, State) ->
     spawn(ppspp_datagram, handle, [Packet]),
     {noreply, State};
@@ -89,9 +95,11 @@ handle_info(Message, State) ->
     ?WARN("peer: unexpected info: ~p~n", [Message]),
     {stop, {error, {unknown_info, Message}}, State}.
 
+-spec code_change(_,_,_) -> {ok,_}.
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
+-spec terminate(_,[state(), ...]) -> ok.
 terminate(Reason, [#state{socket=Socket, port=Port}]) ->
     gen_udp:close(Socket),
     {memory, Bytes} = erlang:process_info(self(), memory),

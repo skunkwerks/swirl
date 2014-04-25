@@ -28,16 +28,20 @@
 %% api
 
 -spec start_link() -> {ok, pid()} | ignore | {error, any()}.
+
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %%-spec start_child(port()) -> ok.
+-spec start_child([inet:port_number()]) ->
+    {error,_} | {ok, pid()}.
 start_child([Port]) when is_integer(Port) ->
     supervisor:start_child(?MODULE, [Port]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks
 
+-spec init([]) -> {ok,{{simple_one_for_one, 10,60}, [supervisor:child_spec()] }}.
 init([])->
     RestartStrategy = simple_one_for_one,
     MaxRestarts = 10,
