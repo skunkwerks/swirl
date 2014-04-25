@@ -25,12 +25,14 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% api
--spec start_link() -> {ok, pid()}.
+-spec start_link() -> {ok, pid()} | {error, any()}.
+
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks
+-spec init([]) -> {ok,{{one_for_one, 10,60}, [] }}.
 init([]) ->
     Workers = [],
     {ok, {{one_for_one, 10, 60}, Workers}}.
