@@ -6,8 +6,20 @@ deps:
 clean:
 	rebar clean
 
+distclean:
+	git clean -fdx
+	git reset --hard
+
 compile: clean deps
 	rebar compile escriptize
+
+commit: distclean compile check
+	@echo "*** check indentation before git push ***"
+
+check: eunit dialyze
+
+eunit:
+		rebar clean eunit
 
 dialyze: clean
 	dialyzer -I ./include --src -r ./src \
