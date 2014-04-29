@@ -11,7 +11,7 @@ The project was started by Dave Cottlehuber [@dch](http://twitter.com/dch).
 Git workflow
 ------------
 
-We are using github for the whole code base. There are many documents explaining a _github-workflow_ and we are using a similar one. Basically we are differentating between to workflows. One for _contributors_ via a pull request and one for _committers_ with a feature-branch workflow. But first some words on _commit messages_ and _feature branches_.
+We are using github for the whole code base. There are many documents explaining a _github-workflow_ and we are using a similar one. Basically we are differentating between two workflows. One for _contributors_ via a pull request and one for _committers_ with a feature-branch workflow. But first some words on _commit messages_ and _feature branches_.
 
 ###General format for commit messages
 
@@ -63,14 +63,14 @@ Documentation
 
 One important documentation bit is the [Peer-to-Peer Streaming Peer Protocol (PPSPP) draft-ietf-ppsp-peer-protocol-09](http://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol-09) (work in progress). The idea behind Swirl is based on this protocol draft.
 
-The documentation for the project itself is recently still work in progress. You can find the first written documentation files within the gut branch [feature/docs](https://github.com/skunkwerks/swirl/tree/feature/docs).
+The documentation for the project itself is recently still work in progress. You can find the first written documentation files within the git branch [feature/docs](https://github.com/skunkwerks/swirl/tree/feature/docs).
 
 Get in touch<a name="get_in_touch"></a>
 ------------
 
 ###Mailinglist
 
-The Swirl project is using [librelist](http://librelist.com). You can subcribe your email address by simply sending an email to swirl@librelist.com. You will then receive an email with the subject "Confirmation required". Please reply this message. With receiving a confirmation email, including some important information, you will be subscribed.
+The Swirl project is using [librelist](http://librelist.com). You can subcribe your email address by simply sending an email to swirl@librelist.com. You will then receive an email with the subject "Confirmation required". Please reply to this message. With receiving a confirmation email, including some important information, you will be subscribed.
 
 ###IRC
 
@@ -79,7 +79,7 @@ You can join the project members via IRC. The channel is called _#swirl_ and is 
 Testing
 -------
 
-The code of the project is tested. So when sending a pull request from your fork or when adding code as a contributor, please add appropriate tests. A good start is to have a lok into the [test dirctory](https://github.com/skunkwerks/swirl/tree/master/test).
+The code of the project is tested. So when sending a pull request from your fork or when adding code as a contributor, please add appropriate tests. A good start is to have a look into the [test dirctory](https://github.com/skunkwerks/swirl/tree/master/test).
 
 Bug reports
 -----------
