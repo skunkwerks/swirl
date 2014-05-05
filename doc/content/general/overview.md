@@ -1,3 +1,12 @@
++++
+title = "PPSP Overview"
+description = ""
+date = "2014-04-29"
+categories = [
+    "General"
+]
++++
+
 # PPSP Overview
 
 PPSP is a transport protocol — it transfers a stream of opaque binary data from one location to another. It is unique amongst transport protocols as it is a many-to-many transfer protocol, that is, there is no single master server or endpoint that manages the data transfer.

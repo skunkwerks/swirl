@@ -1,4 +1,11 @@
-# Implementation
++++
+title = "Swirl Implementation"
+description = ""
+date = "2014-04-29"
+categories = [
+    "Development"
+]
++++
 
 The Swirl project aims to deliver a fully functional implementation of the PPSP protocol in a number of languages and frameworks.
 
@@ -40,9 +47,9 @@ Further phases are planned, currently:
 [merkle]: merkle.md
 [deployment]: deployment.md
 [storage]: storage.md
-[streaming]: streaming.md
+[streaming]: /streaming.md
 [zeroconf]: zeroconf.md
-[traversal]: traversal.md
+[traversal]: /development/traversal/
 [browser]: browser.md
 [mobile]: mobile.md
 [embedded]: embedded.md

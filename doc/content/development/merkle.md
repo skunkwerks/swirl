@@ -1,4 +1,11 @@
-# Merkle Hash Trees
++++
+title = "Merkle Hash Trees"
+description = ""
+date = "2014-04-29"
+categories = [
+    "Development"
+]
++++
 
 In PPSP, by design, the integrity of any given chunk of data can be verified
 efficiently using a cryptographic signature scheme. The hashing algorithm
