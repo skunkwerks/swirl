@@ -57,13 +57,14 @@ new(Name) ->
 %% @doc insert/2 adds {Bin_Number, Hash, Data} into the ETS table
 %% <p> Provides interface to insert hashes into the ETS table. </p>
 %% @end
--spec insert(mtree(),{binary(), binary()}) -> true.
+-spec insert(mtree(),{binary(), term()}) -> true.
 insert(Tree, {Hash,Data}) ->
     %% get next bin number where the hash is to be inserted
     Bin_Number = next_bin(Tree),
     mtree_store:insert(Tree, {Bin_Number, Hash, Data}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% TODO decide what this function will do !!
 %% @doc remove/3 removes a given hash from tree and re-calculate the root hash
 %% @end
 -spec remove(mtree(), integer()) -> true.
@@ -71,42 +72,54 @@ remove(Tree, Bin_Number) ->
     mtree_store:delete(Tree, Bin_Number).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% TODO maybe use spawn(build_tree/3) to speed up the process.
 %% @doc Takes input the start and end Bin_Number of the leaf nodes and
 %% constructs a tree using the leaf nodes stored in the ETS table and stores
 %% the tree back into the ETS table.
 %% @end
--spec build_tree(list()) -> mtree().
+-spec build_tree(list()) -> Root_Hash :: binary().
 build_tree(Tree) ->
-    %% pad the tree with empty hashes, returns the total number of leaf nodes
-    %% (including empty hashes) in the tree
-    End = pad_tree(Tree),
-    build_tree(Tree, {0, End, 1}).
+    %% pad the tree with empty hashes, and return size of new tree
+    Tree_Size = pad_tree(Tree),
+    Bin_List  = lists:seq(0, Tree_Size, 2),
+    build_tree(Tree, Bin_List, []).
 
-build_tree(Tree, {Start, End, Level}) ->
-    Range = lists:seq(Start, End, math:pow(2,Level+1)),
-    Hash_Store = fun(HTree, X) ->
-                    {ok, Hash1, _} = mtree_store:lookup(HTree, X),
-                    {ok, Hash2, _} = mtree_store:lookup(HTree, X+2),
-                    Node = {X+1, crypto:hash(?ALGO, [Hash1, Hash2]), na},
-                    mtree_store:insert(Tree, Node)
-                 end,
-    lists:map(Hash_Store(Tree, Bin), Range),
-    ok.
+build_tree(Tree, [], [Root_Bin]) ->
+    {ok, Root_Hash, _} = mtree_store:lookup(Tree, Root_Bin),
+    Root_Hash;
 
+build_tree(Tree, [], Bin_List) ->
+    build_tree(Tree, Bin_List, []);
+
+build_tree(Tree, [Bin1, Bin2 | Tail], Acc) ->
+    {ok, Hash1, _} = mtree_store:lookup(Tree, Bin1),
+    {ok, Hash2, _} = mtree_store:lookup(Tree, Bin2),
+    Hash           = crypto:hash(?ALGO, [Hash1, Hash2]),
+    Bin_Number     = math:round((Bin1+Bin2)/2),
+
+    mtree_store:insert(Tree, {Bin_Number, Hash, empty}),
+    build_tree(Tree, Tail, lists:append([Acc, [Bin_Number]])).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc root_hash/1 get the root hash of the tree.
+%% TODO discuss this !
+%% @doc root_hash/1 get the root hash of the tree. The root of a full binary
+%% tree that uses bin number scheme will always be of the form 2^N -1 where N
+%% is the number of leaf nodes in the tree. This function assumes that the
+%% binary tree is full.
 %% @end
 -spec root_hash(mtree()) -> hash().
 root_hash(Tree) ->
-    root_hash({Tree, 0}, <<0:160>>).
+    %% TODO check if the tree is complete or not
+    root_hash({Tree, 0}, ?EMPTY_HASH).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc This function assumes that the binary tree is full i.e. there are 2^N
+%% leaf nodes in the tree.
+%% @end
 root_hash({Tree, N}, Root_Hash) ->
     Root_Bin = erlang:round(math:pow(2,N))-1,
 
     case mtree_store:lookup(Tree, Root_Bin) of
-        %% if the current the Bin_Number (Root) doesn't exist in the tree then
-        %% the previous Bin_Number (N-1) is the root bin
         {error,not_found}   -> Root_Hash;
         {ok, Hash, _Data}   -> root_hash({Tree, N+1}, Hash)
     end.
@@ -194,10 +207,10 @@ bin_to_range(Bin_Number) ->
         %% if Bin_Number is even then its a leaf, hence no range is returned
         Bin_Number rem 2 =:= 0 ->
             [];
-
         %% Bin_Number has to be a positive integer.
         Bin_Number >= 0 ->
-            io:format("~w~n", [bin_to_range(Bin_Number, 1)]);
+            %io:format("~w~n", [bin_to_range(Bin_Number, 1)]);
+            bin_to_range(Bin_Number, 1);
         true ->
             error
     end.
@@ -222,18 +235,62 @@ bin_to_range(Bin_Number, Level) ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc Pad tree with empty leaf hashes.
+%% @end
+pad_tree(Tree) ->
+    Curr_Length = tree_length(Tree)+2,
+    New_Length  = next_power_2(Curr_Length),
+    pad_tree(Tree, Curr_Length, New_Length).
+
+pad_tree(Tree,Start,End) ->
+    if
+        Start=:=End -> End-2;
+        true        ->
+            mtree_store:insert(Tree, {Start, ?EMPTY_HASH, empty}),
+            pad_tree(Tree, Start+2, End)
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc Get the next nearest power of 2
+%% @end
+next_power_2(Number) ->
+    if
+        Number band (Number-1) =:= 0 -> Number;
+        true -> next_power_2(Number, 0)
+    end.
+
+next_power_2(0, Count) ->
+    1 bsl Count;
+next_power_2(Number, Count) ->
+    next_power_2(Number bsr 1, Count+1).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc generate the next bin number where the hash has to inserted. Here the
 %% next bin number should either not exist in the tree or it should have an
 %% empty hash
 %% @end
 next_bin(Tree) ->
-    next_bin(Tree, 0).
+    generate_bin(Tree, 0, ?EMPTY_HASH).
 
-next_bin(Tree, Bin_Number) ->
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc get highest Bin_Number of the leaf node, which indicates the number of
+%% elements in the tree or the tree breadth/size. NOTE : the EMPTY_HASH has
+%% been set to none so that all the empty leaf nodes are also included in the
+%% tree size.
+%% @end
+tree_length(Tree) ->
+    generate_bin(Tree, 0, none)-2.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc generate the next bin number where the hash has to inserted. Here the
+%% next bin number should either not exist in the tree or it should have an
+%% empty hash
+%% NOTE : next_bin/3 return Bin_Number which on next the highest Bin_Number in
+%% the tree.
+%% @end
+generate_bin(Tree, Bin_Number, Hash) ->
     case mtree_store:lookup(Tree, Bin_Number) of
-        {error, not_found}       -> Bin_Number;
-        {ok, ?EMPTY_HASH, _Data} -> Bin_Number;
-        {ok, _Hash, _Data}       -> next_bin(Tree, Bin_Number+2)
+        {error, not_found}  -> Bin_Number;
+        {ok, Hash, _D}      -> Bin_Number;
+        {ok, _H, _D}        -> generate_bin(Tree, Bin_Number+2, Hash)
     end.
-
-
