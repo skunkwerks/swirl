@@ -27,15 +27,16 @@
 
 -export([new/1,
          insert/2,
-         remove/2,
          build_tree/1,
+         prune_bin_range/2,
          root_hash/1,
          get_peak_hash/1,
          get_hash_by_index/2,
          get_uncle_hashes/2,
          get_munro_hash/2,
+         verify_peak_hash/1,
          verify_munro_hash/3,
-         verify/3,
+         verify_uncle_hash/3,
          dump_tree/1,
          load_tree/1,
          bin_to_range/1]).
@@ -50,36 +51,36 @@
 %% @doc Initialize a new merkle hash tree.
 %% @end
 -spec new(atom()) -> ok.
-new(Name) ->
-    mtree_store:init(Name).
+new(Tree) ->
+    mtree_store:init(Tree).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc insert/2 adds {Bin_Number, Hash, Data} into the ETS table
+%% @doc insert/2 adds {Bin, Hash, Data} into the ETS table
 %% <p> Provides interface to insert hashes into the ETS table. </p>
 %% @end
 -spec insert(mtree(),{binary(), term()}) -> true.
 insert(Tree, {Hash,Data}) ->
     %% get next bin number where the hash is to be inserted
-    Bin_Number = next_bin(Tree),
-    mtree_store:insert(Tree, {Bin_Number, Hash, Data}).
+    Bin = next_bin(Tree),
+    mtree_store:insert(Tree, {Bin, Hash, Data}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% TODO decide what this function will do !!
 %% @doc remove/3 removes a given hash from tree and re-calculate the root hash
 %% @end
--spec remove(mtree(), integer()) -> true.
-remove(Tree, Bin_Number) ->
-    mtree_store:delete(Tree, Bin_Number).
+-spec prune_bin_range(mtree(), integer()) -> true.
+prune_bin_range(_Tree, _Bin) -> ok.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% TODO maybe use spawn(build_tree/3) to speed up the process.
-%% @doc Takes input the start and end Bin_Number of the leaf nodes and
+%% @doc Takes input the start and end Bin of the leaf nodes and
 %% constructs a tree using the leaf nodes stored in the ETS table and stores
 %% the tree back into the ETS table.
 %% @end
 -spec build_tree(list()) -> Root_Hash :: binary().
 build_tree(Tree) ->
-    %% pad the tree with empty hashes, and return size of new tree
+    %% pad the tree with empty hashes, returns the last Bin that was
+    %% added to pad the tree.
     Tree_Size = pad_tree(Tree),
     Bin_List  = lists:seq(0, Tree_Size, 2),
     build_tree(Tree, Bin_List, []).
@@ -94,11 +95,11 @@ build_tree(Tree, [], Bin_List) ->
 build_tree(Tree, [Bin1, Bin2 | Tail], Acc) ->
     {ok, Hash1, _} = mtree_store:lookup(Tree, Bin1),
     {ok, Hash2, _} = mtree_store:lookup(Tree, Bin2),
-    Hash           = crypto:hash(?ALGO, [Hash1, Hash2]),
-    Bin_Number     = math:round((Bin1+Bin2)/2),
+    Hash           = hash([Hash1, Hash2]),
+    Bin            = math:round((Bin1+Bin2)/2),
 
-    mtree_store:insert(Tree, {Bin_Number, Hash, empty}),
-    build_tree(Tree, Tail, lists:append([Acc, [Bin_Number]])).
+    mtree_store:insert(Tree, {Bin, Hash, empty}),
+    build_tree(Tree, Tail, lists:append([Acc, [Bin]])).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% TODO discuss this !
@@ -109,19 +110,15 @@ build_tree(Tree, [Bin1, Bin2 | Tail], Acc) ->
 %% @end
 -spec root_hash(mtree()) -> hash().
 root_hash(Tree) ->
-    %% TODO check if the tree is complete or not
-    root_hash({Tree, 0}, ?EMPTY_HASH).
+    case is_complete(Tree) of
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc This function assumes that the binary tree is full i.e. there are 2^N
-%% leaf nodes in the tree.
-%% @end
-root_hash({Tree, N}, Root_Hash) ->
-    Root_Bin = erlang:round(math:pow(2,N))-1,
+        {false, none}    ->
+            build_tree(Tree),
+            root_hash(Tree);
 
-    case mtree_store:lookup(Tree, Root_Bin) of
-        {error,not_found}   -> Root_Hash;
-        {ok, Hash, _Data}   -> root_hash({Tree, N+1}, Hash)
+        {true, Root_Bin} ->
+            {ok, Hash, _} = mtree_store:lookup(Tree, Root_Bin),
+            Hash
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -131,21 +128,178 @@ root_hash({Tree, N}, Root_Hash) ->
 %% </p>
 %% @end
 -spec get_peak_hash(mtree()) -> hash_list().
-get_peak_hash(_Tree) -> ok.
+get_peak_hash(Tree) ->
+    case is_complete(Tree) of
+        {false, none}    ->
+            build_tree(Tree),
+            get_peak_hash(Tree);
+        {true, Root_Bin} ->
+            Bin_List = lists:seq(0,2*Root_Bin,2),
+            get_peak_hash(Tree, Bin_List, [], [])
+    end.
+
+%% TODO write a calculate peaks function to reduce the no. of lookup operations.
+%% TODO Also to enhance the speed one can stop moving forward once the first empty
+%% hash is found
+%%
+%% Takes a list of leaf nodes and traverses up the tree to get the peak hashes.
+get_peak_hash(_Tree, [], [], Peaks) ->
+    Peaks;
+
+get_peak_hash(Tree, [], Acc, Peaks) ->
+    get_peak_hash(Tree, lists:reverse(Acc), [], Peaks);
+
+get_peak_hash(Tree, [Bin1,Bin2 | Tail], Acc, Peaks) ->
+    case [mtree_store:lookup(Tree, Bin1),
+          mtree_store:lookup(Tree, Bin2)] of
+
+        [{ok, ?EMPTY_HASH, _}, _] ->
+            get_peak_hash(Tree, Tail, Acc, Peaks);
+
+        [_, {ok, ?EMPTY_HASH, _}] ->
+            {ok, Hash,_} = mtree_store:lookup(Tree, Bin1),
+            get_peak_hash(Tree, Tail, Acc, [{Bin1,Hash}|Peaks]);
+
+        _   ->
+            New_Bin = erlang:round((Bin1+Bin2)/2),
+            get_peak_hash(Tree, Tail, [New_Bin | Acc], Peaks)
+    end;
+
+get_peak_hash(Tree, [Bin], Acc, Peaks) ->
+    {ok, Hash,_} = mtree_store:lookup(Tree, Bin),
+    get_peak_hash(Tree, [], Acc, [{Bin,Hash}|Peaks]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc verify_peak_hash/1 takes a peak hash list and verifies its against the
+%% given root hash hence enabling the peer to guess the size of the DATA
+%% @end
+%% TODO decide if Root_Hash = {Root_Bin, Root_Hash}
+%% TODO write function to calculate data size from peak hashes.
+verify_peak_hash({Peak_List, Root_Hash}) ->
+    %% sort the list acc to the bin numbers and reverse it
+    Hash_List = lists:reverse(lists:keysort(1, Peak_List)),
+    verify_peak_hash(Hash_List, Root_Hash).
+
+verify_peak_hash([{_Bin, Hash}], Root_Hash) ->
+    if
+        Hash =:= Root_Hash -> true;
+        true               -> false
+    end;
+verify_peak_hash([{Bin, Hash} | Tail], Root_Hash) ->
+    Sibling     = get_sibling(Bin, get_layer_num(Bin)-1),
+    Parent_Hash = case lists:keyfind(Sibling, 1, Tail) of
+                      false ->
+                          Sibling_Hash = get_subtree_hash(Sibling),
+                          hash([Hash, Sibling_Hash]);
+                      {_, Sibling_Hash} ->
+                          hash([Sibling_Hash, Hash])
+                  end,
+    Parent_Bin  = erlang:round((Bin+Sibling)/2),
+    Hash_List   = [{Parent_Bin, Parent_Hash} | Tail],
+    verify_peak_hash(Hash_List, Root_Hash).
+
+%% Get the root hash of the empty subtree
+get_subtree_hash(Bin) ->
+    [Start, End] = bin_to_range(Bin),
+    Hash_List = [{X,?EMPTY_HASH} || X <- lists:seq(Start, End, 2)],
+    get_subtree_hash(Hash_List, []).
+
+get_subtree_hash([], [{_, Root_Hash}]) ->
+    Root_Hash;
+get_subtree_hash([], Acc) ->
+    get_subtree_hash(Acc, []);
+get_subtree_hash([{Bin1, Hash1}, {Bin2,Hash2} | Tail], Acc) ->
+    Parent_Bin  = erlang:round((Bin1+Bin2)/2),
+    Parent_Hash = hash([Hash1, Hash2]),
+    get_subtree_hash(Tail, [{Parent_Bin, Parent_Hash} | Acc]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc get_hash_by_index/2 returns a hash or list of hashes for a given
+%% Bin which may represent a single chunk or a range of chunks.
+%% @end
+-spec get_hash_by_index(mtree(), integer()) -> hash_list().
+get_hash_by_index(Tree, Bin) ->
+
+    case is_complete(Tree) of
+        {false, none}    ->
+            build_tree(Tree),
+            get_hash_by_index(Tree, Bin);
+        {true, _Root_Bin} ->
+            [Start,End] = bin_to_range(Bin),
+            get_hash_by_index(Tree, lists:seq(Start,End,2), [])
+    end.
+
+get_hash_by_index(_Tree, [], Acc) ->
+    lists:reverse(Acc);
+get_hash_by_index(Tree, [Bin | Tail], Acc) ->
+    {ok, Hash, _} = mtree_store:lookup(Tree, Bin),
+    get_hash_by_index(Tree, Tail, [Hash|Acc]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc get_uncle_hashes/2 returns list of uncle hashes required to verify
 %% a given chunk.
 %% @end
 -spec get_uncle_hashes(mtree(), integer()) -> hash_list().
-get_uncle_hashes(_Tree, _Chunk_Id) -> ok.
+get_uncle_hashes(Tree, Bin) when Bin rem 2 =:= 0 ->
+    get_uncle_hashes(Tree, Bin, 0);
+get_uncle_hashes(_Tree, _Bin) ->
+    {error, not_a_leaf}.
+
+get_uncle_hashes(Tree, {Bin, Layer}, Acc) ->
+    Sibling = get_sibling(Bin,Layer),
+    if
+        Sibling < Bin ->
+            lists:reverse(Acc);
+        Sibling > Bin ->
+            {ok, Hash, _} = mtree_store:lookup(Tree, Sibling),
+            Root  = erlang:round((Sibling+Bin)/2),
+            get_uncle_hashes(Tree, {Root, Layer+1}, [{Sibling, Hash} | Acc])
+    end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc get_hash_by_index/2 returns a hash or list of hashes for a given
-%% Bin_Number which may represent a single chunk or a range of chunks.
+%% TODO : verify if it matches the specs.
+%% @doc Given a Hash_List of the type [{Bin1,Hash1}, {Bin2,Hash2}, ...]
+%% verify_uncle_hash/3 for a given chunk ID (i.e. Bin Number), inserts the
+%% Uncle_Hashes into the tree and returns true if the new Root_Hash of the tree
+%% after addition of a new chunk is same as the received Root_Hash.
+%% <p> When a peer receives a new chunk it MUST receive Uncle_Hashes required
+%% to verify to calculate the Root_Hash and check it against the received
+%% Root_Hash </p>
 %% @end
--spec get_hash_by_index(mtree(), integer()) -> hash_list().
-get_hash_by_index(_Tree, _Bin_Number) -> ok.
+%%
+%%
+%% TODO incomplete
+-spec verify_uncle_hash(mtree(), hash_list(), hash()) -> {true, mtree()}
+                                                       | {false,term()}.
+verify_uncle_hash(Tree, Bin, {Hash_List,_Root_Hash}) when Bin rem 2 =:= 0 ->
+    {ok, Hash, _} = mtree_store:lookup(Tree, Bin),
+    verify_uncle_hash(Tree, Hash_List, {Bin, Hash}, 0);
+verify_uncle_hash(_Tree, _Bin, _) ->
+    not_a_leaf.
+
+verify_uncle_hash(Tree, Hash_List, {Bin, Bin_Hash}, Layer) ->
+    Sibling = get_sibling(Bin, Layer),
+    if
+        Sibling < Bin ->
+            ok;
+            %verify(Tree, Bin, Bin_Hash, Layer);
+
+        Sibling > Bin ->
+            case get_sibling_hash(Hash_List, Sibling) of
+                error        -> {error, hash_not_found};
+                Sibling_Hash ->
+                    Parent_Hash = hash([Bin_Hash, Sibling_Hash]),
+                    Parent_Bin  = erlang:round((Bin + Sibling)/2),
+                    verify_uncle_hash(Tree, Hash_List,
+                              {Parent_Bin, Parent_Hash}, Layer+1)
+            end
+    end.
+
+get_sibling_hash(Hash_List, Bin) ->
+    case lists:keyfind(Bin, 1, Hash_List) of
+        {_, Hash} -> Hash;
+        false     -> error
+    end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc get_munro_hash/2 return the munro hash for a range of chunk numbers.
@@ -157,7 +311,7 @@ get_hash_by_index(_Tree, _Bin_Number) -> ok.
 %% hash.</p>
 %% @end
 -spec get_munro_hash(mtree(), [integer()]) -> hash().
-get_munro_hash(_Tree, _Bin_Numbers) -> ok.
+get_munro_hash(_Tree, _Bins) -> ok.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc verify_munro_hash/2 returns true if the calculated Munro_Hash from the
@@ -168,19 +322,6 @@ get_munro_hash(_Tree, _Bin_Numbers) -> ok.
 -spec verify_munro_hash(mtree(), hash(), hash_list()) -> {true, mtree()}
                                                        | {false, mtree()}.
 verify_munro_hash(_Tree, _Munro_Hash, _Uncle_Hashes) -> ok.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% TODO : verify if it matches the specs.
-%% @doc verify/3 inserts the Uncle_Hashes into the tree and returns true if the
-%% new Root_Hash of the tree after addition of a new chunk is same as the
-%% received Root_Hash.
-%% <p> When a peer receives a new chunk it MUST receive Uncle_Hashes required
-%% to verify to calculate the Root_Hash and check it against the received
-%% Root_Hash </p>
-%% @end
--spec verify(mtree(), hash_list(), hash()) -> {true, mtree()}
-                                            | {false,mtree()}.
-verify(_Tree, _Uncle_Hashes, _Root_Hash) -> ok.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc dump_tree/2 write the merkle hash tree into a file with name as
@@ -197,48 +338,74 @@ dump_tree(File_Name) ->
 load_tree(Tree) ->
     mtree_store:table_to_file(Tree).
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% TODO add check to ensure that Bin_Number is an integer
-%% @doc Return [Start, End] range of leaf nodes for a given Bin_Number
+%%% GENERAL INTERNAL FUNCTIONS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc returns hash of Hash_List
+%% @end
+hash(Hash_List) ->
+    crypto:hash(?ALGO, Hash_List).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc returns the sibling bin number for a bin number belonging to a given
+%% layer
+%% @end
+get_sibling(Bin, Layer) ->
+    Nth = erlang:round((Bin-math:pow(2,Layer)+1)/math:pow(2,Layer+1))+1,
+    if
+        Nth rem 2 =:= 0 -> Bin - erlang:round(math:pow(2,Layer+1));
+        true            -> Bin + erlang:round(math:pow(2,Layer+1))
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc returns the sibling bin number for a bin number belonging to a given
+%% layer
+%% @end
+get_layer_num(Bin) ->
+    [Start, End] = bin_to_range(Bin),
+    erlang:round(math:log(End+2 -Start)/math:log(2)).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% TODO add check to ensure that Bin is an integer
+%% @doc Return [Start, End] range of leaf nodes for a given Bin
 %% @end
 -spec bin_to_range(integer()) -> list().
-bin_to_range(Bin_Number) ->
+bin_to_range(Bin) ->
     if
-        %% if Bin_Number is even then its a leaf, hence no range is returned
-        Bin_Number rem 2 =:= 0 ->
+        %% if Bin is even then its a leaf, hence no range is returned
+        Bin rem 2 =:= 0 ->
             [];
-        %% Bin_Number has to be a positive integer.
-        Bin_Number >= 0 ->
-            %io:format("~w~n", [bin_to_range(Bin_Number, 1)]);
-            bin_to_range(Bin_Number, 1);
+        %% Bin has to be a positive integer.
+        Bin >= 0 ->
+            %io:format("~w~n", [bin_to_range(Bin, 1)]);
+            bin_to_range(Bin, 1);
         true ->
             error
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% INTERNAL FUNCTIONS
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc Using arithmetic progression check if the given Bin_Number lies in the
+%% @doc Using arithmetic progression check if the given Bin lies in the
 %% given level of the tree..
 %% @end
-bin_to_range(Bin_Number, Level) ->
-    Nth = ((Bin_Number+1)/math:pow(2,Level)-1)/2,
+bin_to_range(Bin, Level) ->
+    Nth = ((Bin+1)/math:pow(2,Level)-1)/2,
     case Nth - erlang:round(Nth)  of
         0.0 ->
             Range = erlang:round(math:pow(2,Level)),
-            [Bin_Number+1-Range, Bin_Number-1+Range];
+            [Bin+1-Range, Bin-1+Range];
 
         _ ->
-            bin_to_range(Bin_Number, Level+1)
+            bin_to_range(Bin, Level+1)
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Pad tree with empty leaf hashes.
 %% @end
 pad_tree(Tree) ->
-    Curr_Length = tree_length(Tree)+2,
+    Curr_Length = tree_length(Tree),
     New_Length  = next_power_2(Curr_Length),
     pad_tree(Tree, Curr_Length, New_Length).
 
@@ -265,32 +432,41 @@ next_power_2(Number, Count) ->
     next_power_2(Number bsr 1, Count+1).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc generate the next bin number where the hash has to inserted. Here the
+%% @doc check if tree has 2^N leaf nodes and also check if the root (2^(N-1)-1
+%% or Bin/2 -1) exists.
+is_complete(Tree) ->
+    Bin      = tree_length(Tree),
+    Root_Bin = erlang:round(Bin/2)-1,
+    case {Bin band (Bin-1), mtree_store:is_member(Tree, Root_Bin)} of
+        {0, true} -> {true, Root_Bin};
+        _         -> {false, none}
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% TODO speed up this function.
+%% @doc generate the next bin number where the hash has to inserted. The
 %% next bin number should either not exist in the tree or it should have an
 %% empty hash
 %% @end
 next_bin(Tree) ->
-    generate_bin(Tree, 0, ?EMPTY_HASH).
+    next_bin(Tree, 0).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc get highest Bin_Number of the leaf node, which indicates the number of
-%% elements in the tree or the tree breadth/size. NOTE : the EMPTY_HASH has
-%% been set to none so that all the empty leaf nodes are also included in the
-%% tree size.
+%% @doc next_bin/3 returns Bin which next to the highest Bin in the tree.
+%% @end
+next_bin(Tree, Bin) ->
+    case mtree_store:lookup(Tree, Bin) of
+        {error, not_found}    -> Bin;
+        {ok, ?EMPTY_HASH, _D} -> Bin;
+        {ok, _H, _D}          -> next_bin(Tree, Bin+2)
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc get highest Bin of the leaf node, which indicates the number of
+%% elements in the tree or the tree breadth/size.
+%% NOTE: Since the ETS table is an ordered storage the last element will always
+%% be a leaf node. So, generated bin will get the last entry in the ETS table
+%% and return it which can used to calculate the ROOT of the tree
 %% @end
 tree_length(Tree) ->
-    generate_bin(Tree, 0, none)-2.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc generate the next bin number where the hash has to inserted. Here the
-%% next bin number should either not exist in the tree or it should have an
-%% empty hash
-%% NOTE : next_bin/3 return Bin_Number which on next the highest Bin_Number in
-%% the tree.
-%% @end
-generate_bin(Tree, Bin_Number, Hash) ->
-    case mtree_store:lookup(Tree, Bin_Number) of
-        {error, not_found}  -> Bin_Number;
-        {ok, Hash, _D}      -> Bin_Number;
-        {ok, _H, _D}        -> generate_bin(Tree, Bin_Number+2, Hash)
-    end.
+    mtree_store:highest_bin(Tree)+2.
