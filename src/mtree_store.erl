@@ -25,6 +25,8 @@
 -export([init/1,
          insert/2,
          lookup/2,
+         is_member/2,
+         highest_bin/1,
          delete/2,
          table_to_file/1,
          file_to_table/1]).
@@ -33,10 +35,11 @@
 %% @doc Initialize a new ETS table. The table is named and public and elements
 %% are sotred as ordered set.
 %% @end
--spec init(atom()) -> ok.
-init(Table_Name) ->
-    ets:new(Table_Name, [ordered_set,
+-spec init(atom()) -> Table :: atom().
+init(Table) ->
+    ets:new(Table, [ordered_set,
                         {keypos, ?POS},
+                        {read_concurrency,true},
                         public,
                         named_table]).
 
@@ -45,35 +48,49 @@ init(Table_Name) ->
 %% will replace any old object with a key same as new one.
 %% @end
 -spec insert(atom(), {integer(), binary(), binary()}) -> true.
-insert(Table_Name, {Bin_Number, Hash, Data}) ->
-    ets:insert(Table_Name, {Bin_Number, Hash, Data}).
+insert(Table, {Bin, Hash, Data}) ->
+    ets:insert(Table, {Bin, Hash, Data}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc searches for a given Bin_Number in the table.
+%% @doc searches for a given Bin in the table.
 %% @end
 -spec lookup(atom(), integer()) -> {ok, binary(), binary()}
                                  | {error, atom()}.
-lookup(Table_Name, Bin_Number) ->
-    case ets:lookup(Table_Name, Bin_Number) of
-        [{Bin_Number, Hash, Data}] -> {ok, Hash, Data};
+lookup(Table, Bin) ->
+    case ets:lookup(Table, Bin) of
+        [{Bin, Hash, Data}] -> {ok, Hash, Data};
         []                         -> {error, not_found}
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc Deletes an object with the given Bin_Number from the table
+%% @doc searches for a given Bin in the table.
+%% @end
+-spec is_member(atom(), integer()) -> true | false.
+is_member(Table, Bin) ->
+    ets:member(Table, Bin).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc returns the highest bin number in the ets table, which will always be a
+%% leaf node.
+%% @end
+-spec highest_bin(atom()) -> term() | '$end_of_table'.
+highest_bin(Table) ->
+    ets:last(Table).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc Deletes an object with the given Bin from the table
 %% @end
 -spec delete(atom(), integer()) -> true.
-delete(Table_Name, Bin_Number) ->
-    ets:match_delete(Table_Name, {Bin_Number, '_', '_'}).
+delete(Table, Bin) ->
+    ets:match_delete(Table, {Bin, '_', '_'}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Write the ets table to the disk and deletes the table from the current
 %% running erlang shell.
 %% @end
 -spec table_to_file(atom()) -> ok | {error , term()}.
-table_to_file(Table_Name) ->
-    ets:tab2file(Table_Name, lists:concat([Table_Name, ".ETS"])),
-    ets:delete(Table_Name).
+table_to_file(Table) ->
+    ets:tab2file(Table, lists:concat([Table, ".ETS"])),
+    ets:delete(Table).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Loads the ets table from the given file.

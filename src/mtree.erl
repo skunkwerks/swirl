@@ -42,9 +42,9 @@
          dump_tree/1,
          load_tree/1]).
 
--opaque mtree()     :: {term()}.
--type hash()        :: binary().
--type hash_list()   :: [hash()].
+-opaque mtree()    :: {term()}.
+-type hash()       :: binary().
+-type hash_list()  :: [hash()].
 
 -export_type([mtree/0]).
 
@@ -59,10 +59,11 @@ new(Tree) ->
 %% @doc insert/2 adds {Bin, Hash, Data} into the ETS table
 %% <p> Provides interface to insert hashes into the ETS table. </p>
 %% @end
--spec insert(mtree(),{binary(), term()}) -> true.
-insert(Tree, {Hash,Data}) ->
-    %% get next bin number where the hash is to be inserted
-    Bin = mtree_core:next_bin(Tree),
+-spec insert(mtree(),term()) -> true.
+insert(Tree, Data) ->
+    %% get next bin number where the hash is to be inserted and call insert
+    Hash = mtree_core:hash(Data),
+    Bin  = mtree_core:next_bin(Tree),
     mtree_store:insert(Tree, {Bin, Hash, Data}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -80,11 +81,10 @@ prune_bin_range(_Tree, _Bin) -> ok.
 %% @end
 -spec build_tree(list()) -> Root_Hash :: binary().
 build_tree(Tree) ->
-    %% pad the tree with empty hashes, returns the last Bin that was
-    %% added to pad the tree.
+    %% pad tree with empty hashes, returns the last Bin that was added to pad
+    %% the tree.
     Tree_Size = mtree_core:pad_tree(Tree),
-    Bin_List  = lists:seq(0, Tree_Size, 2),
-    build_tree(Tree, Bin_List, []).
+    build_tree(Tree, lists:seq(0, Tree_Size, 2), []).
 
 build_tree(Tree, [], [Root_Bin]) ->
     {ok, Root_Hash, _} = mtree_store:lookup(Tree, Root_Bin),
@@ -95,7 +95,7 @@ build_tree(Tree, [Bin1, Bin2 | Tail], Acc) ->
     {ok, Hash1, _} = mtree_store:lookup(Tree, Bin1),
     {ok, Hash2, _} = mtree_store:lookup(Tree, Bin2),
     Hash           = mtree_core:hash([Hash1, Hash2]),
-    Bin            = math:round((Bin1+Bin2)/2),
+    Bin            = erlang:round((Bin1+Bin2)/2),
     mtree_store:insert(Tree, {Bin, Hash, empty}),
     build_tree(Tree, Tail, [Bin | Acc]).
 
@@ -135,16 +135,14 @@ get_peak_hash(Tree) ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% TODO write a calculate peaks function to reduce the no. of lookup operations.
-%% hash is found
+%% TODO write a calculate peaks function to reduce the no. of lookup
+%% operations hash is found
 %% Takes a list of leaf nodes and traverses up the tree to get the peak hashes.
 %% the moment an empty leaf is encountered we more a level up in the layer.
 get_peak_hash(_Tree, [], [], Peaks) ->
     Peaks;
-
 get_peak_hash(Tree, [], Acc, Peaks) ->
     get_peak_hash(Tree, lists:reverse(Acc), [], Peaks);
-
 get_peak_hash(Tree, [Bin1, Bin2 | Tail], Acc, Peaks) ->
     case [mtree_store:lookup(Tree, Bin1),
           mtree_store:lookup(Tree, Bin2)] of
@@ -160,7 +158,6 @@ get_peak_hash(Tree, [Bin1, Bin2 | Tail], Acc, Peaks) ->
             Parent_Bin = erlang:round((Bin1+Bin2)/2),
             get_peak_hash(Tree, Tail, [Parent_Bin | Acc], Peaks)
     end;
-
 get_peak_hash(Tree, [Bin], Acc, Peaks) ->
     {ok, Hash,_} = mtree_store:lookup(Tree, Bin),
     get_peak_hash(Tree, [], Acc, [{Bin,Hash}|Peaks]).
@@ -244,13 +241,18 @@ get_uncle_hashes(_Tree, _Bin) ->
 
 get_uncle_hashes(Tree, {Bin, Layer}, Acc) ->
     Sibling = mtree_core:get_sibling(Bin),
+
     if
         Sibling < Bin ->
             lists:reverse(Acc);
         Sibling > Bin ->
-            {ok, Hash, _} = mtree_store:lookup(Tree, Sibling),
-            Root  = erlang:round((Sibling+Bin)/2),
-            get_uncle_hashes(Tree, {Root, Layer+1}, [{Sibling, Hash} | Acc])
+            case mtree_store:lookup(Tree, Sibling) of
+                {error, not_found} -> lists:reverse(Acc);
+                {ok, Hash, _} ->
+                    Root = erlang:round((Sibling+Bin)/2),
+                    get_uncle_hashes(Tree, {Root, Layer+1},
+                                     [{Sibling, Hash} | Acc])
+            end
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -328,7 +330,7 @@ verify(_, {Root_Bin, Root_Hash}, {Bin, Hash}) when Root_Bin =:= Bin ->
     mtree_core:compare_hash(Root_Hash, Hash);
 verify(Tree, {Root_Bin, Root_Hash}, {Bin, Hash}) ->
     Sibling               = mtree_core:get_sibling(Bin),
-    {ok, Sibling_Hash, _} = mtree_core:lookup(Tree, Sibling),
+    {ok, Sibling_Hash, _} = mtree_store:lookup(Tree, Sibling),
     Parent_Bin            = erlang:round((Bin + Sibling)/2),
     Parent_Hash = if
                       Bin < Sibling ->

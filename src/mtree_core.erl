@@ -68,7 +68,7 @@ get_sibling(Bin) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Return the layer number to which a particular bin belongs.
 %% @end
-get_layer_num(Bin) ->
+get_layer_num(Bin) when Bin >= 0 ->
     [Start, End] = bin_to_range(Bin),
     erlang:round(math:log(End+2 -Start)/math:log(2)).
 
