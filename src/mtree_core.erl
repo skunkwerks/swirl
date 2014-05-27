@@ -34,20 +34,23 @@
          tree_length/1]).
 
 -opaque mtree()     :: {term()}.
-%-type hash()        :: binary().
-%-type hash_list()   :: [hash()].
+-type bin()         :: non_neg_integer().
+-type hash()        :: binary().
+-type hash_list()   :: list(hash()).
 
 -export_type([mtree/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc returns hash of Hash_List
 %% @end
+-spec hash(hash_list()) -> hash().
 hash(Hash_List) ->
     crypto:hash(?ALGO, Hash_List).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc returns hash of Hash_List
 %% @end
+-spec compare_hash(hash(), hash()) -> true | false.
 compare_hash(Hash1, Hash2) when Hash1 =:= Hash2 ->
     true;
 compare_hash(_H1, _H2) ->
@@ -57,6 +60,7 @@ compare_hash(_H1, _H2) ->
 %% @doc returns the sibling bin number for a bin number belonging to a given
 %% layer
 %% @end
+-spec get_sibling(bin()) -> bin().
 get_sibling(Bin) ->
     Layer = get_layer_num(Bin)-1,
     Nth   = erlang:round((Bin-math:pow(2,Layer)+1)/math:pow(2,Layer+1))+1,
@@ -68,6 +72,7 @@ get_sibling(Bin) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Return the layer number to which a particular bin belongs.
 %% @end
+-spec get_layer_num(bin()) -> pos_integer().
 get_layer_num(Bin) when Bin >= 0 ->
     [Start, End] = bin_to_range(Bin),
     erlang:round(math:log(End+2 -Start)/math:log(2)).
@@ -76,7 +81,7 @@ get_layer_num(Bin) when Bin >= 0 ->
 %% TODO add check for Bin to be an integer in the gaurd
 %% @doc Return [Start, End] range of leaf nodes for a given Bin
 %% @end
--spec bin_to_range(integer()) -> list().
+-spec bin_to_range(bin()) -> list(bin()).
 bin_to_range(Bin) when Bin >= 0 ->
     if
         %% if Bin is even then its a leaf, hence no range is returned
@@ -106,6 +111,7 @@ bin_to_range(Bin, Level) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Pad tree with empty leaf hashes.
 %% @end
+-spec pad_tree(mtree()) -> bin().
 pad_tree(Tree) ->
     Curr_Length = tree_length(Tree),
     New_Length  = nearest_power_2(Curr_Length),
@@ -120,6 +126,7 @@ pad_tree(Tree, Start, End) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Get the next nearest power of 2
 %% @end
+-spec nearest_power_2(integer()) -> integer().
 nearest_power_2(Number) when Number band (Number-1) =:= 0 ->
     Number;
 nearest_power_2(Number) ->
@@ -136,6 +143,7 @@ nearest_power_2(Number, Count) ->
 %% @doc check if tree has 2^N leaf nodes i.e. Bin band (Bin-1) == 0 or not and
 %% also check if the root (2^(N-1)-1 or Bin/2 -1) exists.
 %% @end
+-spec is_complete(mtree()) -> {true, bin()} | {false, none}.
 is_complete(Tree) ->
     Bin      = tree_length(Tree),
     Root_Bin = erlang:round(Bin/2)-1,
@@ -151,6 +159,7 @@ is_complete(Tree) ->
 %% next bin number should either not exist in the tree or it should have an
 %% empty hash
 %% @end
+-spec next_bin(mtree()) -> bin().
 next_bin(Tree) ->
     next_bin(Tree, 0).
 
@@ -171,5 +180,6 @@ next_bin(Tree, Bin) ->
 %% be a leaf node. So, generated bin will get the last entry in the ETS table
 %% and return it which can used to calculate the ROOT of the tree
 %% @end
+-spec tree_length(mtree()) -> bin().
 tree_length(Tree) ->
     mtree_store:highest_bin(Tree)+2.

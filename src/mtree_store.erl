@@ -47,25 +47,25 @@ init(Table) ->
 %% @doc Insert the tuple {bin number, hash, chunk} into the table. Note : this
 %% will replace any old object with a key same as new one.
 %% @end
--spec insert(atom(), {integer(), binary(), binary()}) -> true.
+-spec insert(atom(), {non_neg_integer(), binary(), binary()}) -> true.
 insert(Table, {Bin, Hash, Data}) ->
     ets:insert(Table, {Bin, Hash, Data}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc searches for a given Bin in the table.
 %% @end
--spec lookup(atom(), integer()) -> {ok, binary(), binary()}
-                                 | {error, atom()}.
+-spec lookup(atom(), non_neg_integer()) -> {ok, binary(), binary()}
+                                           | {error, atom()}.
 lookup(Table, Bin) ->
     case ets:lookup(Table, Bin) of
         [{Bin, Hash, Data}] -> {ok, Hash, Data};
-        []                         -> {error, not_found}
+        []                  -> {error, not_found}
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc searches for a given Bin in the table.
 %% @end
--spec is_member(atom(), integer()) -> true | false.
+-spec is_member(atom(), non_neg_integer()) -> true | false.
 is_member(Table, Bin) ->
     ets:member(Table, Bin).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -79,7 +79,7 @@ highest_bin(Table) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Deletes an object with the given Bin from the table
 %% @end
--spec delete(atom(), integer()) -> true.
+-spec delete(atom(), non_neg_integer()) -> true.
 delete(Table, Bin) ->
     ets:match_delete(Table, {Bin, '_', '_'}).
 

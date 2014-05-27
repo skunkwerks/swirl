@@ -42,16 +42,17 @@
          dump_tree/1,
          load_tree/1]).
 
--opaque mtree()    :: {term()}.
--type hash()       :: binary().
--type hash_list()  :: [hash()].
+-opaque mtree()     :: {term()}.
+-type bin()         :: non_neg_integer().
+-type hash()        :: binary().
+-type hash_list()   :: list(hash()).
 
 -export_type([mtree/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Initialize a new merkle hash tree.
 %% @end
--spec new(atom()) -> ok.
+-spec new(mtree()) -> ok.
 new(Tree) ->
     mtree_store:init(Tree).
 
@@ -59,7 +60,7 @@ new(Tree) ->
 %% @doc insert/2 adds {Bin, Hash, Data} into the ETS table
 %% <p> Provides interface to insert hashes into the ETS table. </p>
 %% @end
--spec insert(mtree(),term()) -> true.
+-spec insert(mtree(), binary()) -> true.
 insert(Tree, Data) ->
     %% get next bin number where the hash is to be inserted and call insert
     Hash = mtree_core:hash(Data),
@@ -79,7 +80,7 @@ prune_bin_range(_Tree, _Bin) -> ok.
 %% constructs a tree using the leaf nodes stored in the ETS table and stores
 %% the tree back into the ETS table.
 %% @end
--spec build_tree(list()) -> Root_Hash :: binary().
+-spec build_tree(mtree()) -> Root_Hash :: binary().
 build_tree(Tree) ->
     %% pad tree with empty hashes, returns the last Bin that was added to pad
     %% the tree.
@@ -106,7 +107,7 @@ build_tree(Tree, [Bin1, Bin2 | Tail], Acc) ->
 %% is the number of leaf nodes in the tree. This function assumes that the
 %% binary tree is full.
 %% @end
--spec root_hash(mtree()) -> hash().
+-spec root_hash(mtree()) -> {bin(), hash()}.
 root_hash(Tree) ->
     case mtree_core:is_complete(Tree) of
         {false, none}    ->
@@ -212,7 +213,7 @@ get_subtree_hash([{Bin1, Hash1}, {Bin2,Hash2} | Tail], Acc) ->
 %% @doc get_hash_by_index/2 returns a hash or list of hashes for a given
 %% Bin which may represent a single chunk or a range of chunks.
 %% @end
--spec get_hash_by_index(mtree(), integer()) -> hash_list().
+-spec get_hash_by_index(mtree(), bin()) -> hash_list().
 get_hash_by_index(Tree, Bin) ->
     case mtree_core:is_complete(Tree) of
         {false, none}    ->
@@ -233,7 +234,7 @@ get_hash_by_index(Tree, [Bin | Tail], Acc) ->
 %% @doc get_uncle_hashes/2 returns list of uncle hashes required to verify
 %% a given chunk.
 %% @end
--spec get_uncle_hashes(mtree(), integer()) -> hash_list().
+-spec get_uncle_hashes(mtree(), bin()) -> hash_list().
 get_uncle_hashes(Tree, Bin) when Bin rem 2 =:= 0 ->
     get_uncle_hashes(Tree, {Bin, 0}, []);
 get_uncle_hashes(_Tree, _Bin) ->
@@ -266,8 +267,8 @@ get_uncle_hashes(Tree, {Bin, Layer}, Acc) ->
 %% Root_Hash </p>
 %% @end
 %%
-%%
 %% TODO incomplete, needs thorough checking.
+%% TODO pending : add uncle hashes to tree.
 verify_uncle_hash(Tree, Hash_List,{Root_Bin, Root_Hash}, Bin)
   when Bin rem 2 =:= 0 ->
 
@@ -322,6 +323,7 @@ get_hash(Hash_List, Bin) ->
 %% hash and verifies its against the root hash
 %% @end
 %% TODO thorough checking.
+-spec verify(mtree(), {bin(), binary()}) -> true | false.
 verify(Tree, {Bin, Hash}) ->
     {Root_Bin, Root_Hash} = root_hash(Tree),
     verify(Tree, {Root_Bin, Root_Hash}, {Bin, Hash}).
@@ -366,13 +368,13 @@ verify_munro_hash(_Tree, _Munro_Hash, _Uncle_Hashes) -> ok.
 %% @doc dump_tree/2 write the merkle hash tree into a file with name as
 %% File_Name. Returns ok if the operation succeeded.
 %% @end
--spec dump_tree(string()) -> {ok, atom()} | {error, term()}.
-dump_tree(File_Name) ->
+-spec load_tree(string()) -> {ok, atom()} | {error, term()}.
+load_tree(File_Name) ->
     mtree_store:file_to_table(File_Name).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc load_tree/1 loads merkle hash tree from a file with name as File_Name.
 %% @end
--spec load_tree(atom()) -> ok.
-load_tree(Tree) ->
+-spec dump_tree(mtree()) -> ok.
+dump_tree(Tree) ->
     mtree_store:table_to_file(Tree).
