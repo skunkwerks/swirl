@@ -25,6 +25,7 @@
 -export([init/1,
          insert/2,
          lookup/2,
+         get_first/1,
          is_member/2,
          highest_bin/1,
          delete/2,
@@ -63,11 +64,19 @@ lookup(Table, Bin) ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc gets the first bin from the tree
+%% @end
+-spec get_first(atom()) -> term() | '$end_of_table'.
+get_first(Table) ->
+    ets:first(Table).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc searches for a given Bin in the table.
 %% @end
 -spec is_member(atom(), non_neg_integer()) -> true | false.
 is_member(Table, Bin) ->
     ets:member(Table, Bin).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc returns the highest bin number in the ets table, which will always be a
 %% leaf node.

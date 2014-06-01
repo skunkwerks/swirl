@@ -24,6 +24,7 @@
 
 -export([hash/1,
          compare_hash/2,
+         get_parent/1,
          get_sibling/1,
          get_layer_num/1,
          bin_to_range/1,
@@ -55,6 +56,14 @@ compare_hash(Hash1, Hash2) when Hash1 =:= Hash2 ->
     true;
 compare_hash(_H1, _H2) ->
     false.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc returns the sibling bin number for a bin number belonging to a given
+%% layer
+%% @end
+-spec get_parent(bin()) -> bin().
+get_parent(Bin) ->
+    erlang:round((get_sibling(Bin) + Bin)/2).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc returns the sibling bin number for a bin number belonging to a given
@@ -114,7 +123,7 @@ bin_to_range(Bin, Level) ->
 -spec pad_tree(mtree()) -> bin().
 pad_tree(Tree) ->
     Curr_Length = tree_length(Tree),
-    New_Length  = nearest_power_2(Curr_Length),
+    New_Length  = nearest_power_2(Curr_Length)-2,
     pad_tree(Tree, Curr_Length, New_Length).
 
 pad_tree(_Tree, Start, End) when Start =:= End ->
@@ -145,8 +154,8 @@ nearest_power_2(Number, Count) ->
 %% @end
 -spec is_complete(mtree()) -> {true, bin()} | {false, none}.
 is_complete(Tree) ->
-    Bin      = tree_length(Tree),
-    Root_Bin = erlang:round(Bin/2)-1,
+    Bin      = tree_length(Tree)+2,
+    Root_Bin = erlang:round(nearest_power_2(Bin)/2) -1,
     case {Bin band (Bin-1), mtree_store:is_member(Tree, Root_Bin)} of
         {0, true} -> {true, Root_Bin};
         _         -> {false, none}
@@ -182,4 +191,4 @@ next_bin(Tree, Bin) ->
 %% @end
 -spec tree_length(mtree()) -> bin().
 tree_length(Tree) ->
-    mtree_store:highest_bin(Tree)+2.
+    mtree_store:highest_bin(Tree).

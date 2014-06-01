@@ -29,16 +29,16 @@
          insert/2,
          build_tree/1,
          prune_bin_range/2,
+         root_hash1/1,
          root_hash/1,
          get_peak_hash/1,
          get_hash_by_index/2,
          get_uncle_hashes/2,
          get_munro_hash/2,
-         verify/2,
          verify/3,
          verify_peak_hash/1,
          verify_munro_hash/3,
-         verify_uncle_hash/4,
+         verify_uncle_hash/3,
          dump_tree/1,
          load_tree/1]).
 
@@ -108,8 +108,24 @@ build_tree(Tree, [Bin1, Bin2 | Tail], Acc) ->
 %% is the number of leaf nodes in the tree. This function assumes that the
 %% binary tree is full.
 %% @end
--spec root_hash(mtree()) -> {bin(), hash()}.
+%% Core idea : get the highest bin stored in the table. Round it off to the
+%% nerarest power of 2 and search for this power/2 -1 in the table (which will
+%% be our root hash)
+%% NOTE : works even if the tree has only uncle hashes an not all
+-spec root_hash(mtree()) -> {bin(), hash()} | {error, term()}.
 root_hash(Tree) ->
+    Last_Bin = mtree_store:highest_bin(Tree),
+    Root_Bin = erlang:round(mtree_core:nearest_power_2(Last_Bin)/2) -1,
+    case mtree_store:lookup(Tree, Root_Bin) of
+        {ok, Root_Hash, _} ->
+            {Root_Bin, Root_Hash};
+        {error, not_found} ->
+            {error, inconsistant_tree}
+    end.
+
+%% ALTERNATE IMPLEMENTATION (REMOVE THIS)
+%% TODO Check if this is required
+root_hash1(Tree) ->
     case mtree_core:is_complete(Tree) of
         {false, none}    ->
             build_tree(Tree),
@@ -125,6 +141,7 @@ root_hash(Tree) ->
 %% receiver for reliable file size detection and download/live streaming
 %% unification </p>
 %% @end
+%% TODO : discuss whether to remove build_tree
 -spec get_peak_hash(mtree()) -> hash_list().
 get_peak_hash(Tree) ->
     case mtree_core:is_complete(Tree) of
@@ -132,7 +149,8 @@ get_peak_hash(Tree) ->
             build_tree(Tree),
             get_peak_hash(Tree);
         {true, Root_Bin} ->
-            Bin_List = lists:seq(0,2*Root_Bin,2),
+            Start    = mtree_store:get_first(Tree),
+            Bin_List = lists:seq(Start, 2*Root_Bin,2),
             get_peak_hash(Tree, Bin_List, [], [])
     end.
 
@@ -224,20 +242,18 @@ get_subtree_hash([{Bin1, Hash1}, {Bin2,Hash2} | Tail], Acc) ->
 %% @end
 -spec get_hash_by_index(mtree(), bin()) -> hash_list().
 get_hash_by_index(Tree, Bin) ->
-    case mtree_core:is_complete(Tree) of
-        {false, none}    ->
-            build_tree(Tree),
-            get_hash_by_index(Tree, Bin);
-        {true, _Root_Bin} ->
-            [Start,End] = mtree_core:bin_to_range(Bin),
-            get_hash_by_index(Tree, lists:seq(Start,End,2), [])
-    end.
+    [Start,End] = mtree_core:bin_to_range(Bin),
+    get_hash_by_index(Tree, lists:seq(Start,End,2), []).
 
 get_hash_by_index(_Tree, [], Acc) ->
-    lists:reverse(Acc);
+    {ok, lists:reverse(Acc)};
 get_hash_by_index(Tree, [Bin | Tail], Acc) ->
-    {ok, Hash, _} = mtree_store:lookup(Tree, Bin),
-    get_hash_by_index(Tree, Tail, [{Bin, Hash}|Acc]).
+    case mtree_store:lookup(Tree, Bin) of
+        {ok, Hash, _} ->
+            get_hash_by_index(Tree, Tail, [{Bin, Hash}|Acc]);
+        {error, not_found} ->
+            {error, hash_range_not_avail}
+    end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc get_uncle_hashes/2 returns list of uncle hashes required to verify
@@ -273,56 +289,64 @@ get_uncle_hashes(Tree, {Bin, Layer}, Acc) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% TODO : verify if it matches the specs.
 %% @doc Given a Hash_List of the type [{Bin1,Hash1}, {Bin2,Hash2}, ...]
-%% verify_uncle_hash/3 for a given chunk ID (i.e. Bin Number), inserts the
-%% Uncle_Hashes into the tree and returns true if the new Root_Hash of the tree
-%% after addition of a new chunk is same as the received Root_Hash.
+%% verify_uncle_hash/3 for a given chunk ID and its Hash (i.e. Bin Number),
+%% inserts the Uncle_Hashes into the tree and returns true if the new Root_Hash
+%% of the tree after addition of a new chunk is same as the received Root_Hash.
 %% <p> When a peer receives a new chunk it MUST receive Uncle_Hashes required
 %% to verify to calculate the Root_Hash and check it against the received
 %% Root_Hash </p>
+%% 
+%% IMPORTANT NOTE : the verify function assumes optimistic approach i.e. if
+%% reciever is trying to verify chuck 3 (C3), then the function assumes that it
+%% has already verified C0, C1, C2.
 %% @end
 %%
 %% TODO incomplete, needs thorough checking.
 %% TODO pending : add uncle hashes to tree.
--spec verify_uncle_hash(mtree(), hash_list(), {bin(), hash()}) -> true
-                                                                  | false.
-verify_uncle_hash(Tree, Hash_List,{Root_Bin, Root_Hash}, Bin)
+-spec verify_uncle_hash(mtree(), bin(),
+                        {hash_list(), bin(), hash()}) -> true
+                                                       | false.
+verify_uncle_hash(Tree, {Bin, Hash}, {Hash_List, Root_Bin, Root_Hash})
   when Bin rem 2 =:= 0 ->
-    {ok, Hash, _} = mtree_store:lookup(Tree, Bin),
-
-    case verify_uncle_hash(Hash_List, {Bin, Hash}, Root_Bin) of
-        {verify, {Bin, Hash}} ->
-            Ret_Root_Hash = verify(Tree, {Root_Bin, Root_Hash}, {Bin, Hash}),
-            mtree_core:compare_hash(Ret_Root_Hash, Root_Hash);
-
-        Ret_Root_Hash ->
-            mtree_core:compare_hash(Ret_Root_Hash, Root_Hash)
+    case verify_uncle_hash(Tree, Hash_List, {Root_Bin, Root_Hash},
+                           {Bin, Hash}, []) of
+        %% Uncle_Hashes also includes all the intermediate parents calculated
+        %% using the actual uncle hashes
+        {ok, true,_Uncle_Hashes} ->
+            ok;
+            %{ok, insert_hashes(Uncle_Hashes)};
+        {ok, false, _} ->
+            {error, hash_mismatch};
+        {error, Msg, _} ->
+            {error, Msg}
     end;
-verify_uncle_hash(_Tree, _Bin, _Root_Hash, _Bin) ->
+verify_uncle_hash(_Tree, _Bin, _) ->
     not_a_leaf.
 
-verify_uncle_hash([], {Bin, Bin_Hash}, Root_Bin) when Bin =:= Root_Bin ->
-    Bin_Hash;
-verify_uncle_hash([], {Bin, Bin_Hash}, _Root_Bin) ->
-    {verify, {Bin, Bin_Hash}};
-verify_uncle_hash(Hash_List, {Bin, Bin_Hash}, Root_Bin) ->
-    Sibling = mtree_core:get_sibling(Bin),
-    if
+verify_uncle_hash(_Tree, [], {R_Bin, R_Hash}, {Bin, Hash}, Acc)
+  when Bin =:= R_Bin ->
+    {ok, mtree_core:compare(R_Hash, Hash), Acc};
+verify_uncle_hash(Tree, Hash_List, {R_Bin, R_Hash}, {Bin, Hash}, Acc) ->
+    case mtree_core:get_sibling(Bin) of
         %% if the sibling is less than bin it means that any further required
         %% hashes will be in Tree itself and not the Hash_List.
-        Sibling < Bin ->
-            {verify, {Bin, Bin_Hash}};
+        Sibling when Sibling < Bin ->
+            {Status, Value} = verify(Tree, {R_Bin, R_Hash}, {Bin, Hash}),
+            {Status, Value, Acc};
 
-        Sibling > Bin ->
+        Sibling when Sibling > Bin ->
             case get_hash(Hash_List, Sibling) of
                 error        ->
-                    {error, hash_not_found};
+                    {error, missing_uncle_hashes_in_list, empty};
                 Sibling_Hash ->
-                    Parent_Hash   = mtree_core:hash([Bin_Hash, Sibling_Hash]),
+                    Parent_Hash   = mtree_core:hash([Hash, Sibling_Hash]),
                     Parent_Bin    = erlang:round((Bin + Sibling)/2),
                     New_Hash_List = lists:keydelete(Sibling,1,Hash_List),
+                    New_Acc = [{Sibling, Sibling_Hash},
+                               {Parent_Bin, Parent_Hash} | Acc],
 
-                    verify_uncle_hash(New_Hash_List,
-                                      {Parent_Bin, Parent_Hash}, Root_Bin)
+                    verify_uncle_hash(Tree, New_Hash_List,{R_Bin, R_Hash},
+                                      {Parent_Bin, Parent_Hash}, New_Acc)
             end
     end.
 
@@ -338,24 +362,24 @@ get_hash(Hash_List, Bin) ->
 %% hash and verifies its against the root hash
 %% @end
 %% TODO thorough checking.
--spec verify(mtree(), {bin(), hash()}) -> true | false.
-verify(Tree, {Bin, Hash}) ->
-    {Root_Bin, Root_Hash} = root_hash(Tree),
-    verify(Tree, {Root_Bin, Root_Hash}, {Bin, Hash}).
-
+-spec verify(mtree(), {bin(), hash()}, {bin(), hash()}) -> true | false.
 verify(_, {Root_Bin, Root_Hash}, {Bin, Hash}) when Root_Bin =:= Bin ->
-    mtree_core:compare_hash(Root_Hash, Hash);
+    {ok, mtree_core:compare_hash(Root_Hash, Hash)};
 verify(Tree, {Root_Bin, Root_Hash}, {Bin, Hash}) ->
-    Sibling               = mtree_core:get_sibling(Bin),
-    {ok, Sibling_Hash, _} = mtree_store:lookup(Tree, Sibling),
-    Parent_Bin            = erlang:round((Bin + Sibling)/2),
-    Parent_Hash = if
-                      Bin < Sibling ->
-                          mtree_core:hash([Hash, Sibling_Hash]);
-                      Bin > Sibling ->
-                          mtree_core:hash([Sibling_Hash, Hash])
-                  end,
-    verify(Tree, {Root_Bin, Root_Hash}, {Parent_Bin, Parent_Hash}).
+    Sibling = mtree_core:get_sibling(Bin),
+    case mtree_store:lookup(Tree, Sibling) of
+        {ok,Sibling_Hash, _} ->
+            Parent_Bin  = erlang:round((Bin + Sibling)/2),
+            Parent_Hash = if
+                              Bin < Sibling ->
+                                  mtree_core:hash([Hash, Sibling_Hash]);
+                              Bin > Sibling ->
+                                  mtree_core:hash([Sibling_Hash, Hash])
+                          end,
+            verify(Tree, {Root_Bin, Root_Hash}, {Parent_Bin, Parent_Hash});
+        {error, not_found} ->
+            {error, missing_hashes_in_tree}
+    end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc get_munro_hash/2 return the munro hash for a range of chunk numbers.
