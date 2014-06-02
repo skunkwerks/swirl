@@ -122,8 +122,8 @@ bin_to_range(Bin, Level) ->
 %% @end
 -spec pad_tree(mtree()) -> bin().
 pad_tree(Tree) ->
-    Curr_Length = tree_length(Tree),
-    New_Length  = nearest_power_2(Curr_Length)-2,
+    Curr_Length = next_bin(Tree),
+    New_Length  = nearest_power_2(Curr_Length),
     pad_tree(Tree, Curr_Length, New_Length).
 
 pad_tree(_Tree, Start, End) when Start =:= End ->
@@ -162,24 +162,23 @@ is_complete(Tree) ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% TODO speed up this function by staring from last and moving back to find the
-%% %% empty leaf node
 %% @doc generate the next bin number where the hash has to inserted. The
 %% next bin number should either not exist in the tree or it should have an
 %% empty hash
 %% @end
 -spec next_bin(mtree()) -> bin().
 next_bin(Tree) ->
-    next_bin(Tree, 0).
+    Last_Bin = mtree_store:highest_bin(Tree),
+    next_bin(Tree, nearest_power_2(Last_Bin)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc next_bin/3 returns Bin which next to the highest Bin in the tree.
 %% @end
 next_bin(Tree, Bin) ->
     case mtree_store:lookup(Tree, Bin) of
-        {error, not_found}    -> Bin;
-        {ok, ?EMPTY_HASH, _D} -> Bin;
-        {ok, _H, _D}          -> next_bin(Tree, Bin+2)
+        {error, not_found}    -> next_bin(Tree, Bin-2);
+        {ok, ?EMPTY_HASH, _D} -> next_bin(Tree, Bin-2);
+        {ok, _H, _D}          -> Bin+2
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

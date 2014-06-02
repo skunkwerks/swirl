@@ -23,6 +23,7 @@
 -module(mtree).
 
 -define(EMPTY_HASH, <<0:160>>).
+-define(EMPTY_DATA, empty).
 -define(ALGO, sha).
 
 -export([new/1,
@@ -82,10 +83,11 @@ prune_bin_range(_Tree, _Bin) -> ok.
 %% constructs a tree using the leaf nodes stored in the ETS table and stores
 %% the tree back into the ETS table.
 %% @end
+%% IMPORTANT NOTE : This function will fail incase we prune the tree or if the
+%% required leaf nodes are not in the tree, also the Start must be leaf node
+%% number 0
 -spec build_tree(mtree()) -> Root_Bin :: bin().
 build_tree(Tree) ->
-    %% pad tree with empty hashes, returns the last Bin that was added to pad
-    %% the tree.
     Tree_Size = mtree_core:pad_tree(Tree),
     build_tree(Tree, lists:seq(0, Tree_Size, 2), []).
 
@@ -98,7 +100,7 @@ build_tree(Tree, [Bin1, Bin2 | Tail], Acc) ->
     {ok, Hash2, _} = mtree_store:lookup(Tree, Bin2),
     Hash           = mtree_core:hash([Hash1, Hash2]),
     Bin            = erlang:round((Bin1+Bin2)/2),
-    mtree_store:insert(Tree, {Bin, Hash, empty}),
+    mtree_store:insert(Tree, {Bin, Hash, ?EMPTY_DATA}),
     build_tree(Tree, Tail, [Bin | Acc]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -141,6 +143,7 @@ root_hash1(Tree) ->
 %% receiver for reliable file size detection and download/live streaming
 %% unification </p>
 %% @end
+%% IMPORTANT NOTE : this will fail if intermediate leaf nodes dont exist
 %% TODO : discuss whether to remove build_tree
 -spec get_peak_hash(mtree()) -> hash_list().
 get_peak_hash(Tree) ->
@@ -149,8 +152,7 @@ get_peak_hash(Tree) ->
             build_tree(Tree),
             get_peak_hash(Tree);
         {true, Root_Bin} ->
-            Start    = mtree_store:get_first(Tree),
-            Bin_List = lists:seq(Start, 2*Root_Bin,2),
+            Bin_List = lists:seq(0, 2*Root_Bin, 2),
             get_peak_hash(Tree, Bin_List, [], [])
     end.
 
@@ -193,7 +195,7 @@ get_peak_hash(Tree, [Bin], Acc, Peaks) ->
 %% highest bin will be in the lowest layer.
 %% TODO decide if Root_Hash = {Root_Bin, Root_Hash}
 %% TODO write function to calculate data size from peak hashes.
--spec verify_peak_hash({list({bin(), hash()})}) -> true | false.
+-spec verify_peak_hash({list({bin(), hash()}), hash()}) -> true | false.
 verify_peak_hash({Peak_List, Root_Hash}) ->
     %% sort the list acc to the bin numbers and reverse it
     Hash_List = lists:reverse(lists:keysort(1, Peak_List)),
@@ -276,8 +278,8 @@ get_uncle_hashes(Tree, {Bin, Layer}, Acc) ->
         Sibling > Bin ->
             %% TODO check if this condition works
             case mtree_store:lookup(Tree, Sibling) of
-                %% assuming that the tree is complete, so when no sibling is
-                %% found it means that we have reached the ROOT
+                %% assuming that the tree is complete, so when the sibling is
+                %% not found it means that we have reached the ROOT
                 {error, not_found} -> lists:reverse(Acc);
                 {ok, Hash, _}      ->
                     Root = erlang:round((Sibling+Bin)/2),
