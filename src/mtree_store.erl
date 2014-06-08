@@ -21,9 +21,12 @@
 -module(mtree_store).
 
 -define(POS, 1).
+-type bin()  :: non_neg_integer().
+-type hash() :: binary().
 
 -export([init/1,
          insert/2,
+         insert_new/2,
          lookup/2,
          get_first/1,
          is_member/2,
@@ -48,15 +51,23 @@ init(Table) ->
 %% @doc Insert the tuple {bin number, hash, chunk} into the table. Note : this
 %% will replace any old object with a key same as new one.
 %% @end
--spec insert(atom(), {non_neg_integer(), binary(), binary()}) -> true.
+-spec insert(atom(), {bin(), binary(), binary()}) -> true.
 insert(Table, {Bin, Hash, Data}) ->
     ets:insert(Table, {Bin, Hash, Data}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc Insert the tuple {bin number, hash, chunk} if the bin number is not
+%% already in the tree.
+%% @end
+-spec insert_new(atom(), {bin(), hash(), binary()}) -> true | false.
+insert_new(Table, {Bin, Hash, Data}) ->
+    ets:insert_new(Table, {Bin, Hash, Data}).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc searches for a given Bin in the table.
 %% @end
--spec lookup(atom(), non_neg_integer()) -> {ok, binary(), binary()}
-                                           | {error, atom()}.
+-spec lookup(atom(), bin()) -> {ok, hash(), binary()}
+                               | {error, atom()}.
 lookup(Table, Bin) ->
     case ets:lookup(Table, Bin) of
         [{Bin, Hash, Data}] -> {ok, Hash, Data};
@@ -73,7 +84,7 @@ get_first(Table) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc searches for a given Bin in the table.
 %% @end
--spec is_member(atom(), non_neg_integer()) -> true | false.
+-spec is_member(atom(), bin()) -> true | false.
 is_member(Table, Bin) ->
     ets:member(Table, Bin).
 
@@ -88,7 +99,7 @@ highest_bin(Table) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Deletes an object with the given Bin from the table
 %% @end
--spec delete(atom(), non_neg_integer()) -> true.
+-spec delete(atom(), bin()) -> true.
 delete(Table, Bin) ->
     ets:match_delete(Table, {Bin, '_', '_'}).
 

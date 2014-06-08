@@ -31,6 +31,7 @@
          pad_tree/1,
          nearest_power_2/1,
          is_complete/1,
+         root_bin/1,
          next_bin/1,
          tree_length/1]).
 
@@ -119,12 +120,16 @@ bin_to_range(Bin, Level) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Pad tree with empty leaf hashes.
+%% <p> Gets the total no. of elements in the table and rounds to
+%% nearest_power_2. Then it pads from from next_bin up till the nearest_power_2
+%% </p>
 %% @end
 -spec pad_tree(mtree()) -> bin().
 pad_tree(Tree) ->
-    Curr_Length = next_bin(Tree),
-    New_Length  = nearest_power_2(Curr_Length),
-    pad_tree(Tree, Curr_Length, New_Length).
+    %% since we start from 0
+    Tot_Elements = mtree_store:highest_bin(Tree)+1,
+    New_Length   = nearest_power_2(Tot_Elements),
+    pad_tree(Tree, next_bin(Tree), New_Length).
 
 pad_tree(_Tree, Start, End) when Start =:= End ->
     End-2;
@@ -162,14 +167,26 @@ is_complete(Tree) ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc gets the expected root bin of the current tree
+%% @end
+-spec root_bin(mtree()) -> bin().
+root_bin(Tree) ->
+    Last_Bin = mtree_store:highest_bin(Tree),
+    erlang:round(mtree_core:nearest_power_2(Last_Bin)/2) -1.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc generate the next bin number where the hash has to inserted. The
 %% next bin number should either not exist in the tree or it should have an
 %% empty hash
 %% @end
 -spec next_bin(mtree()) -> bin().
 next_bin(Tree) ->
-    Last_Bin = mtree_store:highest_bin(Tree),
-    next_bin(Tree, nearest_power_2(Last_Bin)).
+    case mtree_store:highest_bin(Tree) of
+        '$end_of_table' ->
+            0;
+        Last_Bin ->
+            next_bin(Tree, nearest_power_2(Last_Bin))
+    end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc next_bin/3 returns Bin which next to the highest Bin in the tree.
