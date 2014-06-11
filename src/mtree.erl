@@ -25,6 +25,8 @@
 -define(EMPTY_HASH, <<0:160>>).
 -define(EMPTY_DATA, empty).
 -define(ALGO, sha).
+%% NCHUNKS_PER_SIG has to be a fixed power of 2
+-define(NCHUNKS_PER_SIG, 32).
 
 -export([new/1,
          insert/2,
@@ -36,12 +38,12 @@
          get_hash_by_index/2,
          get_uncle_hashes/2,
          get_latest_munro/1,
-         get_munro_hash/2,
+         get_munro_uncles/2,
          get_subtree_hash/1,
          verify/3,
          verify_peak_hash/2,
          verify_munro_hash/3,
-         verify_uncle_hash/4,
+         verify_uncle_hash/3,
          peaks_to_size/1,
          dump_tree/1,
          load_tree/1]).
@@ -125,7 +127,7 @@ root_hash(Tree) ->
         {ok, Root_Hash, _} ->
             {Root_Bin, Root_Hash};
         {error, not_found} ->
-            {error, inconsistant_tree}
+            erlang:error({error, root_hash_not_found})
     end.
 
 %% ALTERNATE IMPLEMENTATION (REMOVE THIS)
@@ -297,12 +299,13 @@ get_uncle_hashes(Tree, Bin, Acc, Root_Bin) ->
 %% has already verified C0, C1, C2.
 %% @end
 %%
-%% TODO incomplete, needs thorough checking.
-%% TODO pending : add uncle hashes to tree.
--spec verify_uncle_hash(mtree(), hash_list(),
-                        bin_hash(), bin_hash()) -> {ok, true}
-                                                 | {error, term()}.
-verify_uncle_hash(Tree, Hash_List, {Bin, Hash}, {Root_Bin, Root_Hash})
+%% TODO incomplete, needs thorough testing
+-spec verify_uncle_hash(mtree(),hash_list(),bin_hash()) -> {ok, true}
+                                                         | {error, term()}.
+verify_uncle_hash(Tree, Hash_List, {Bin, Hash}) ->
+    verify_uncle_hash(Tree, Hash_List, root_hash(Tree), {Bin, Hash}).
+
+verify_uncle_hash(Tree, Hash_List, {Root_Bin, Root_Hash}, {Bin, Hash})
   when Bin rem 2 =:= 0 ->
     case verify_uncle_hash(Tree, Hash_List, {Root_Bin, Root_Hash},
                            {Bin, Hash}, []) of
@@ -395,14 +398,27 @@ verify(Tree, {Root_Bin, Root_Hash}, {Bin, Hash}) ->
 %% munro hash of the received chunk and compare it to the received munro
 %% hash.</p>
 %% @end
--spec get_munro_hash(mtree(), [integer()]) -> hash().
-get_munro_hash(_Tree, _Bins) -> ok.
+-spec get_munro_uncles(mtree(), [integer()]) -> hash().
+get_munro_uncles(Tree, Bin) when Bin rem 2 =:= 0 ->
+    Munro_Root = get_munro_root(Bin),
+    get_uncle_hashes(Tree, Bin, [], Munro_Root);
+get_munro_uncles(_Tree, _Bin) ->
+    {error, not_a_leaf}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc in a live stream this funcitons gets the most recent munro root bin.
+%% Since the injector will generated chunks that are a fixed power of 2 so the
+%% muro root will always lie in layer corresponding to the power of 2.
 %% @end
 -spec get_latest_munro(mtree()) -> bin() | {error, term()}.
-get_latest_munro(_Tree) -> ok.
+get_latest_munro(Tree) ->
+    get_latest_munro(Tree, ?NCHUNKS_PER_SIG -1, ?NCHUNKS_PER_SIG *2).
+
+get_latest_munro(Tree, Bin, Diff) ->
+    case mtree_store:is_member(Tree, Bin) of
+        true  -> get_latest_munro(Tree, Bin+Diff, Diff);
+        false -> mtree_core:lookup(Tree, Bin-Diff)
+    end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc verify_munro_hash/2 returns true if the calculated Munro_Hash from the
@@ -412,8 +428,25 @@ get_latest_munro(_Tree) -> ok.
 %% @end
 -spec verify_munro_hash(mtree(), hash(), hash_list()) -> {true, mtree()}
                                                        | {false, mtree()}.
-verify_munro_hash(_Tree, {_Munro_Root,_Munro_Hash}, _Munro_Uncle_Hashes) ->
-    ok.
+verify_munro_hash(Tree, {Bin, Hash}, Munro_Uncle_Hashes)
+    when Bin rem 2 =:= 0 ->
+    Munro_Root = get_munro_root(Bin),
+    case mtree_store:lookup(Tree, Munro_Root) of
+        {error, _}          -> {error, missing_munro_root};
+        {ok, Munro_Hash, _} ->
+            verify_uncle_hash(Tree, Munro_Uncle_Hashes,
+                              {Munro_Root, Munro_Hash}, {Bin, Hash})
+    end;
+verify_munro_hash(_Tree, _, _) ->
+    {error, not_a_leaf}.
+
+%% LOCAL INTERNAL FUNCTION
+%% munro root is only defined for the leaf nodes
+get_munro_root(Bin) ->
+    Layer_Num  = erlang:round(math:log(?NCHUNKS_PER_SIG)/math:log(2)),
+    lists:foldl(fun(_, Root) ->
+                        mtree_core:get_parent(Root)
+                end, Bin, lists:seq(1, Layer_Num)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc determines the APPROXIMATE size of the given data. Returns the number
