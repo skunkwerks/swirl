@@ -20,6 +20,7 @@
 
 -define(DATA, "/home/kansi/Documents/done/code/swirl/test/data/m74.jpg").
 -define(CHUNK, 1024).
+-define(EMPTY_HASH, <<0:160>>).
 %-define(ALGO, sha).
 -define(TABLE, test).
 
@@ -65,10 +66,23 @@ pad_tree_test() ->
     End = mtree_core:pad_tree(?TABLE),
     ?assertEqual((End+2), mtree_core:nearest_power_2(End)).
 
-prop_is_complete() ->
-    ok.
+get_peak_hash_test() ->
+    Peak_Bins = [Bin || {Bin, _Hash} <- mtree:get_peak_hash(?TABLE)],
+    Leaf_nodes = lists:flatten(
+                   lists:map(
+                     fun(Peak) ->
+                        [Start, End] = mtree_core:bin_to_range(Peak),
+                        lists:seq(Start, End, 2)
+                     end, Peak_Bins)),
+    %% not leaf node under a peak can be empty
+    %% TODO add check if the returned leaf doesn't exit i.e. {error, _}
+    [?_assertNotEqual({ok, ?EMPTY_HASH, '_'},
+                      mtree_store:lookup(?TABLE, Leaf)) || Leaf <- Leaf_nodes].
 
-
+get_root_hash_test() ->
+    {Root_Bin, _Hash} = mtree:root_hash(?TABLE),
+    Tree_Len = mtree_core:tree_length(?TABLE),
+    ?assertEqual(2*Root_Bin, Tree_Len).
 
 %init_table() ->
     %%% Initialize table
