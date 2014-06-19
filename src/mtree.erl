@@ -406,9 +406,10 @@ get_munro_uncles(_Tree, _Bin) ->
     {error, not_a_leaf}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc in a live stream this funcitons gets the most recent munro root bin.
-%% Since the injector will generated chunks that are a fixed power of 2 so the
-%% muro root will always lie in layer corresponding to the power of 2.
+%% @doc This function is helpful during SECURE TUNE IN in a live stream, this
+%% funcitons gets the most recent munro root bin.  Since the injector will
+%% generated chunks that are a fixed power of 2 so the muro root will always
+%% lie in layer corresponding to the power of 2.
 %% @end
 -spec get_latest_munro(mtree()) -> bin() | {error, term()}.
 get_latest_munro(Tree) ->
