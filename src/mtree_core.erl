@@ -19,7 +19,7 @@
 %% @end
 -module(mtree_core).
 
--include("../include/ppspp.hrl"). 
+-include("ppspp.hrl"). 
 
 -export([hash/1,
          compare_hash/2,

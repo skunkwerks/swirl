@@ -23,6 +23,11 @@
 -define(WORD,  16/big).
 -define(BYTE,   8/big).
 
+%% default values for static and live streaming 
+-define(SHA1_EMPTY_HASH,                 <<0:160>>).
+-define(PPSPP_DEFAULT_HASH_ALGORITHM,    sha).
+-define(NCHUNKS_PER_SIG,                 32).
+
 %% PPSP Protocol Options -- section 7.0
 -define(PPSPP_VERSION,                  0:?BYTE). %% MUST, version 1:8
 -define(PPSPP_MINIMUM_VERSION,          1:?BYTE). %% MUST, version 1:8

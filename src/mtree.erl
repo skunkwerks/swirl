@@ -22,7 +22,7 @@
 %% @end
 -module(mtree).
 
--include("../include/ppspp.hrl"). 
+-include("ppspp.hrl"). 
 %% NCHUNKS_PER_SIG has to be a fixed power of 2
 
 -export([new/1,
