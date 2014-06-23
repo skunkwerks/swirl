@@ -20,7 +20,6 @@
 %% @end
 -module(mtree_store).
 
--define(POS, 1).
 -type bin()  :: non_neg_integer().
 -type hash() :: binary().
 
@@ -37,12 +36,13 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Initialize a new ETS table. The table is named and public and elements
-%% are sotred as ordered set.
+%% are sorted as ordered set.
 %% @end
 -spec init(atom()) -> Table :: atom().
 init(Table) ->
     ets:new(Table, [ordered_set,
-                        {keypos, ?POS},
+                        %% the first element is considered as key.
+                        {keypos, 1},
                         {read_concurrency,true},
                         public,
                         named_table]).
@@ -51,7 +51,7 @@ init(Table) ->
 %% @doc Insert the tuple {bin number, hash, chunk} into the table. Note : this
 %% will replace any old object with a key same as new one.
 %% @end
--spec insert(atom(), {bin(), binary(), binary()}) -> true.
+-spec insert(atom(), {bin(), binary(), binary() | atom()}) -> true.
 insert(Table, {Bin, Hash, Data}) ->
     ets:insert(Table, {Bin, Hash, Data}).
 
@@ -67,11 +67,11 @@ insert_new(Table, {Bin, Hash, Data}) ->
 %% @doc searches for a given Bin in the table.
 %% @end
 -spec lookup(atom(), bin()) -> {ok, hash(), binary()}
-                               | {error, atom()}.
+                             | {error, _}.
 lookup(Table, Bin) ->
     case ets:lookup(Table, Bin) of
         [{Bin, Hash, Data}] -> {ok, Hash, Data};
-        []                  -> {error, not_found}
+        []                  -> {error, mtree_store_bin_not_found}
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -107,7 +107,7 @@ delete(Table, Bin) ->
 %% @doc Write the ets table to the disk and deletes the table from the current
 %% running erlang shell.
 %% @end
--spec table_to_file(atom()) -> ok | {error , term()}.
+-spec table_to_file(atom()) -> true | {error , _}.
 table_to_file(Table) ->
     ets:tab2file(Table, lists:concat([Table, ".ETS"])),
     ets:delete(Table).
@@ -115,6 +115,6 @@ table_to_file(Table) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Loads the ets table from the given file.
 %% @end
--spec file_to_table(string()) -> {ok, atom()} | {error, term()}.
+-spec file_to_table(string()) -> {ok, atom()} | {error, _}.
 file_to_table(File_Name) ->
     ets:file2tab(File_Name).

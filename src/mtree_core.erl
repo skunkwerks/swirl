@@ -19,8 +19,7 @@
 %% @end
 -module(mtree_core).
 
--define(EMPTY_HASH, <<0:160>>).
--define(ALGO, sha).
+-include("../include/ppspp.hrl"). 
 
 -export([hash/1,
          compare_hash/2,
@@ -35,7 +34,7 @@
          next_bin/1,
          tree_length/1]).
 
--opaque mtree()     :: {term()}.
+-opaque mtree()     :: atom().
 -type bin()         :: non_neg_integer().
 -type hash()        :: binary().
 -type hash_list()   :: list(hash()).
@@ -47,16 +46,14 @@
 %% @end
 -spec hash(hash_list()) -> hash().
 hash(Hash_List) ->
-    crypto:hash(?ALGO, Hash_List).
+    crypto:hash(?PPSPP_DEFAULT_HASH_ALGORITHM, Hash_List).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc returns hash of Hash_List
 %% @end
 -spec compare_hash(hash(), hash()) -> true | false.
-compare_hash(Hash1, Hash2) when Hash1 =:= Hash2 ->
-    true;
-compare_hash(_H1, _H2) ->
-    false.
+compare_hash(H, H) -> true;
+compare_hash(_, _) -> false.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc returns the sibling bin number for a bin number belonging to a given
@@ -134,7 +131,7 @@ pad_tree(Tree) ->
 pad_tree(_Tree, Start, End) when Start =:= End ->
     End-2;
 pad_tree(Tree, Start, End) ->
-    mtree_store:insert(Tree, {Start, ?EMPTY_HASH, empty}),
+    mtree_store:insert(Tree, {Start, ?SHA1_EMPTY_HASH, empty}),
     pad_tree(Tree, Start+2, End).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -175,7 +172,7 @@ root_bin(Tree) ->
     erlang:round(mtree_core:nearest_power_2(Last_Bin)/2) -1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc generate the next bin number where the hash has to inserted. The
+%% @doc generate the next bin number where the hash has to be inserted. The
 %% next bin number should either not exist in the tree or it should have an
 %% empty hash
 %% @end
@@ -189,12 +186,12 @@ next_bin(Tree) ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc next_bin/3 returns Bin which next to the highest Bin in the tree.
+%% @doc next_bin/3 returns the next highest Bin in the tree.
 %% @end
 next_bin(Tree, Bin) ->
     case mtree_store:lookup(Tree, Bin) of
-        {error, not_found}    -> next_bin(Tree, Bin-2);
-        {ok, ?EMPTY_HASH, _D} -> next_bin(Tree, Bin-2);
+        {error, _}    -> next_bin(Tree, Bin-2);
+        {ok, ?SHA1_EMPTY_HASH, _D} -> next_bin(Tree, Bin-2);
         {ok, _H, _D}          -> Bin+2
     end.
 
