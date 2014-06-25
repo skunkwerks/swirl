@@ -31,6 +31,7 @@
          nearest_power_2/1,
          is_complete/1,
          root_bin/1,
+         get_munro_root/1,
          next_bin/1,
          tree_length/1]).
 
@@ -170,6 +171,15 @@ is_complete(Tree) ->
 root_bin(Tree) ->
     Last_Bin = mtree_store:highest_bin(Tree),
     erlang:round(mtree_core:nearest_power_2(Last_Bin)/2) -1.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc gets the transient root bin of the current tree
+%% @end
+get_munro_root(Bin) ->
+    Layer_Num  = erlang:round(math:log(?NCHUNKS_PER_SIG)/math:log(2)),
+    lists:foldl(fun(_, Root) ->
+                        mtree_core:get_parent(Root)
+                end, Bin, lists:seq(1, Layer_Num)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc generate the next bin number where the hash has to be inserted. The

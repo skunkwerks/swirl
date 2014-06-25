@@ -34,8 +34,10 @@
          get_peak_hash/1,
          get_hash_by_index/2,
          get_uncle_hashes/2,
+         get_all_uncle_hashes/2,
          get_latest_munro/1,
          get_munro_uncles/2,
+         get_all_munro_uncles/2,
          get_subtree_hash/1,
          verify/3,
          verify_peak_hash/2,
@@ -281,6 +283,28 @@ get_uncle_hashes(Tree, Bin, Acc, Root_Bin) ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc get_uncle_hashes/2 returns list of uncle hashes required to verify
+%% a given chunk.
+%% @end
+-spec get_all_uncle_hashes(mtree(), bin()) -> hash_list() | {error, _}.
+get_all_uncle_hashes(Tree, Bin) when Bin rem 2 =:= 0 ->
+    get_all_uncle_hashes(Tree, Bin, [], mtree_core:root_bin(Tree));
+get_all_uncle_hashes(_Tree, _Bin) ->
+    {error, mtree_not_a_leaf}.
+
+get_all_uncle_hashes(_Tree, Bin, Acc, Root_Bin) when Root_Bin =:= Bin ->
+    lists:reverse(Acc);
+get_all_uncle_hashes(Tree, Bin, Acc, Root_Bin) ->
+    Sibling = mtree_core:get_sibling(Bin),
+    case mtree_store:lookup(Tree, Sibling) of
+        {error, _}    -> {error, mtree_missing_uncle_hashes};
+        {ok, Hash, _} ->
+            New_Root = erlang:round((Sibling+Bin)/2),
+            get_all_uncle_hashes(Tree, New_Root,
+                                 [{Sibling, Hash} | Acc], Root_Bin)
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% TODO : verify if it matches the specs.
 %% @doc Given a Hash_List of the type [{Bin1,Hash1}, {Bin2,Hash2}, ...]
 %% verify_uncle_hash/3 for a given chunk ID and its Hash (i.e. Bin Number),
@@ -380,19 +404,25 @@ verify(Tree, {Root_Bin, Root_Hash}, {Bin, Hash}) ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc get_munro_hash/2 return the munro hash for a range of chunk numbers.
-%% <p> When new chunks are generated and added to the tree during live feed we
-%% get a transient root hash or munro hash of this newly generated subtree. Now
-%% when the peer requests a chunk of this new subtree, the munro hash is sent
-%% along with the necessary uncle hashes which will be used to calculate the
-%% munro hash of the received chunk and compare it to the received munro
-%% hash.</p>
+%% @doc get_munro_uncles/2 returns the uncle hashes required to check the
+%% intergrity of the given chunk.
 %% @end
 -spec get_munro_uncles(mtree(), [integer()]) -> hash().
 get_munro_uncles(Tree, Bin) when Bin rem 2 =:= 0 ->
-    Munro_Root = get_munro_root(Bin),
+    Munro_Root = mtree_core:get_munro_root(Bin),
     get_uncle_hashes(Tree, Bin, [], Munro_Root);
 get_munro_uncles(_Tree, _Bin) ->
+    {error, mtree_not_a_leaf}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc get_all_munro_uncles/2 returns the all munro hashes required to verify
+%% the intergrity regardless of previous chunks sent.
+%% @end
+-spec get_all_munro_uncles(mtree(), [integer()]) -> hash().
+get_all_munro_uncles(Tree, Bin) when Bin rem 2 =:= 0 ->
+    Munro_Root = mtree_core:get_munro_root(Bin),
+    get_all_uncle_hashes(Tree, Bin, [], Munro_Root);
+get_all_munro_uncles(_Tree, _Bin) ->
     {error, mtree_not_a_leaf}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -412,6 +442,7 @@ get_latest_munro(Tree, Bin, Diff) ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% TODO : write test cases to check this.
 %% @doc verify_munro_hash/2 returns true if the calculated Munro_Hash from the
 %% Uncle_Hashes is equal to the received Munro_Hash.
 %% <p> Uses verify function internally which is provided the new subtree as
@@ -421,7 +452,7 @@ get_latest_munro(Tree, Bin, Diff) ->
                                                        | {false, mtree()}.
 verify_munro_hash(Tree, {Bin, Hash}, Munro_Uncle_Hashes)
     when Bin rem 2 =:= 0 ->
-    Munro_Root = get_munro_root(Bin),
+    Munro_Root = mtree_core:get_munro_root(Bin),
     case mtree_store:lookup(Tree, Munro_Root) of
         {error, _}          -> {error, mtree_missing_munro_root};
         {ok, Munro_Hash, _} ->
@@ -430,14 +461,6 @@ verify_munro_hash(Tree, {Bin, Hash}, Munro_Uncle_Hashes)
     end;
 verify_munro_hash(_Tree, _, _) ->
     {error, mtree_not_a_leaf}.
-
-%% LOCAL INTERNAL FUNCTION
-%% munro root is only defined for the leaf nodes
-get_munro_root(Bin) ->
-    Layer_Num  = erlang:round(math:log(?NCHUNKS_PER_SIG)/math:log(2)),
-    lists:foldl(fun(_, Root) ->
-                        mtree_core:get_parent(Root)
-                end, Bin, lists:seq(1, Layer_Num)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc determines the APPROXIMATE size of the given data. Returns the number
