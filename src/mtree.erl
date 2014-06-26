@@ -31,6 +31,7 @@
          prune_bin_range/2,
          root_hash1/1,
          root_hash/1,
+         get_data_range/1,
          get_peak_hash/1,
          get_hash_by_index/2,
          get_uncle_hashes/2,
@@ -142,6 +143,33 @@ root_hash1(Tree) ->
         {true, Root_Bin} ->
             {ok, Hash, _} = mtree_store:lookup(Tree, Root_Bin),
             {Root_Bin, Hash}
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc root_hash/1 get the root hash of the tree. The root of a full binary
+%% tree that uses bin number scheme will always be of the form 2^N -1 where N
+%% is the number of leaf nodes in the tree. This function assumes that the
+%% binary tree is full.
+%% @end
+-spec get_data_range(mtree()) -> {ok, bin(), bin()}.
+get_data_range(Tree) ->
+    End = case mtree_core:next_bin(Tree) of
+              Bin when Bin > 0 -> Bin-2
+          end,
+    case mtree_store:get_first(Tree) of
+        First when First rem 2 =:= 0 ->
+            {ok, get_first_leaf(Tree, First, End), End};
+        First                        ->
+            {ok, get_first_leaf(Tree, First+1, End), End} 
+    end.
+
+get_first_leaf(_Tree, End, End) ->
+    End;
+get_first_leaf(Tree, Bin, End) ->
+    case mtree_store:lookup(Tree, Bin) of
+        {ok, ?SHA1_EMPTY_HASH, _} -> get_first_leaf(Tree, Bin+2, End);
+        {error, _}                -> get_first_leaf(Tree, Bin+2, End);
+        _                         -> Bin
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -379,7 +407,7 @@ insert_uncle_hashes(Tree, Hash_List) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc verify/2 for a given bin bumber and its hash it recalculates the root
-%% hash and verifies its against the root hash
+%% hash And verifies its against the root hash
 %% @end
 %% TODO thorough checking.
 -spec verify(mtree(), bin_hash(), bin_hash()) -> {ok, true}
