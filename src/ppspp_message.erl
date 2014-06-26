@@ -19,6 +19,8 @@
 %% @end
 
 -module(ppspp_message).
+-include("ppspp.hrl").
+-include("ppspp_records.hrl").
 -include("swirl.hrl").
 
 -ifdef(TEST).
@@ -30,7 +32,7 @@
 -export([unpack/1, 
          pack/1,
          validate_message_type/1, 
-         handle/1]).
+         handle/3]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% api
@@ -158,10 +160,53 @@ parse(_, _Rest) ->
 %  are the content integrity protection scheme used and an option to
 %  specify the swarm identifier.  The complete set of protocol options
 %  are specified in Section 7.
-handle({handshake, _Body}) ->
-    {ok, ppspp_message_handler_not_yet_implemented};
+handle(Type, {handshake,_Payload}, State) ->
+    {ok, Payload1} = prepare(Type, {handshake, orddict:new()}, State),
+    {ok, Payload2} = prepare(Type, {have, orddict:new()}, State),
+    {ok, [{handshake, Payload1}, {have, Payload2}]};
 
-handle(Message) ->
+handle(_Type, Message,_State) ->
     ?DEBUG("message: handler not yet implemented ~p~n", [Message]),
     {ok, ppspp_message_handler_not_yet_implemented}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% 
+prepare(Type, {handshake,_Payload}, State) ->
+    Sub_Options =
+      [ {ppspp_swarm_id, State#state.ppspp_swarm_id},
+        {ppspp_version, State#state.ppspp_version},
+        {ppspp_minimum_version, State#state.ppspp_minimum_version},
+        {ppspp_chunking_method, State#state.ppspp_chunking_method},
+        {ppspp_integrity_check_method,
+         State#state.ppspp_integrity_check_method},
+        {ppspp_merkle_hash_function, State#state.ppspp_merkle_hash_function}],
+
+    %% Add LIVE streaming options incase the seeder is in live stream swarm.
+    Options_List =
+    if
+        Type =:= live orelse Type =:= injector ->
+            [ {ppspp_live_signature_algorithm,
+               State#state.ppspp_live_signature_algorithm },
+              {ppspp_live_disard_window,
+               State#state.ppspp_live_discard_window} | Sub_Options];
+        true -> Sub_Options 
+    end,
+
+    _Payload = orddict:from_list(Options_List),
+    %% TODO : allocate free channel & store it in Payload as source channel id
+    %% TODO : discuss how to get the free Channel id
+    %% orddict:store(channel, Channel, orddict:store(options, Options, Payload),
+    ok;
+
+%% Prepre HAVE message for sttic and live stream
+%% the HAVE message prepared here is of the sort : {have, bin}  
+prepare(static, {have,_Options}, State) ->
+    _Peaks = mtree:get_peak_hash(State#state.mtree),
+    ok;
+prepare(_Live,  {have,_Options},_State) ->
+    ok;
+
+prepare(live,   {have,_Options},_State) ->
+    ok.
 
