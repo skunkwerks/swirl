@@ -22,6 +22,7 @@
 -include("ppspp.hrl").
 -include("ppspp_records.hrl").
 -include("swirl.hrl").
+-define(NCHUNKS_PER_SIG, 32).
 
 -ifdef(TEST).
 -include_lib("proper/include/proper.hrl").
@@ -161,17 +162,44 @@ parse(_, _Rest) ->
 %  specify the swarm identifier.  The complete set of protocol options
 %  are specified in Section 7.
 handle(Type, {handshake,_Payload}, State) ->
-    {ok, Payload1} = prepare(Type, {handshake, orddict:new()}, State),
-    {ok, Payload2} = prepare(Type, {have, orddict:new()}, State),
-    {ok, [{handshake, Payload1}, {have, Payload2}]};
+    {ok, HANDSHAKE} = prepare(Type, {handshake, orddict:new()}, State),
+    {ok, HAVE} = prepare(Type, {have, orddict:new()}, State),
+    {ok, [HANDSHAKE, HAVE]};
+
+handle(live, {request, [Start, End]},_State) ->
+    %% TODO export get_munro_root from mtree.
+    Start_Munro = mtree:get_munro_root(Start),
+    End_Munro   = mtree:get_munro_root(End),
+    get_bin_list(Start_Munro, End_Munro, {Start, End}, []),
+    %% TODO write  
+    %lists:map(
+      %fun(Chunk_ID) -> 
+        %{ok, INTEGRITY} = prepare(live, {integrity, Chunk_ID,
+                                         %orddict:new()}, State),
+        %{ok, SIGNED_INTEGRITY} = prepare(live, {signed_integrity, Chunk_ID,
+                                                %orddict:new()}, State),
+        %{ok, DATA} = prepare(live, {data, Chunk_ID, orddict:new()}, State), 
+      %end, lists:seq(Start, End, 2)), 
+    %{ok, [_INTEGRITY, _SIGNED_INTEGRITY, _DATA]};
+    ok;
 
 handle(_Type, Message,_State) ->
     ?DEBUG("message: handler not yet implemented ~p~n", [Message]),
     {ok, ppspp_message_handler_not_yet_implemented}.
 
+get_bin_list(End_Munro, End_Munro,   {Start, End}, Acc) ->
+    lists:concat([Acc, [End_Munro | lists:seq(Start, End, 2)]]);
+get_bin_list(Start_Munro, End_Munro, {Start, End}, Acc) ->
+    [_, Last] = mtree_core:bin_to_range(Start_Munro),
+    New_Acc   = lists:concat([Acc, [Start_Munro | lists:seq(Start, Last, 2)]]),
+    get_bin_list(mtree:get_next_munro(Start_Munro), End_Munro,
+                 {Last+2, End}, New_Acc).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% 
+%% the HANDSHAKE message is of the sort :
+%% {handshake, [{channel, }, {options, []}] 
 prepare(Type, {handshake,_Payload}, State) ->
     Sub_Options =
       [ {ppspp_swarm_id, State#state.ppspp_swarm_id},
@@ -200,13 +228,29 @@ prepare(Type, {handshake,_Payload}, State) ->
     ok;
 
 %% Prepre HAVE message for sttic and live stream
-%% the HAVE message prepared here is of the sort : {have, bin}  
-prepare(static, {have,_Options}, State) ->
-    _Peaks = mtree:get_peak_hash(State#state.mtree),
-    ok;
-prepare(_Live,  {have,_Options},_State) ->
+%% the HAVE message is of the sort : {have, [{range, [{Start,End}]}] 
+prepare(static, {have, Payload}, State) ->
+    %% NOTE : incase the data range is not continous get_data_range will return
+    %% wrong output
+    {ok, Start, End} = mtree:get_data_range(State#state.mtree),
+    {ok, orddict:store(range, [{Start, End}], Payload)};
+prepare(_Live,  {have, Payload}, State) ->
+    {ok, Munro_Root, _} = mtree:get_latest_munro(State#state.mtree),
+    [Start, End]        = mtree_core:bin_to_range(Munro_Root),
+    {ok, orddict:store(range, [{Start, End}], Payload)};
+
+%% return dict with only one key i.e. range. 
+%% the REQUEST message is of the sort : {request, [{range, [{Start,End}]}] 
+prepare(_Type, {request, [Start, End], Payload}, _State) ->
+    {ok, orddict:store(range, [{Start, End}], Payload)};
+
+prepare(_Type, {data, Chunk_ID,_Payload}, State) ->
+    {ok, _Hash,_Data} = mtree_store:lookup(State#state.mtree, Chunk_ID),
+    %% TODO : figure out wht the Start and End range mean in the specs.
+    %% TODO : add ntp module and filter out the timestamp.
+    _Ntp_Timestamp = ntp:ask(), 
     ok;
 
-prepare(live,   {have,_Options},_State) ->
+prepare(static, {integrity,_Options},_State) ->
     ok.
 

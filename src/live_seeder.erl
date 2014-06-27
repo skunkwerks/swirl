@@ -151,7 +151,8 @@ handle_msg([{handshake, Payload} | Other_Messages], State, Reply) ->
                                  {handshake, Payload}),
     handle_msg(Other_Messages, State, lists:concat([Response, Reply]));
 
-handle_msg([{ack, _Data} | _Other_Messages], State, _Reply) ->
+handle_msg([{ack,_Payload} | _Other_Messages], State, _Reply) ->
+    %% TODO figure out how to store the ACKed DATA of by different peers.
     {noreply, State};
 
 %% Seeder only sends the HAVE messages and receive them
@@ -177,8 +178,11 @@ handle_msg([{signed_integrity, _Data} | Other_Messages], State, Reply) ->
     ?WARN("live_seeder: unexpected signed_integrity message ~n", []),
     handle_msg(Other_Messages, State, Reply);
 
-handle_msg([{request, _Data} | _Other_Messages], State, _Reply) ->
-    {noreply, State};
+handle_msg([{request, Payload} | Other_Messages], State, Reply) ->
+    [{Start, End}] = orddict:fetch(range, Payload), 
+    [ ppspp_message:handle(State#state.server_type, {request, Bin})] ,
+
+    handle_msg(Other_Messages, State, lists:concat([Response, Reply]));
 
 handle_msg([{cancel, _Data} | _Other_Messages], State, _Reply) ->
     {noreply, State};
