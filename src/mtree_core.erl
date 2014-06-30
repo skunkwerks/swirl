@@ -32,6 +32,7 @@
          is_complete/1,
          root_bin/1,
          get_munro_root/1,
+         get_next_munro_root/1,
          next_bin/1,
          tree_length/1]).
 
@@ -180,6 +181,12 @@ get_munro_root(Bin) ->
     lists:foldl(fun(_, Root) ->
                         mtree_core:get_parent(Root)
                 end, Bin, lists:seq(1, Layer_Num)).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc gets the transient root bin of the current tree
+%% @end
+get_next_munro_root(Bin) ->
+    {ok, Bin+?NCHUNKS_PER_SIG *2}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc generate the next bin number where the hash has to be inserted. The
