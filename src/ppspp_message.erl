@@ -19,10 +19,9 @@
 %% @end
 
 -module(ppspp_message).
--include("ppspp.hrl").
+%-include("ppspp.hrl").
 -include("ppspp_records.hrl").
 -include("swirl.hrl").
--define(NCHUNKS_PER_SIG, 32).
 
 -ifdef(TEST).
 -include_lib("proper/include/proper.hrl").
@@ -156,50 +155,93 @@ parse(_, _Rest) ->
 %%    alternate peer.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% The payload of the HANDSHAKE message is a channel ID (see
+%  The payload of the HANDSHAKE message is a channel ID (see
 %  Section 3.11) and a sequence of protocol options.  Example options
 %  are the content integrity protection scheme used and an option to
 %  specify the swarm identifier.  The complete set of protocol options
 %  are specified in Section 7.
 handle(Type, {handshake,_Payload}, State) ->
     {ok, HANDSHAKE} = prepare(Type, {handshake, orddict:new()}, State),
-    {ok, HAVE} = prepare(Type, {have, orddict:new()}, State),
+    {ok, HAVE}      = prepare(Type, {have, orddict:new()}, State),
     {ok, [HANDSHAKE, HAVE]};
 
-handle(live, {request, [Start, End]},_State) ->
-    %% TODO export get_munro_root from mtree.
-    Start_Munro = mtree:get_munro_root(Start),
-    End_Munro   = mtree:get_munro_root(End),
-    get_bin_list(Start_Munro, End_Munro, {Start, End}, []),
-    %% TODO write  
-    %lists:map(
-      %fun(Chunk_ID) -> 
-        %{ok, INTEGRITY} = prepare(live, {integrity, Chunk_ID,
-                                         %orddict:new()}, State),
-        %{ok, SIGNED_INTEGRITY} = prepare(live, {signed_integrity, Chunk_ID,
-                                                %orddict:new()}, State),
-        %{ok, DATA} = prepare(live, {data, Chunk_ID, orddict:new()}, State), 
-      %end, lists:seq(Start, End, 2)), 
-    %{ok, [_INTEGRITY, _SIGNED_INTEGRITY, _DATA]};
+%% handles HANDSHAKE received by leecher.
+%% TODO leecher type not implemented in the record yet
+handle(leecher, {handshake,_Payload},_State) ->
     ok;
+
+handle(_Type, {ack,_Payload},_State) ->
+    %% TODO store the ACKed packets SOMEWHERE !
+    ok;
+
+handle(_Type, {have, _Payload},_State) ->
+    %% TODO figure out what range to request.
+    ok;
+
+handle(_Type, {integrity, _Payload},_State) ->
+    %% TODO figure out how to handle integrity messages. The leecher will
+    %% recevive integrity message which cn spn multiple chunks so we need to
+    %% piggybck integrity messages untill the DATA the right data packet
+    %% arrives 
+    ok;
+
+handle(live, {signed_integrity, _Payload},_State) ->
+
+    ok;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% REQUEST
+handle(static, {request, [_Start, _End]},_State) ->
+    %handle_REQ_List({static, State}, REQ_List, []);
+    ok;
+handle(live,   {request, [Start, End]}, State) ->
+    Start_Munro    = mtree_core:get_munro_root(Start),
+    End_Munro      = mtree_core:get_munro_root(End),
+    {ok, REQ_List} = get_bin_list(Start_Munro, End_Munro, {Start, End}, []),
+    %% REQ_List : [ Munro_Root1, bins ... , Munro_Root2, bins ..]
+    %% the bins that follow the Munro_Root lie in the range of the Munro_Root.
+    {ok, handle_REQ_List({live, State}, REQ_List, [])};
 
 handle(_Type, Message,_State) ->
     ?DEBUG("message: handler not yet implemented ~p~n", [Message]),
     {ok, ppspp_message_handler_not_yet_implemented}.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% LOCAL INTERNAL FUNCTION
+%% handle_REQ_List/3 : REQ_List and return value will be as follows 
+%% REQ_List (live): [Munro_Root1, Leaf_bin ... , Munro_Root2, Leaf_bins ..] 
+%% Returns (live) : [INTEGRITY, SIGNED_INTEGRITY, INTEGRITY, DATA, ...] messages
+%% REQ_List (static) : [Leaf_bin, ...] 
+%% Returns (static)  : [INTEGRITY, DATA, INTEGRITY, DATA, ...] messages
+handle_REQ_List(_, [], Acc) ->
+    lists:reverse(Acc);
+handle_REQ_List({_Type, State}, [Leaf | Rest], Acc) when Leaf rem 2 =:=0 ->
+    {ok, INTEGRITY} = prepare(live, {integrity, Leaf, orddict:new()}, State),
+    {ok, DATA}      = prepare(live, {data, Leaf}, State), 
+    handle_REQ_List({live, State}, Rest, [DATA, INTEGRITY | Acc]);
+handle_REQ_List({live, State}, [Munro_Root | Rest], Acc) ->
+    {ok, INTEGRITY} = prepare(live, {integrity, Munro_Root,
+                                     orddict:new()}, State),
+    {ok, SIGNED_INTEGRITY} = prepare(live, {signed_integrity, Munro_Root,
+                                            orddict:new()}, State),
+    handle_REQ_List({live, State}, Rest, [SIGNED_INTEGRITY, INTEGRITY | Acc]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% LOCAL INTERNAL FUNCTION
+%% return list of bins : [Munro_Root1, bins ... , Munro_Root2, bins ..]
+%% the bins that follow the Munro_Root lie in the range of the Munro_Root.
 get_bin_list(End_Munro, End_Munro,   {Start, End}, Acc) ->
-    lists:concat([Acc, [End_Munro | lists:seq(Start, End, 2)]]);
+    {ok, lists:concat([Acc, [End_Munro | lists:seq(Start, End, 2)]])};
 get_bin_list(Start_Munro, End_Munro, {Start, End}, Acc) ->
     [_, Last] = mtree_core:bin_to_range(Start_Munro),
     New_Acc   = lists:concat([Acc, [Start_Munro | lists:seq(Start, Last, 2)]]),
-    get_bin_list(mtree:get_next_munro(Start_Munro), End_Munro,
-                 {Last+2, End}, New_Acc).
+    {ok, Munro_Root} = mtree:get_next_munro(Start_Munro),
+    get_bin_list(Munro_Root, End_Munro, {Last+2, End}, New_Acc).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-%% 
-%% the HANDSHAKE message is of the sort :
-%% {handshake, [{channel, }, {options, []}] 
+%% HANDSHAKE message is of the sort :
+%% {handshake, [{channel, }, {options, [{}, {}, ...]}] 
 prepare(Type, {handshake,_Payload}, State) ->
     Sub_Options =
       [ {ppspp_swarm_id, State#state.ppspp_swarm_id},
@@ -221,36 +263,77 @@ prepare(Type, {handshake,_Payload}, State) ->
         true -> Sub_Options 
     end,
 
-    _Payload = orddict:from_list(Options_List),
+    Options = orddict:from_list(Options_List),
     %% TODO : allocate free channel & store it in Payload as source channel id
     %% TODO : discuss how to get the free Channel id
-    %% orddict:store(channel, Channel, orddict:store(options, Options, Payload),
-    ok;
+    Channel  = not_implemented,
+    {ok, {handshake, orddict:from_list([{channel, Channel},
+                                        {options, Options}])}};
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% ACK msg 
+%% the ACK message is of the sort : {ack, [{range, [{Start,End}]}] 
+prepare(_Type, {ack, [Start, End]}, _State) ->
+    {ok, {ack, orddict:from_list(range, [{Start, End}])}};
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% REQUEST msg 
+%% the REQUEST message is of the sort : {request, [{range, [{Start,End}]}] 
+prepare(_Type, {request, [Start, End]}, _State) ->
+    {ok, {request, orddict:from_list([{range, [{Start, End}]}])}};
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% HAVE
 %% Prepre HAVE message for sttic and live stream
 %% the HAVE message is of the sort : {have, [{range, [{Start,End}]}] 
-prepare(static, {have, Payload}, State) ->
+prepare(static, {have,_Payload}, State) ->
     %% NOTE : incase the data range is not continous get_data_range will return
     %% wrong output
     {ok, Start, End} = mtree:get_data_range(State#state.mtree),
-    {ok, orddict:store(range, [{Start, End}], Payload)};
-prepare(_Live,  {have, Payload}, State) ->
+    {ok, {have, orddict:from_list(range, [{Start, End}])}};
+prepare(_Live,  {have,_Payload}, State) ->
     {ok, Munro_Root, _} = mtree:get_latest_munro(State#state.mtree),
     [Start, End]        = mtree_core:bin_to_range(Munro_Root),
-    {ok, orddict:store(range, [{Start, End}], Payload)};
+    {ok, {have, orddict:from_list(range, [{Start, End}])}};
 
-%% return dict with only one key i.e. range. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% REQUEST msg 
 %% the REQUEST message is of the sort : {request, [{range, [{Start,End}]}] 
-prepare(_Type, {request, [Start, End], Payload}, _State) ->
-    {ok, orddict:store(range, [{Start, End}], Payload)};
+prepare(_Type, {request, [Start, End]}, _State) ->
+    {ok, {request, orddict:from_list(range, [{Start, End}])}};
 
-prepare(_Type, {data, Chunk_ID,_Payload}, State) ->
-    {ok, _Hash,_Data} = mtree_store:lookup(State#state.mtree, Chunk_ID),
-    %% TODO : figure out wht the Start and End range mean in the specs.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% DATA msg : {data, [{range, }, {timestamp, int}, {data, binary}]} 
+prepare(_Type, {data, Chunk_ID}, State) ->
+    {ok, _Hash, Data} = mtree_store:lookup(State#state.mtree, Chunk_ID),
+    %% TODO : figure out what the Start and End range mean in the specs.
+    Range = not_implemented,
+    %% DATA msg must contain the Chunk_ID of the chunk.
     %% TODO : add ntp module and filter out the timestamp.
-    _Ntp_Timestamp = ntp:ask(), 
-    ok;
+    Ntp_Timestamp = time, %% ntp:ask(), 
+    {ok, {data, orddict:from_list([{range, Range},
+                                   {timestamp, Ntp_Timestamp},
+                                   {data, Data}])}};
 
-prepare(static, {integrity,_Options},_State) ->
-    ok.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% INTEGRITY msg : {integrity, [{range, }, {hash, binary}] 
+%% TODO : decide if instead of Bin we need to use Range !
+prepare(_Type, {integrity, Bin}, State) ->
+    {ok, Hash, _Data} = mtree_store:lookup(State#state.mtree, Bin),
+    Range = not_implemented,
+    {ok, {integrity, orddict:from_list([{range, Range}, {hash, Hash}])}};
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% SIGNED_INTEGRITY msg : {signed_integrity, [{range, },
+%%                                            {timestamp, Time},
+%%                                            {signature, binary}] 
+prepare(live, {signed_integrity, Munro_Root}, State) ->
+    {ok, _Hash, _Data} = mtree_store:lookup(State#state.mtree, Munro_Root),
+    Range = not_implemented,
+    %% TODO : add ntp module and filter out the timestamp.
+    Ntp_Timestamp = time, %% ntp:ask(), 
+    Signture      = not_implemented,
+    {ok, {data, orddict:from_list([{range, Range},
+                                   {timestamp, Ntp_Timestamp},
+                                   {signature, Signture}])}}.
 
