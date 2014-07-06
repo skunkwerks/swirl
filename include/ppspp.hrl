@@ -46,9 +46,18 @@
 -define(PPSPP_SUPPORTED_MESSAGES,       8:?BYTE). %% MUST unless all supported
 %                                                 %% length:8, messages:length
 -define(PPSPP_END_OPTION,             255:?BYTE). %% 0. The key is sufficient
+
+
 %% values used within the option parser
--define(PPSPP_DEFAULT_CHUNK_SIZE,          1024). %%
+-define(PPSPP_DEFAULT_CHUNK_SIZE,             1024).
 -define(PPSPP_CURRENT_VERSION,                1). %% match IETF protocol version
+-define(PPSPP_DEFAULT_INTEGRITY_CHECK_METHOD,      ppspp_merkle_hash_tree).
+-define(PPSPP_DEFAULT_LIVE_INTEGRITY_CHECK_METHOD, ppspp_merkle_hash_tree).
+-define(PPSPP_DEFAULT_MERKLE_HASH_FUNCTION,        ppspp_sha1).
+-define(PPSPP_DEFAULT_LIVE_SIGNATURE_ALGORITHM,    pending).
+-define(PPSPP_DEFAULT_CHUNK_ADDRESSING_METHOD,     ppspp_chunking_32bit_bins).
+-define(PPSPP_DEFAULT_LIVE_DISCARD_WINDOW,         32).
+
 
 %% PPSPP Datagram Fields -- section 8.4
 -define(PPSPP_CHANNEL_SIZE,      ?DWORD).
