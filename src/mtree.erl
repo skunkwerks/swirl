@@ -146,10 +146,7 @@ root_hash1(Tree) ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc root_hash/1 get the root hash of the tree. The root of a full binary
-%% tree that uses bin number scheme will always be of the form 2^N -1 where N
-%% is the number of leaf nodes in the tree. This function assumes that the
-%% binary tree is full.
+%% @doc get_data_range/1 returns the start and end of the chunk range. 
 %% @end
 -spec get_data_range(mtree()) -> {ok, bin(), bin()}.
 get_data_range(Tree) ->

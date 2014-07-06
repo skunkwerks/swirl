@@ -23,6 +23,7 @@
 
 -export([hash/1,
          compare_hash/2,
+         lies_in/2,
          get_parent/1,
          get_sibling/1,
          get_layer_num/1,
@@ -56,6 +57,16 @@ hash(Hash_List) ->
 -spec compare_hash(hash(), hash()) -> true | false.
 compare_hash(H, H) -> true;
 compare_hash(_, _) -> false.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc lies_in/2 : return true if the bin lies in the given range.
+%% @end
+-spec lies_in(bin(), list())-> true |
+                               false. 
+lies_in(Bin, [Start, End]) when Bin >= Start andalso Bin =< End ->
+    true;
+lies_in(_, _) ->
+    false.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc returns the sibling bin number for a bin number belonging to a given
