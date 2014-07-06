@@ -12,7 +12,7 @@
 %% License for the specific language governing permissions and limitations under
 %% the License.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Live seeder is responsible for serving live stream data.
 %% <p>description goes here</p>
 %% @end
@@ -21,7 +21,7 @@
 
 -behaviour(gen_server).
 
-%-include("../include/ppspp.hrl").
+%% -include("../include/ppspp.hrl").
 -include("../include/ppspp_records.hrl").
 -include("../include/swirl.hrl").
 %% API
@@ -50,13 +50,15 @@
 %% @end
 %%--------------------------------------------------------------------
 %-spec start_link({atom(), hash()})
-start_link({Type, Swarm_ID}) ->
+% TODO for injector the Role is seeder always !
+start_link(Args) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE,
-                          [{Type, Swarm_ID}], []).
+                          [Args], []).
 
-start_link({Type, Swarm_ID}, Swarm_Options) ->
+%% TODO implement init for this. 
+start_link(Args, Swarm_Options) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE,
-                          [{Type, Swarm_ID}, Swarm_Options], []).
+                          [Args, Swarm_Options], []).
 
 
 %%%===================================================================
@@ -74,7 +76,7 @@ start_link({Type, Swarm_ID}, Swarm_Options) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([{Type, Swarm_ID}]) ->
+init([{Type, Role, Swarm_ID, State_Table}]) ->
     {Integrity_Check_Method, Live_Sig_Algo, Live_Discard_Window} =
             if
                 Type =:= static ->
@@ -87,6 +89,8 @@ init([{Type, Swarm_ID}]) ->
             end,
     {ok, #state{
           server_type           = Type,
+          role                  = Role,
+          peer_table            = State_Table, 
           %% TODO : decide how to name the merkle tree
           mtree                 = Swarm_ID,
           ppspp_swarm_id        = Swarm_ID, 
@@ -102,6 +106,7 @@ init([{Type, Swarm_ID}]) ->
 init([{_Type, _Swarm_ID}, _Swarm_Options]) ->
     %% TODO : discuss the data type for Swarm_Options 
     {ok, #state{}}.
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Handling call messages
@@ -129,76 +134,118 @@ handle_call(Message, _From, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_cast(Msg, State) ->
-    %% spwan(?MODULE, handle_msg, [{Type}, Msg, State, []]),  
-    _Reply = handle_msg({State#state.server_type}, Msg, State, []), 
+    %% TODO get the state of peer from peer_state table and store it in State
+    %% if peer lookup fails then add the peer to the table with the new dict as
+    %% follows : orddict:from_list([{range, []}])
+    %% State#state.peer_state will contain ACKed Chunk_IDs
+    _Reply = handle_msg({State#state.server_type, State#state.role}, Msg,
+                        State, []), 
+    %% spwan(?MODULE, handle_msg, [{Type, Role}, Msg, State, []]),  
     {noreply, State}.
 
 %%
+%% Handle messages.
+%%
 handle_msg(_, [], _State, _Reply) ->
     %% TODO send packed message to the listener
+    %% lists:reverse(lists:flatten(Reply)).
     %ppspp_datagram:pack(Reply)
     ok;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% replies with HANDSHAKE and HAVE message.
 %% Payload is expected to be an orddict.
-handle_msg({Type}, [{handshake, Payload} | Rest], State, Reply) ->
-    {ok, Response} = ppspp_message:handle(Type, {handshake, Payload}, State),
-    handle_msg({Type}, Rest, State, lists:concat([Response, Reply]));
+handle_msg({Type, Role}, [{handshake, Payload} | Rest], State, Reply) ->
+    {ok, Response} = ppspp_message:handle({Type, Role},
+                                          {handshake, Payload}, State),
+    handle_msg({Type, Role}, Rest, State, [Response | Reply]);
 
-handle_msg({_Type}, [{ack,_Payload} | _Rest], State, _Reply) ->
-    %% TODO figure out how to store the ACKed DATA of by different peers.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% ACK
+handle_msg({Type, leecher}, [{ack,_Payload} | Rest], State, Reply) ->
+    ?WARN("~p ~p: unexpected ACK message ~n", [Type, leecher]),
+    handle_msg({Type, leecher}, Rest, State, Reply);
+
+handle_msg({Type, Role}, [{ack, Payload} | Rest], State, Reply) ->
+    ppspp_message:handle({Type, Role}, {ack, Payload}, State),
+    %% Update State
+    {Peer, _}        = State#state.peer_state,
+    {ok, Peer_State} = peer_store:lookup(State#state.peer_table, Peer),
+    New_State        = State#state{peer_state = {Peer, Peer_State}},
+    handle_msg({Type, Role}, Rest, New_State, Reply);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% HAVE
+handle_msg({Type, leecher}, [{have, Payload} | Rest], State, Reply) ->
+    %% TODO discuss how to prepare REQUEST for DATA from multiple peers. 
+    {ok, Response} = ppspp_message:handle({Type, leecher},
+                                          {have, Payload}, State),
+    handle_msg({Type, leecher}, Rest, State, [Response | Reply]);
+
+handle_msg({Type, Role}, [{have,_Payload} | _Rest], State, _Reply) ->
+    ?WARN("~p ~p: unexpected HAVE message ~n", [Type, Role]),
     {noreply, State};
 
-%% Seeder only sends the HAVE messages and receive them
-handle_msg({_Type}, [{have, _Data} | _Rest], State, _Reply) ->
-    ?WARN("live_seeder: unexpected HAVE message ~n", []),
-    {noreply, State};
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% INTEGRITY 
+handle_msg({Type, leecher}, [{integrity, Payload} | Rest], State, Reply) ->
+    {ok, _Response} = ppspp_message:handle({Type, leecher},
+                                          {integrity, Payload}, State),
+    handle_msg({Type, leecher}, Rest, State, Reply);
 
-%% Seeder should not receive integrity message, the leecher should.
-handle_msg({Type}, [{integrity, _Data} | Rest], State, Reply) ->
-    ?WARN("live_seeder: unexpected integrity message ~n", []),
-    handle_msg({Type}, Rest, State, Reply);
+handle_msg({Type, Role}, [{integrity, _Data} | Rest], State, Reply) ->
+    ?WARN("~p ~p: unexpected integrity message ~n", [Type, Role]),
+    handle_msg({Type, seeder}, Rest, State, Reply);
 
-%% currently no implementation
-handle_msg({Type}, [{pex_resv4, _Data} | Rest], State, Reply) ->
+%%
+%% currently NO implementation
+handle_msg({Type, Role}, [{pex_resv4, _Data} | Rest], State, Reply) ->
     ?WARN("live_seeder: unexpected pex_resv4 message ~n", []),
-    handle_msg({Type}, Rest, State, Reply);
-handle_msg({Type}, [{pex_req, _Data} | Rest], State, Reply) ->
+    handle_msg({Type, Role}, Rest, State, Reply);
+handle_msg({Type, Role}, [{pex_req, _Data} | Rest], State, Reply) ->
     ?WARN("live_seeder: unexpected pex_req message ~n", []),
-    handle_msg({Type}, Rest, State, Reply);
+    handle_msg({Type, Role}, Rest, State, Reply);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Seeder should not receive signed_integrity message.
-handle_msg({Type}, [{signed_integrity, _Data} | Rest], State, Reply) ->
+handle_msg({Type, Role}, [{signed_integrity, _Data} | Rest], State, Reply) ->
     ?WARN("live_seeder: unexpected signed_integrity message ~n", []),
-    handle_msg({Type}, Rest, State, Reply);
+    handle_msg({Type, Role}, Rest, State, Reply);
 
-handle_msg({Type}, [{request, Payload} | Rest], State, Reply) ->
-    [{Start, End}] = orddict:fetch(range, Payload), 
-    {ok, Response} = ppspp_message:handle(Type, {request, [Start, End]},
-                                          State) ,
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% REQUEST
+handle_msg({Type, leecher}, [{request,_Payload} | Rest], State, Reply) ->
+    ?WARN("leecher: unexpected REQUEST message ~n", []),
+    handle_msg({Type, leecher}, Rest, State, Reply);
 
-    handle_msg({Type}, Rest, State, lists:concat([Response, Reply]));
+handle_msg({Type, Role}, [{request, Payload} | Rest], State, Reply) ->
+    {ok, Response} = ppspp_message:handle({Type, Role},
+                                          {request, Payload}, State) ,
+    handle_msg({Type, Role}, Rest, State, [Response | Reply]);
 
-handle_msg({_Type}, [{cancel, _Data} | _Rest], State, _Reply) ->
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% CANCEL
+handle_msg({_Type, _Role}, [{cancel, _Data} | _Rest], State, _Reply) ->
     {noreply, State};
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Seeder should not receive choke message.
-handle_msg({Type}, [{choke, _Data} | Rest], State, Reply) ->
+handle_msg({Type, Role}, [{choke, _Data} | Rest], State, Reply) ->
     ?WARN("live_seeder: unexpected choke message ~n", []),
-    handle_msg({Type}, Rest, State, Reply);
+    handle_msg({Type, Role}, Rest, State, Reply);
 
 %% Seeder should not receive unchoke message.
-handle_msg({Type}, [{unchoke, _Data} | Rest], State, Reply) ->
+handle_msg({Type, Role}, [{unchoke, _Data} | Rest], State, Reply) ->
     ?WARN("live_seeder: unexpected unchoke message ~n", []),
-    handle_msg({Type}, Rest, State, Reply);
+    handle_msg({Type, Role}, Rest, State, Reply);
 
 %% currently no implementation
-handle_msg({Type}, [{pex_resv6, _Data} | Rest], State, Reply) ->
+handle_msg({Type, Role}, [{pex_resv6, _Data} | Rest], State, Reply) ->
     ?WARN("live_seeder: unexpected pex_resv6 message ~n", []),
-    handle_msg({Type}, Rest, State, Reply);
-handle_msg({Type}, [{pex_rescert, _Data} | Rest], State, Reply) ->
+    handle_msg({Type, Role}, Rest, State, Reply);
+handle_msg({Type, Role}, [{pex_rescert, _Data} | Rest], State, Reply) ->
     ?WARN("live_seeder: unexpected pex_rescert message ~n", []),
-    handle_msg({Type}, Rest, State, Reply).
+    handle_msg({Type, Role}, Rest, State, Reply).
 
 %%--------------------------------------------------------------------
 %% @doc
