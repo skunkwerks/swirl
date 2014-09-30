@@ -1,0 +1,24 @@
+baseurl: http://swirl-project.org/
+languageCode: en-nz
+title: Bringing Peer-to-Peer Streaming to the World
+author:
+    name: the Swirl Project
+builddrafts: false
+theme: hyde-x
+metadataformat: yaml
+canonifyurls: false
+contentdir: ../doc
+publishdir: ../public
+permalinks:
+  post: blog/:year/:month/:day/:filename
+  archive: archive/:year/:month/:day/:filename
+  talk: talks/:year/:filename
+params:
+  defaultDescription: Bringing Peer-to-Peer Streaming to the World
+  defaultKeywords: p2p,ppsp,streaming
+  highlight: monokai_sublime
+  tagline: Bringing Peer-to-Peer Streaming to the World
+  copyright: "Copyright (c) 2014 - 2038 Skunkwerks GmbH; all rights reserved."
+  github: https://github.com/skunkwerks
+  twitter: http://twitter.com/swirl_project
+...
