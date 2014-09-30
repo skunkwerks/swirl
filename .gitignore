@@ -8,3 +8,4 @@ logs/*
 erl_crash.dump
 /swirl
 /.rebar/
+/public/

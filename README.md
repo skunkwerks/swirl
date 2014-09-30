@@ -139,7 +139,7 @@ and you can see more of them at the [hubblesite], and on their [mobile] site.
 [PPSP]: http://datatracker.ietf.org/doc/draft-ietf-ppsp-peer-protocol/
 [rebar]: https://github.com/rebar/rebar
 [ESL]: https://www.erlang-solutions.com/downloads/download-erlang-otp
-[Swirl Project]: http://swirl-project.org/
+[Swirl Project]: http://www.swirl-project.org/
 [public domain]: http://hubblesite.org/about_us/copyright.php
 [hubblesite]: http://hubblesite.org/gallery/wallpaper/pr2007041a/
 [mobile]: http://m.hubblesite.org/vote/pr2007041a
