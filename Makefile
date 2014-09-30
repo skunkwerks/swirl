@@ -44,3 +44,9 @@ console:
 
 run:
 	./swirl
+
+.PHONY : doc
+doc:
+	@rm -rf public
+	@echo doc: building site in public/
+	@(cd site && hugo --config=config.yaml --destination=../public -v)
