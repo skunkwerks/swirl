@@ -1,9 +1,9 @@
 # How to contribute to the Swirl project?
 
 First of all, thank you very much for passing by and for your interest in
-contributing to the [Swirl project](http://swirl-project.org/). We hope you
+contributing to the [Swirl project](http://www.swirl-project.org/). We hope you
 will find all needed information in this document. If you have any
-questions, please [get in touch with us](http://swirl-project.org/#contributing).
+questions, please [get in touch with us](http://www.swirl-project.org/#contributing).
 
 ## People
 
