@@ -45,8 +45,13 @@ console:
 run:
 	./swirl
 
-.PHONY : doc
+.PHONY : doc publish
 doc:
 	@rm -rf public
 	@echo doc: building site in public/
 	@(cd site && hugo --config=config.yaml --destination=../public -v)
+
+publish: doc
+	@echo publish: shipping site from public/ to gs://www.swirl-project.org/
+	gsutil -m rm -R gs://www.swirl-project.org/**
+	gsutil -m cp -R -z html,md,css,xml,js,svg  public/* gs://www.swirl-project.org/
