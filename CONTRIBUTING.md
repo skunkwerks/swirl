@@ -8,6 +8,7 @@ questions, please [get in touch with us](http://www.swirl-project.org/#contribut
 ## People
 
 - Dave Cottlehuber [@dch](http://twitter.com/dch__)
+- Andy Wenk [@awenkhh](http://twitter.com/awenkhh)
 
 ## Git Workflow
 
