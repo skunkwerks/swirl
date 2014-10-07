@@ -1,28 +1,28 @@
 all: distclean compile
 
 deps:
-	rebar get-deps update-deps
+	rebar get-deps update-deps compile
 
 clean:
-	rebar clean
+	rebar clean skip_deps=true
 
 distclean:
 	git clean -fdxe .dialyzer.plt
 	git reset --hard
 
 compile: clean
-	rebar compile escriptize
+	rebar compile escriptize skip_deps=true
 
 distcheck: distclean check
 	@echo "*** check indentation before git push ***"
 
-check: compile eunit ct dialyze
+check: clean compile eunit ct dialyze
 
 ct:
-		rebar compile skip_deps=true ct
+		rebar ct skip_deps=true
 
 eunit:
-		rebar compile skip_deps=true eunit
+		rebar eunit skip_deps=true
 
 dialyze: .dialyzer.plt
 	dialyzer --plt .dialyzer.plt \
@@ -36,7 +36,7 @@ dialyze: .dialyzer.plt
 		; [ $$? -ne 1 ]  # ignore warning (2) or ok (0) but not error (1)
 
 .dialyzer.plt:
-	@echo *** dialyzer plt not found -- this takes a wee while ***
+	@echo "*** dialyzer plt not found -- build takes a wee while ***"
 	dialyzer --build_plt --output_plt .dialyzer.plt --apps \
 		erts kernel stdlib crypto \
 		sasl common_test eunit compiler \
