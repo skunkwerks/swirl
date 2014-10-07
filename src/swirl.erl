@@ -47,6 +47,7 @@ start() ->
     ok.
 
 %% @doc Stop the swirl application and all dependent swarms and peers.
+%% Allows swirl to terminate any peer connections if necessary.
 %% end
 -spec stop() -> ok | {error,_}.
 stop() ->
@@ -57,11 +58,12 @@ stop() ->
 %% @end
 -spec quit() -> no_return().
 quit() ->
-    stop(),
+    _ = stop(),
     init:stop().
 
 %% @doc start a PPSPP listener (peer) on a given port, or the default port.
 %% @end
+-spec start_peer() -> {ok, pid()} | {error,_}.
 start_peer() ->
     start_peer(?SWIRL_PORT).
 
@@ -131,9 +133,9 @@ help() ->
     ok.
 
 %% for escript support
--spec main(_) -> ok.
+-spec main(any()) -> no_return().
 main(_) ->
     help(),
     start(),
-    start_peer(),
+    _ = start_peer(),
     timer:sleep(infinity).
