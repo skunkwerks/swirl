@@ -1,4 +1,4 @@
-all: clean compile
+all: distclean compile
 
 deps:
 	rebar get-deps update-deps
@@ -7,26 +7,38 @@ clean:
 	rebar clean
 
 distclean:
-	git clean -fdx
+	git clean -fdxe .dialyzer.plt
 	git reset --hard
 
-compile: clean deps
+compile: clean
 	rebar compile escriptize
 
-commit: distclean compile check
+commit: distclean check
 	@echo "*** check indentation before git push ***"
 
-check: eunit dialyze
+check: compile eunit ct dialyze
+
+ct:
+		rebar skip_deps=true ct
 
 eunit:
-		rebar clean eunit
+		rebar skip_deps=true eunit
 
-dialyze: clean
-	dialyzer -I ./include --src -r ./src \
-		-Werror_handling -Wrace_conditions -Wunderspecs
+dialyze: .dialyzer.plt
+	dialyzer --plt .dialyzer.plt \
+		-I ./include \
+		--src -r ./src \
+		--fullpath \
+		-Wunmatched_returns \
+		-Werror_handling \
+		-Wrace_conditions \
+		-Wunderspecs \
+		; [ $$? -ne 1 ]
 
-dialyzer-setup:
-	dialyzer --build_plt --apps erts kernel stdlib crypto \
+.dialyzer.plt:
+	@echo *** dialyzer plt not found -- this takes a wee while ***
+	dialyzer --build_plt --output_plt .dialyzer.plt --apps \
+		erts kernel stdlib crypto \
 		sasl common_test eunit compiler \
 		| fgrep -v dialyzer.ignore
 
@@ -46,6 +58,7 @@ run:
 	./swirl
 
 .PHONY : doc publish
+
 doc:
 	@rm -rf public
 	@echo doc: building site in public/
