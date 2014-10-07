@@ -13,16 +13,16 @@ distclean:
 compile: clean
 	rebar compile escriptize
 
-commit: distclean check
+distcheck: distclean check
 	@echo "*** check indentation before git push ***"
 
 check: compile eunit ct dialyze
 
 ct:
-		rebar skip_deps=true ct
+		rebar compile skip_deps=true ct
 
 eunit:
-		rebar skip_deps=true eunit
+		rebar compile skip_deps=true eunit
 
 dialyze: .dialyzer.plt
 	dialyzer --plt .dialyzer.plt \
