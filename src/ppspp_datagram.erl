@@ -38,10 +38,10 @@
 handle({udp, Socket, Peer, Port, Maybe_Datagram}, State) ->
     Pretty_Endpoint = convert:endpoint_to_string(Peer, Port),
     Peer = orddict:from_list([{peer, Peer},
-                                {port, Port},
-                                {endpoint, Pretty_Endpoint},
-                                {transport, udp},
-                                {socket, Socket} ]),
+                              {port, Port},
+                              {endpoint, Pretty_Endpoint},
+                              {transport, udp},
+                              {socket, Socket} ]),
     ?DEBUG("dgram: received udp from ~s~n", [Pretty_Endpoint]),
     {ok, Datagram} = unpack(Maybe_Datagram, Peer, State),
     % NB usually called from spawned process, so return values are ignored
