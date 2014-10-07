@@ -1,14 +1,16 @@
 # How to contribute to the Swirl project?
 
 First of all, thank you very much for passing by and for your interest in
-contributing to the [Swirl project](http://www.swirl-project.org/). We hope you
-will find all needed information in this document. If you have any
-questions, please [get in touch with us](http://www.swirl-project.org/#contributing).
+contributing to the [Swirl project](http://www.swirl-project.org/). We hope
+you will find all needed information in this document. If you have any
+questions, please
+[get in touch with us](http://www.swirl-project.org/#contributing).
 
 ## People
 
 - Dave Cottlehuber [@dch](http://twitter.com/dch__)
 - Andy Wenk [@awenkhh](http://twitter.com/awenkhh)
+- Vansheep Singh [@kansi](https://github.com/kansi)
 
 ## Git Workflow
 
@@ -27,12 +29,12 @@ important to write good commit messages. Please follow these easy rules:
 - Write an informative headline not longer than about 50 characters.
 - It should have a short prefix indicating the general area this patch
   affects, such as `docs:`, `swarm:`, `peer:`, `site:` etc.
-- If you have been working on an issue or task, please use the task or
-  issue title.
+- If you have been working on an issue or task, please use the task or issue
+  title.
 - Include a newline after the title.
 - The commit body can be as long as you like, but please ensure that you
-    refer to any issues or tasks that relate to this - for example,
-    `closes #123 increase the foo force factor`
+    refer to any issues or tasks that relate to this - for example, `closes
+    #123 increase the foo force factor`
 - Include as much information needed to understand what you have written or
   changed as needed.
 
@@ -44,8 +46,7 @@ and work on this branch. The convention we are using for the name is
     feature/name_of_the_branch
 
 The name should be clear and informative. If you are working on an issue or
-issue, please use the name of the issue or issue as the name for the
-branch.
+issue, please use the name of the issue or issue as the name for the branch.
 
 __Example:__
 
@@ -73,8 +74,8 @@ workflow:
 
 1. Create a feature branch for bigger changes, tasks or issues. If it is an
 issue the feature branch should be named like: `1912-troubleshooting-guide`
-where `1912` is the issue number and `Troubleshooting Guide` the title of the
-issue.
+where `1912` is the issue number and `Troubleshooting Guide` the title of
+the issue.
 
 2. Please follow these steps for your work:
     - create feature branch from master
@@ -91,9 +92,13 @@ following single commits:
     - actual feature/fix, part #1
     - actual feature/fix, part #2
 
-4. Do a final check for whitespace, correct Erlang indentation as needed.
+4. Do a final check for whitespace, correct Erlang indentation as needed. If
+you have `vim 7.4` or higher installed, you can use `make reindent` for
+this.
 
-5. Ensure that `make commit`, which runs all tests, passes successfully.
+5. Ensure that `make distcheck`, which removes all unwanted files in the
+repo, and resets all listed files to the last commit, before running all
+tests, passes successfully.
 
 6. For significant changes, please get a `+1` confirmation from another
 project member.
@@ -101,11 +106,12 @@ project member.
 # Documentation
 
 Swirl is based on the reference IETF protocol document, still in draft, at
-[Peer-to-Peer Streaming Peer Protocol](http://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol)
+[Peer-to-Peer Streaming Peer
+Protocol](http://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol)
 
-The documentation for the project itself is still a work in progress.
-You can find the first written documentation files within the git branch
-[feature/docs](https://github.com/skunkwerks/swirl/tree/feature/docs).
+The documentation for the project itself is still a work in progress. You
+can find the first written documentation files within the git branch
+[feature/docs](https://github.com/skunkwerks/swirl/tree/master/doc).
 
 ## Coding Style
 
@@ -115,7 +121,9 @@ Apart from a few odd places, the code is indented using the definitive
 Erlang emacs style. You are welcome to use vim of course, and from vim 7.4
 onwards, the same erlang indentation should apply as in emacs. There are a
 number of useful vim plugins at https://github.com/vim-erlang/ as well as
-the canonical `vim-erlang-runtime` plugin if your vim is older than 7.4.
+the canonical `vim-erlang-runtime` plugin if your vim is older than 7.4. Use
+the `gg=G` shortcut in vim to re-indent correctly, and check your `.vimrc`
+includes `filetype plugin indent on`.
 
 If you're creating a new file, please copy `./src/template` which includes
 all the sensible things like license header, emacs and vim tab settings.
@@ -124,12 +132,14 @@ all the sensible things like license header, emacs and vim tab settings.
 
 The code of the project is tested. So when sending a pull request from your
 fork or when adding code as a contributor, please add appropriate tests. A
-good start is to have a look into the [test
-directory](https://github.com/skunkwerks/swirl/tree/master/test).
+good place to start is to have a look into the [test
+directory](https://github.com/skunkwerks/swirl/tree/master/test). As a rule
+of thumb, put API (exported module functions) into a `common_test` module,
+and use `eunit` for internal module tests.
 
-Contributions should pass `make commit` before being committed to master or
-release branches. This cleans the repo, and runs both `eunit` and `dialyzer`
-checks on your behalf.
+Contributions should pass `make distcheck` before being committed to master
+or release branches. This cleans the repo, and runs all tests (eunit,
+common_test, and dialyzer) checks on your behalf.
 
 ## Bug Reports
 
@@ -146,5 +156,5 @@ contributions. By doing so on a regular basis, we are eventually happy to
 add you as a contributor.
 
 Please ensure that all contributions are your original work, or credited
-appropriately, and that all the code *you* write must be under the
-[Apache v2 License](http://www.apache.org/licenses/LICENSE-2.0.html).
+appropriately, and that all the code *you* write must be under the [Apache
+v2 License](http://www.apache.org/licenses/LICENSE-2.0.html).
