@@ -17,7 +17,6 @@
 -behaviour(gen_server).
 
 -ifdef(TEST).
--include_lib("proper/include/proper.hrl").
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 

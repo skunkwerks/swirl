@@ -23,7 +23,6 @@
 -include("ppspp.hrl").
 
 -ifdef(TEST).
--include_lib("proper/include/proper.hrl").
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
