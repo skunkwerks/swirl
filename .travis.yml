@@ -1,0 +1,12 @@
+language: erlang
+notifications:
+  irc: "irc.freenode.net#swirlproject"
+script: "make distcheck"
+otp_release:
+  - 17.0
+  - 17.1
+branches:
+  only:
+    - master
+    - devel
+    - /^merge-.+/
