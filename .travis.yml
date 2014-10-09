@@ -8,5 +8,5 @@ otp_release:
 branches:
   only:
     - master
-    - devel
+    - develop
     - /^merge-.+/
