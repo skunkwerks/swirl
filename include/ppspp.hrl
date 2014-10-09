@@ -15,7 +15,7 @@
 -ifndef(PPSPP_RELEASE).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% PPSPP_RELEASE must only change wrt IETF RFC status
--define(PPSPP_RELEASE, "d-08").
+-define(PPSPP_RELEASE, "d-10").
 
 %% useful bits and bytes
 -define(QWORD, 64/big).
@@ -23,8 +23,9 @@
 -define(WORD,  16/big).
 -define(BYTE,   8/big).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% PPSP Protocol Options -- section 7.0
--define(PPSPP_VERSION,                  0:?BYTE). %% MUST, version 1:8
+-define(PPSPP_SUPPORTED_VERSION,        0:?BYTE). %% MUST, version 1:8
 -define(PPSPP_MINIMUM_VERSION,          1:?BYTE). %% MUST, version 1:8
 -define(PPSPP_SWARM_ID_LENGTH,          2:?BYTE). %% MUST for initiator,
 %                                                 %% MAY for peer,
@@ -40,15 +41,30 @@
 %                                                 %% window: QWORD/DWORD*
 -define(PPSPP_SUPPORTED_MESSAGES,       8:?BYTE). %% MUST unless all supported
 %                                                 %% length:8, messages:length
--define(PPSPP_END_OPTION,             255:?BYTE). %% 0. The key is sufficient
+-define(PPSPP_END_OPTION,             255:?BYTE). %% 0. The key alone is sufficient
 %% values used within the option parser
 -define(PPSPP_DEFAULT_CHUNK_SIZE,          1024). %%
--define(PPSPP_CURRENT_VERSION,                1). %% match IETF protocol version
+-define(PPSPP_RFC_VERSION,                    1). %% match IETF protocol version
 
+%% as atoms
+-define(PPSPP_ALL_PROTOCOL_OPTIONS, [supported_version,
+                                     minimum_version,
+                                     swarm_id_length,
+                                     content_integrity_check_method,
+                                     merkle_hash_tree_function,
+                                     live_signature_algorithm,
+                                     chunk_addressing_method,
+                                     live_discard_window,
+                                     supported_messages,
+                                     end_option,
+                                     default_chunk_size]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% PPSPP Datagram Fields -- section 8.4
 -define(PPSPP_CHANNEL_SIZE,      ?DWORD).
 -define(PPSPP_UNKNOWN_CHANNEL, 0:?DWORD).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% PPSPP Message Types -- section 8.2
 -define(PPSPP_MESSAGE_SIZE,              ?BYTE  ).
 -define(HANDSHAKE,                  << 0:?BYTE>>).
@@ -66,6 +82,11 @@
 -define(PEX_RESv6,                  <<12:?BYTE>>).
 -define(PEX_REScert,                <<13:?BYTE>>).
 -define(PPSPP_MAXIMUM_MESSAGE_TYPE,   14).
+
+-define(PPSPP_ALL_MESSAGE_TYPES, [handshake, data, ack, have, integrity,
+                                  pex_resv4, pex_req, signed_integrity,
+                                  request, cancel, choke, unchoke,
+                                  pex_resv6, pex_rescert]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -endif.

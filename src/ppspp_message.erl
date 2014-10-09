@@ -109,8 +109,8 @@ validate_message_type(_Maybe_Message_Type) ->
 %%    [{Type, Parsed_Message}, Maybe_More_Messages]
 %% TODO parse should probably be unpack/2 and then drop validate_message_type/1
 parse(handshake, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Options/binary>>) ->
-    [{ok, Options}, Maybe_Messages] = ppspp_options:unpack(Maybe_Options),
-    [{ok, {handshake, orddict:store(channel, Channel, Options) }}, Maybe_Messages];
+    {ok, Options, Maybe_Messages} = ppspp_options:unpack(Maybe_Options),
+    {ok, {handshake, orddict:store(channel, Channel, Options) }, Maybe_Messages};
 
 parse(data, _Rest) ->
     [{data, parsed_msg}, _Rest];

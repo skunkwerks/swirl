@@ -49,7 +49,7 @@ m74_hash() -> convert:hex_string_to_padded_binary("c89800bfc82ed01ed6e3bfd5408c5
 
 handshake_options(packed) ->
     M74_hash = m74_hash(),
-    <<  ?PPSPP_VERSION,                     1, %% ppspp version
+    <<  ?PPSPP_SUPPORTED_VERSION,           1, %% ppspp version
         ?PPSPP_MINIMUM_VERSION,             1, %% ppspp max version
         ?PPSPP_SWARM_ID_LENGTH,      20:?WORD, %% swarm id length (160 bits)
         M74_hash/binary                      , %% the merkle hash requested
