@@ -31,6 +31,27 @@
          validate_message_type/1,
          handle/1]).
 
+-opaque messages() :: list( message()).
+-opaque message() :: {message_type(), any()}.
+-opaque message_type() :: handshake
+| data
+| ack
+| have
+| integrity
+| pex_resv4
+|pex_req
+| signed_integrity
+| request
+| cancel
+| choke
+| unchoke
+| pex_resv6
+| pex_rescert.
+
+-export_type([messages/0,
+              message/0,
+              message_type/0]).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% api
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -51,7 +72,7 @@
 %% {message_type, ppspp_message_type()}
 %% ].
 
-%%-spec unpack(binary() -> ppspp_message()).
+-spec unpack(binary()) -> message().
 
 unpack(Maybe_Messages) when is_binary(Maybe_Messages) ->
     unpack(Maybe_Messages, []).
