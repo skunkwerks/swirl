@@ -32,7 +32,6 @@ dialyze: .dialyzer.plt
 		-Wunmatched_returns \
 		-Werror_handling \
 		-Wrace_conditions \
-		-Wunderspecs \
 		; [ $$? -ne 1 ]  # ignore warning (2) or ok (0) but not error (1)
 
 .dialyzer.plt:
