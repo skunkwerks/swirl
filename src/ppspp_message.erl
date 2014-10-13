@@ -72,7 +72,7 @@
 %% {message_type, ppspp_message_type()}
 %% ].
 
--spec unpack(binary()) -> message().
+-spec unpack(binary()) -> message() | messages().
 
 unpack(Maybe_Messages) when is_binary(Maybe_Messages) ->
     unpack(Maybe_Messages, []).
@@ -87,8 +87,7 @@ unpack( <<>>, Parsed_Messages) ->
 unpack(<<Maybe_Message_Type:?PPSPP_MESSAGE_SIZE, Rest/binary>>, Parsed_Messages) ->
     {ok, Type} = validate_message_type(Maybe_Message_Type),
     [{ok, Parsed_Message}, Maybe_More_Messages] = parse(Type, Rest),
-    unpack(Maybe_More_Messages, [Parsed_Message | Parsed_Messages]);
-unpack(_Maybe_Messages, _Rest) -> {error, ppspp_invalid_message}.
+    unpack(Maybe_More_Messages, [Parsed_Message | Parsed_Messages]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pack(_) -> ok.

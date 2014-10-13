@@ -31,7 +31,7 @@
          unpack/3,
          pack/1]).
 
--opaque channel() :: <<_:32,_:_*8>>.
+-opaque channel() :: 0..16#ffffffff.
 -opaque endpoint() :: list( endpoint_option()).
 -opaque endpoint_option() :: {ip, inet:ip_address()}
 | {socket, inet:socket()}
@@ -43,14 +43,14 @@
 -export_type([endpoint/0,
               endpoint_option/0,
               datagram/0,
-            channel/0]).
+              channel/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc receives datagram from peer_worker, parses & delivers to matching channel
 %% @spec handle_datagram() -> ok
 %% @end
 -spec handle({udp, inet:socket(), inet:ip_address(), inet:port_number(),
-              binary()}, any()) -> datagram().
+              binary()}, any()) -> ok.
 
 handle({udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram}, State) ->
     Channel = get_channel(Maybe_Datagram),
@@ -65,17 +65,17 @@ handle({udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram}, State) ->
 %% @end
 
 -spec build_endpoint(udp, inet:socket(), inet:ip_address(), inet:port_number(),
-                     channel()) -> endpoint().
+                     channel()) ->  endpoint().
 build_endpoint(udp, Socket, IP, Port, Channel) ->
     Channel_Name = convert:channel_to_string(Channel),
     Endpoint_as_String = convert:endpoint_to_string(IP, Port),
     Endpoint_as_URI = lists:concat([ Endpoint_as_String, "#", Channel_Name]),
     Endpoint = orddict:from_list([{ip, IP},
-                          {channel, Channel},
-                          {port, Port},
-                          {uri, Endpoint_as_URI},
-                          {transport, udp},
-                          {socket, Socket} ]),
+                                  {channel, Channel},
+                                  {port, Port},
+                                  {uri, Endpoint_as_URI},
+                                  {transport, udp},
+                                  {socket, Socket} ]),
     ?DEBUG("dgram: received udp from ~s~n", [Endpoint_as_URI]),
     Endpoint.
 
@@ -85,7 +85,7 @@ build_endpoint(udp, Socket, IP, Port, Channel) ->
 %% </p>
 %% @end
 
--spec get_channel(channel()) -> pos_integer().
+-spec get_channel(binary()) -> channel().
 get_channel(<<Channel:?PPSPP_CHANNEL_SIZE, _Maybe_Messages/binary>>) ->
     Channel.
 
@@ -95,8 +95,7 @@ handle(Datagram) ->
     lists:foreach(
       fun(Message) -> ppspp_message:handle(Message) end,
       orddict:fetch(messages,Datagram)),
-    {ok, Datagram}.
-
+    ok.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc unpack a UDP packet into a PPSPP datagram using erlang term format
