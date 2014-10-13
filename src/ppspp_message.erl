@@ -26,9 +26,9 @@
 -endif.
 
 %% api
--export([unpack/1, 
+-export([unpack/1,
          pack/1,
-         validate_message_type/1, 
+         validate_message_type/1,
          handle/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
