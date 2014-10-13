@@ -93,8 +93,7 @@ validate_message_type(Maybe_Message_Type)
                        ?CHOKE -> choke;
                        ?UNCHOKE -> unchoke;
                        ?PEX_RESv6 -> pex_resv6;
-                       ?PEX_REScert -> pex_rescert;
-                       _  -> ppspp_message_type_not_yet_implemented
+                       ?PEX_REScert -> pex_rescert
                    end,
     ?DEBUG("message: parser got valid message type ~p~n", [Message_Type]),
     {ok, Message_Type};
