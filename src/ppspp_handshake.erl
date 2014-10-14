@@ -28,12 +28,10 @@
 %% api
 -export([unpack/1,
          pack/1,
-         get_channel/1,
-         get_options/1,
          handle/1]).
 
--opaque handshake() -> {handshake,
-                        {channel, ppspp_datagram:channel()},
+-opaque handshake() :: {handshake,
+                        ppspp_datagram:channel(),
                         ppspp_options:options()}.
 -export_type([handshake/0]).
 
@@ -51,7 +49,10 @@
 
 unpack(<<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Options/binary>>) ->
     {ok, Options, Maybe_Messages} = ppspp_options:unpack(Maybe_Options),
-    {ok, {handshake, {channel, Channel}, Options, Maybe_Messages};
+    {ok, {handshake, {channel, Channel}, Options, Maybe_Messages}}.
+
+-spec pack(ppspp_message:message()) -> binary().
+pack(_Message) -> <<>>.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%-spec ... handle takes a tuple of {type, message_body} where body is a
@@ -66,10 +67,10 @@ unpack(<<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Options/binary>>) ->
 %  are the content integrity protection scheme used and an option to
 %  specify the swarm identifier.  The complete set of protocol options
 %  are specified in Section 7.
+-spec handle(ppspp_message:message()) -> any().
 handle({handshake, _Body}) ->
     {ok, ppspp_message_handler_not_yet_implemented};
 
--spec handle(ppspp_message:message()) ->
 handle(Message) ->
     ?DEBUG("message: handler not yet implemented ~p~n", [Message]),
     {ok, ppspp_message_handler_not_yet_implemented}.

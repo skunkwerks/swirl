@@ -89,7 +89,7 @@ build_endpoint(udp, Socket, IP, Port, Channel) ->
 get_channel(<<Channel:?PPSPP_CHANNEL_SIZE, _Maybe_Messages/binary>>) ->
     Channel.
 
-
+-spec handle(datagram()) -> ok.
 handle(Datagram) ->
     _Transport = orddict:fetch(transport, Datagram),
     lists:foreach(

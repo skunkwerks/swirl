@@ -96,7 +96,7 @@ pack([Message, Rest], Messages_as_iolist) ->
 pack([], Messages_as_iolist) -> lists:reverse(Messages_as_iolist).
 
 -spec pack_message(message()) -> binary().
-pack_message(Message) -> <<>>.
+pack_message(_Message) -> <<>>.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % -spec unpack(message_type(), binary()) ->{ok, message(), binary()}
@@ -160,8 +160,9 @@ get_message_type(Maybe_Message_Type)
 %  are the content integrity protection scheme used and an option to
 %  specify the swarm identifier.  The complete set of protocol options
 %  are specified in Section 7.
-handle({handshake, _Body}) ->
-    {ok, ppspp_message_handler_not_yet_implemented};
+-spec handle(message()) -> {ok, any()}.
+
+handle({handshake, Body}) -> ppspp_handshake:handle(Body);
 
 handle(Message) ->
     ?DEBUG("message: handler not yet implemented ~p~n", [Message]),
