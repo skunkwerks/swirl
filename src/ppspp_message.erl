@@ -31,7 +31,7 @@
          get_message_type/1,
          handle/1]).
 
--opaque messages() :: list( message()).
+-opaque messages() :: list(message()).
 -opaque message() :: {message_type(), any()}.
 -opaque message_type() :: handshake
 | data
@@ -77,6 +77,15 @@
 unpack(Maybe_Messages) when is_binary(Maybe_Messages) ->
     unpack(Maybe_Messages, []).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-spec pack(messages()) -> {ok, binary()}.
+pack(_) -> {ok, << >>}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% private
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-spec unpack(binary(), messages()) -> {ok, messages()}.
 %% if the binary is empty, all messages were parsed successfully
 unpack( <<>>, Parsed_Messages) ->
     {ok, lists:reverse(Parsed_Messages)};
@@ -86,15 +95,20 @@ unpack( <<>>, Parsed_Messages) ->
 %% to be rejected.
 unpack(<<Maybe_Message_Type:?PPSPP_MESSAGE_SIZE, Rest/binary>>, Parsed_Messages) ->
     Type = get_message_type(Maybe_Message_Type),
-    [{ok, Parsed_Message}, Maybe_More_Messages] = parse(Type, Rest),
+    {ok, Parsed_Message, Maybe_More_Messages} = unpack(Type, Rest),
     unpack(Maybe_More_Messages, [Parsed_Message | Parsed_Messages]).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pack(_) -> ok.
+-spec unpack(message_type(), binary()) ->{ok, message(), binary()}
+| {error, any()}.
+unpack(handshake, Binary) ->
+    {ok, Handshake, Maybe_Messages} =  ppspp_handshake:unpack(Binary),
+    {ok, Handshake, Maybe_Messages};
+unpack(_, _Binary) ->
+    {error, unsupported_ppspp_message_type}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% private
-%%-spec unpack(binary() -> ppspp_message_type()).
+
+-spec get_message_type(binary()) -> message_type().
 get_message_type(Maybe_Message_Type)
   when is_integer(Maybe_Message_Type),
        Maybe_Message_Type < ?PPSPP_MAXIMUM_MESSAGE_TYPE ->
@@ -118,46 +132,6 @@ get_message_type(Maybe_Message_Type)
     ?DEBUG("message: parser got valid message type ~p~n", [Message_Type]),
     Message_Type.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%-spec ... parse takes a msg_type, _data, and returns
-%%    {error, something} or {ok, {key, orddict}} for the unpacked message
-%%    [{Type, Parsed_Message}, Maybe_More_Messages]
-%% TODO parse should probably be unpack/2 and then drop get_message_type/1
-parse(handshake, <<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Options/binary>>) ->
-    {ok, Options, Maybe_Messages} = ppspp_options:unpack(Maybe_Options),
-    {ok, {handshake, orddict:store(channel, Channel, Options) }, Maybe_Messages};
-
-parse(data, _Rest) ->
-    [{data, parsed_msg}, _Rest];
-parse(ack, _Rest) ->
-    [{ack, parsed_msg}, _Rest];
-parse(have, _Rest) ->
-    [{have, parsed_msg}, _Rest];
-parse(integrity, _Rest) ->
-    [{integrity, parsed_msg}, _Rest];
-parse(pex_resv4, _Rest) ->
-    [{pex_resv4, parsed_msg}, _Rest];
-parse(pex_req, _Rest) ->
-    [{pex_req, parsed_msg}, _Rest];
-parse(signed_integrity, _Rest) ->
-    [{signed_integrity, parsed_msg}, _Rest];
-parse(request, _Rest) ->
-    [{request, parsed_msg}, _Rest];
-parse(cancel, _Rest) ->
-    [{cancel, parsed_msg}, _Rest];
-parse(choke, _Rest) ->
-    [{choke, parsed_msg}, _Rest];
-parse(unchoke, _Rest) ->
-    [{unchoke, parsed_msg}, _Rest];
-parse(pex_resv6, _Rest) ->
-    [{pex_resv6, parsed_msg}, _Rest];
-parse(pex_rescert, _Rest) ->
-    [{pex_rescert, parsed_msg}, _Rest];
-parse(ppspp_message_type_not_yet_implemented, _Rest) ->
-    [{ppspp_message_parser_not_implemented, parsed_msg}, _Rest];
-%% TODO confirm we shouldn't be able to get here by using -spec()
-parse(_, _Rest) ->
-    {error, ppspp_message_type_not_parsable}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%-spec ... handle takes a tuple of {type, message_body} where body is a
