@@ -39,7 +39,7 @@
 | have
 | integrity
 | pex_resv4
-|pex_req
+| pex_req
 | signed_integrity
 | request
 | cancel
