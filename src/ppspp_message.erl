@@ -46,7 +46,8 @@
 | choke
 | unchoke
 | pex_resv6
-| pex_rescert.
+| pex_rescert
+| 00..16#ffffff.
 
 -export_type([messages/0,
               message/0,
@@ -98,10 +99,10 @@ pack([], Messages_as_iolist) -> lists:reverse(Messages_as_iolist).
 pack_message(Message) -> <<>>.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
--spec unpack(message_type(), binary()) ->{ok, message(), binary()}
-                                         | {error, any()}.
--spec unpack(binary(), messages()) -> {ok, messages()}.
-%% if the binary is empty, all messages were parsed successfully
+% -spec unpack(message_type(), binary()) ->{ok, message(), binary()}
+%                                          | {error, any()}.
+% -spec unpack(binary(), messages()) -> {ok, messages()}.
+% %% if the binary is empty, all messages were parsed successfully
 unpack( <<>>, Parsed_Messages) ->
     {ok, lists:reverse(Parsed_Messages)};
 %% otherwise try to unpack another valid message, peeling off and parsing
@@ -111,10 +112,8 @@ unpack( <<>>, Parsed_Messages) ->
 unpack(<<Maybe_Message_Type:?PPSPP_MESSAGE_SIZE, Rest/binary>>, Parsed_Messages) ->
     Type = get_message_type(Maybe_Message_Type),
     {ok, Parsed_Message, Maybe_More_Messages} = unpack(Type, Rest),
-    unpack(Maybe_More_Messages, [Parsed_Message | Parsed_Messages]).
+    unpack(Maybe_More_Messages, [Parsed_Message | Parsed_Messages]);
 
--spec unpack(message_type(), binary()) ->{ok, message(), binary()}
-| {error, any()}.
 unpack(handshake, Binary) ->
     {ok, Handshake, Maybe_Messages} =  ppspp_handshake:unpack(Binary),
     {ok, Handshake, Maybe_Messages};
@@ -123,7 +122,7 @@ unpack(_, _Binary) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--spec get_message_type(binary()) -> message_type().
+-spec get_message_type(message_type()) -> message_type().
 get_message_type(Maybe_Message_Type)
   when is_integer(Maybe_Message_Type),
        Maybe_Message_Type < ?PPSPP_MAXIMUM_MESSAGE_TYPE ->
