@@ -28,9 +28,7 @@
 -export([bin_to_hex/1,
          bin_to_string/1,
          hex_string_to_padded_binary/1,
-         port_to_atom/1,
-         endpoint_to_string/2,
-         channel_to_string/1]).
+         port_to_atom/1]).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -41,12 +39,6 @@ bin_to_hex(Binary) when is_binary(Binary) ->
 
 bin_to_string(Binary) when is_binary(Binary) ->
     lists:flatten(["0x", bin_to_hex(Binary)]).
-
-endpoint_to_string(Peer, Port) ->
-    lists:flatten([[inet_parse:ntoa(Peer)], $:, integer_to_list(Port)]).
-
-channel_to_string(Channel) when is_integer(Channel) ->
-    bin_to_string(<<Channel:?PPSPP_CHANNEL_SIZE>>).
 
 hex_string_to_padded_binary(String) when is_list(String) ->
     Bytes_Length = (length(String) + 1) div 2,

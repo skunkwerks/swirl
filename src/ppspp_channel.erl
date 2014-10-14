@@ -18,7 +18,7 @@
 %% functions for encoding and decoding messages.</p>
 %% @end
 
--module(ppspp_handshake).
+-module(ppspp_channel).
 -include("swirl.hrl").
 
 -ifdef(TEST).
@@ -27,29 +27,42 @@
 
 %% api
 -export([unpack/1,
+         unpack_with_rest/1,
          pack/1,
+         get_channel/1,
+         channel_to_string/1,
          handle/1]).
 
--opaque handshake() :: {handshake,
-                        ppspp_datagram:channel(),
-                        ppspp_options:options()}.
--export_type([handshake/0]).
+-opaque channel() :: {channel, channel_option()}.
+-opaque channel_option() :: {0..16#ffffffff}.
+-export_type([channel/0, channel_option/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% api
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc unpack a handshake message
+%% @doc unpack a channel message
 %% <p>  Deconstruct PPSPP UDP datagram into multiple erlang terms, including
 %% parsing any additional data within the same segment. Any parsing failure
 %% is fatal & will propagate back to the attempted datagram unpacking.
 %% </p>
 %% @end
 
--spec unpack(binary()) -> {ok, handshake(), binary()}.
+-spec unpack_with_rest(binary()) -> {channel(), binary()}.
 
-unpack(<<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Options/binary>>) ->
-    {ok, Options, Maybe_Messages} = ppspp_options:unpack(Maybe_Options),
-    {ok, {handshake, {channel, Channel}, Options}, Maybe_Messages}.
+unpack_with_rest(<<Channel:?PPSPP_CHANNEL_SIZE, Rest/binary>>) ->
+    {{channel, Channel}, Rest}.
+
+-spec unpack(binary()) -> channel().
+unpack(Binary) ->
+    {Channel, _rest} = unpack_with_rest(Binary),
+    Channel.
+
+-spec channel_to_string(channel()) -> string().
+channel_to_string({channel, Channel}) when is_integer(Channel) ->
+    convert:bin_to_string().
+
+-spec get_channel(channel()) -> channel_option().
+get_channel({channel, Channel}) when is_integer(Channel) -> Channel.
 
 -spec pack(ppspp_message:message()) -> binary().
 pack(_Message) -> <<>>.
@@ -62,13 +75,13 @@ pack(_Message) -> <<>>.
 %%    alternate peer.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% The payload of the HANDSHAKE message is a channel ID (see
+% The payload of the channel message is a channel ID (see
 %  Section 3.11) and a sequence of protocol options.  Example options
 %  are the content integrity protection scheme used and an option to
 %  specify the swarm identifier.  The complete set of protocol options
 %  are specified in Section 7.
 -spec handle(ppspp_message:message()) -> any().
-handle({handshake, _Body}) ->
+handle({channel, _Body}) ->
     {ok, ppspp_message_handler_not_yet_implemented};
 
 handle(Message) ->
