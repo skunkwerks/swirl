@@ -19,8 +19,7 @@
 %% @end
 
 -module(ppspp_options).
-
--include("ppspp.hrl").
+-include("swirl.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -316,3 +315,18 @@ use_default_options(Root_Hash) when is_binary(Root_Hash) ->
 -spec pack(ppspp_options()) -> binary().
 
 pack(_) -> <<>>.
+
+-ifdef(TEST).
+defaults_test() ->
+    Hash ="c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
+    Root_Hash = convert:hex_string_to_padded_binary(Hash),
+    Expected_Defaults = [{chunk_addressing_method,chunking_32bit_chunks},
+                         {chunk_size,1024},
+                         {content_integrity_check_method,merkle_hash_tree},
+                         {merkle_hash_tree_function,sha},
+                         {minimum_version,1},
+                         {swarm_id, Root_Hash},
+                         {version,1}],
+    [?_assertEqual( Expected_Defaults , use_default_options(Root_Hash) )].
+-endif.
+
