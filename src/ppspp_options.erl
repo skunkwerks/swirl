@@ -47,7 +47,7 @@
               ppspp_option/0]).
 
 -opaque root_hash() :: binary().
--opaque ppspp_options() :: list({ ppspp_option(), any()}).
+-opaque ppspp_options() :: {ppspp_options, list({ ppspp_option(), any()})}.
 -type ppspp_option() :: supported_version
 | minimum_version
 | swarm_id
@@ -91,7 +91,7 @@ chunk_64bit_chunks.
 unpack(Maybe_Options) ->
     [Options, Maybe_Messages] = unpack(Maybe_Options, orddict:new()),
     Dict_Options = orddict:store(options, Options, orddict:new()),
-    {ok, Dict_Options, Maybe_Messages}.
+    {ok, {ppspp_options, Dict_Options}, Maybe_Messages}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_SUPPORTED_VERSION,
           Version:?BYTE,
@@ -216,8 +216,8 @@ unpack( <<>>, _Options) -> {error, ppspp_options_invalid}.
 %% @end
 -spec get(ppspp_option(), ppspp_options()) -> any().
 
-get(Option, Options) ->
-    orddict:fetch(Option, Options).
+get(Option, {ppspp_options, Options_Dict}) ->
+    orddict:fetch(Option, Options_Dict).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -294,13 +294,13 @@ get_maximum_supported_version(Options) ->
 -spec use_default_options(root_hash()) -> ppspp_options().
 
 use_default_options(Root_Hash) when is_binary(Root_Hash) ->
-    orddict:from_list( [{swarm_id, Root_Hash},
+    {ppspp_options, orddict:from_list( [{swarm_id, Root_Hash},
                         {chunk_addressing_method, chunking_32bit_chunks},
                         {chunk_size, ?PPSPP_DEFAULT_CHUNK_SIZE},
                         {content_integrity_check_method, merkle_hash_tree},
                         {merkle_hash_tree_function, sha},
                         {minimum_version, ?PPSPP_RFC_VERSION},
-                        {version, ?PPSPP_RFC_VERSION}]).
+                        {version, ?PPSPP_RFC_VERSION}])}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc pack an orddict of ppspp erlang terms into a binary PPSPP message segment
@@ -320,13 +320,13 @@ pack(_) -> <<>>.
 defaults_test() ->
     Hash ="c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
     Root_Hash = convert:hex_string_to_padded_binary(Hash),
-    Expected_Defaults = [{chunk_addressing_method,chunking_32bit_chunks},
+    Expected_Defaults = {ppspp_options, [{chunk_addressing_method,chunking_32bit_chunks},
                          {chunk_size,1024},
                          {content_integrity_check_method,merkle_hash_tree},
                          {merkle_hash_tree_function,sha},
                          {minimum_version,1},
                          {swarm_id, Root_Hash},
-                         {version,1}],
+                         {version,1}]},
     [?_assertEqual( Expected_Defaults , use_default_options(Root_Hash) )].
 -endif.
 
