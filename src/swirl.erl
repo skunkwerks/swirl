@@ -85,8 +85,10 @@ start_peers(First, Last) when is_integer(First), is_integer(Last), First < Last 
 
 %% @doc stop a PPSPP peer on a given port, or the default port.
 %% @end
+-spec stop_peer() -> ok | {error, not_found}.
 stop_peer() ->
     stop_peer(?SWIRL_PORT).
+
 -spec stop_peer(inet:port_number()) -> ok | {error, not_found}.
 stop_peer(Port) when is_integer(Port), Port > 0, Port < 65535 ->
     Worker_pid = whereis(convert:port_to_atom(Port)),
