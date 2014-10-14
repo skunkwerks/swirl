@@ -78,13 +78,28 @@ unpack(Maybe_Messages) when is_binary(Maybe_Messages) ->
     unpack(Maybe_Messages, []).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
--spec pack(messages()) -> {ok, binary()}.
-pack(_) -> {ok, << >>}.
+-spec pack(messages()) -> {ok, iolist()}.
+pack(Messages) -> {ok, pack(Messages, [])}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% private
 
+-spec pack(messages(), iolist()) -> iolist().
+%% Try to pack another valid message, peeling off and parsing
+%% recursively the remainder, accumulating valid (packed) messages.
+%% A failure anywhere in a message ultimately causes the entire iolist
+%% to be rejected.
+pack([Message, Rest], Messages_as_iolist) ->
+    pack(Rest, [pack_message(Message) | Messages_as_iolist]);
+%% if head binary is empty, all messages were packed successfully
+pack([], Messages_as_iolist) -> lists:reverse(Messages_as_iolist).
+
+-spec pack_message(message()) -> binary().
+pack_message(Message) -> <<>>.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-spec unpack(message_type(), binary()) ->{ok, message(), binary()}
+                                         | {error, any()}.
 -spec unpack(binary(), messages()) -> {ok, messages()}.
 %% if the binary is empty, all messages were parsed successfully
 unpack( <<>>, Parsed_Messages) ->
