@@ -46,8 +46,7 @@
 | choke
 | unchoke
 | pex_resv6
-| pex_rescert
-| 00..16#ffffff.
+| pex_rescert.
 
 -export_type([messages/0,
               message/0,
