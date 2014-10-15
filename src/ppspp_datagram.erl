@@ -125,5 +125,5 @@ unpack(Datagram, _Peer, _State ) ->
     {ok, Datagram}.
 
 -spec pack(datagram()) -> binary().
-pack(Datagram) -> <<>>.
+pack(_Datagram) -> <<>>.
 
