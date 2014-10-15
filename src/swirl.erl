@@ -140,3 +140,10 @@ main(_) ->
     start(),
     _ = start_peer(),
     timer:sleep(infinity).
+
+-ifdef(TEST).
+-spec peer_random_port_test() -> {ok, pid()}.
+peer_random_port() ->
+    {ok, start_peer(0)}.
+-endif.
+
