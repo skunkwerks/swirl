@@ -122,7 +122,7 @@ unpack(_, _Binary) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--spec get_message_type(message_type()) -> message_type().
+-spec get_message_type(non_neg_integer()) -> message_type().
 get_message_type(Maybe_Message_Type)
   when is_integer(Maybe_Message_Type),
        Maybe_Message_Type < ?PPSPP_MAXIMUM_MESSAGE_TYPE ->

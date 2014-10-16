@@ -45,17 +45,21 @@
               datagram/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc translates raw udp packet into a tidy structure for later use
-%% @spec
+%% @doc  helper functions
 %% @end
-
 -spec peer_to_string(inet:ip_address(), inet:port_number()) -> string().
 
 peer_to_string(Peer, Port) ->
     lists:flatten([[inet_parse:ntoa(Peer)], $:, integer_to_list(Port)]).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc translates raw udp packet into a tidy structure for later use
+%% @spec
+%% @end
+
 -spec build_endpoint(udp, inet:socket(), inet:ip_address(), inet:port_number(),
                      ppspp_channel:channel()) ->  endpoint().
+
 build_endpoint(udp, Socket, IP, Port, Channel) ->
     Channel_Name = ppspp_channel:channel_to_string(Channel),
     Peer_as_String = peer_to_string(IP, Port),
