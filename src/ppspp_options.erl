@@ -318,6 +318,7 @@ use_default_options(Root_Hash) when is_binary(Root_Hash) ->
 pack(_) -> <<>>.
 
 -ifdef(TEST).
+-spec defaults_test() -> term().
 defaults_test() ->
     Hash ="c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
     Root_Hash = convert:hex_string_to_padded_binary(Hash),
