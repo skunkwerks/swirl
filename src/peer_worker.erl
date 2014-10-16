@@ -18,6 +18,7 @@
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
+-spec test() -> term().
 -endif.
 
 %% api
