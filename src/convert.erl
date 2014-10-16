@@ -49,7 +49,7 @@ hex_string_to_padded_binary(String) when is_list(String) ->
     <<Int:Bytes_Length/big-unsigned-integer-unit:8>>.
 
 -spec port_to_atom(inet:port_number()) -> atom().
-port_to_atom(Port) when is_integer(Port), Port > 0, Port < 65535 ->
+port_to_atom(Port) when is_integer(Port), Port >= 0, Port =< 65535 ->
     Port_as_string = lists:flatten("swirl_peer_" ++
                                    io_lib:format("~4.16.0b", [Port])),
     list_to_atom(Port_as_string).

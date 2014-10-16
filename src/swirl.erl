@@ -67,7 +67,7 @@ start_peer() ->
     start_peer(?SWIRL_PORT).
 
 -spec start_peer(inet:port_number()) -> {ok, pid()} | {error,_}.
-start_peer(Port) when is_integer(Port), Port > 0, Port < 65535 ->
+start_peer(Port) when is_integer(Port), Port >= 0, Port =< 65535 ->
     supervisor:start_child(peer_sup, [Port]).
 
 %% @doc start multiple PPSPP listeners (peers) quickly on a given range of
@@ -143,7 +143,7 @@ main(_) ->
 
 -ifdef(TEST).
 -spec peer_random_port_test() -> {ok, pid()}.
-peer_random_port() ->
+peer_random_port_test() ->
     {ok, start_peer(0)}.
 -endif.
 
