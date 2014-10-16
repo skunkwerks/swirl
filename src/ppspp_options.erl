@@ -295,13 +295,14 @@ get_maximum_supported_version(Options) ->
 -spec use_default_options(root_hash()) -> ppspp_options().
 
 use_default_options(Root_Hash) when is_binary(Root_Hash) ->
-    {ppspp_options, orddict:from_list( [{swarm_id, Root_Hash},
-                        {chunk_addressing_method, chunking_32bit_chunks},
-                        {chunk_size, ?PPSPP_DEFAULT_CHUNK_SIZE},
-                        {content_integrity_check_method, merkle_hash_tree},
-                        {merkle_hash_tree_function, sha},
-                        {minimum_version, ?PPSPP_RFC_VERSION},
-                        {version, ?PPSPP_RFC_VERSION}])}.
+    {ppspp_options,
+     orddict:from_list( [{swarm_id, Root_Hash},
+                         {chunk_addressing_method, chunking_32bit_chunks},
+                         {chunk_size, ?PPSPP_DEFAULT_CHUNK_SIZE},
+                         {content_integrity_check_method, merkle_hash_tree},
+                         {merkle_hash_tree_function, sha},
+                         {minimum_version, ?PPSPP_RFC_VERSION},
+                         {version, ?PPSPP_RFC_VERSION}])}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc pack an orddict of ppspp erlang terms into a binary PPSPP message segment
@@ -322,13 +323,14 @@ pack(_) -> <<>>.
 defaults_test() ->
     Hash ="c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
     Root_Hash = convert:hex_string_to_padded_binary(Hash),
-    Expected_Defaults = {ppspp_options, [{chunk_addressing_method,chunking_32bit_chunks},
-                         {chunk_size,1024},
-                         {content_integrity_check_method,merkle_hash_tree},
-                         {merkle_hash_tree_function,sha},
-                         {minimum_version,1},
-                         {swarm_id, Root_Hash},
-                         {version,1}]},
-    [?_assertEqual( Expected_Defaults , use_default_options(Root_Hash) )].
+    Expected = {ppspp_options,
+                [{chunk_addressing_method,chunking_32bit_chunks},
+                 {chunk_size,1024},
+                 {content_integrity_check_method,merkle_hash_tree},
+                 {merkle_hash_tree_function,sha},
+                 {minimum_version,1},
+                 {swarm_id, Root_Hash},
+                 {version,1}]},
+    [?_assertEqual( Expected, use_default_options(Root_Hash) )].
 -endif.
 
