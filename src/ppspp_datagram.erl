@@ -77,15 +77,15 @@ build_endpoint(udp, Socket, IP, Port, Channel) ->
 %% @doc receives datagram from peer_worker, parses & delivers to matching channel
 %% @spec handle_datagram() -> ok
 %% @end
--spec handle({udp, inet:socket(), inet:ip_address(), inet:port_number(), binary()})
--> ok.
+-spec handle({udp, inet:socket(), inet:ip_address(), inet:port_number(),
+              binary()}) -> ok.
 
 handle(_Packet = {udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram}) ->
     Channel = ppspp_channel:unpack_channel(Maybe_Datagram),
     Endpoint = build_endpoint(udp, Socket, Peer_IP_Address, Peer_Port, Channel),
-    {ok, Parsed_Datagram} = unpack(Maybe_Datagram, Endpoint),
+    Datagram = unpack(Maybe_Datagram, Endpoint),
     % NB usually called from spawned process, so return values are ignored
-    handle_datagram(Parsed_Datagram).
+    handle_datagram(Datagram).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Extract PPSPP channel ID from header of datagram
@@ -123,14 +123,14 @@ handle_datagram(_Datagram = {datagram, _Dgram_as_Dict}) ->
 %% {messages, ppspp_messages()}
 %% ].
 
--spec unpack(binary(), endpoint()) -> {ok, datagram()}.
-unpack(Raw_Datagram, _Peer) ->
+-spec unpack(binary(), endpoint()) -> datagram().
+unpack(Raw_Datagram, _Endpoint) ->
     {Channel, Maybe_Messages} = ppspp_channel:unpack_with_rest(Raw_Datagram),
     ?DEBUG("dgram: received on channel ~p~n",
            [ppspp_channel:channel_to_string(Channel)]),
     {ok, Parsed_Messages} = ppspp_message:unpack(Maybe_Messages),
     Parsed_Datagram = orddict:from_list([Channel, {messages, Parsed_Messages}]),
-    {ok, Parsed_Datagram}.
+    {datagram, Parsed_Datagram}.
 
 -spec pack(datagram()) -> binary().
 pack(_Datagram) -> <<>>.
