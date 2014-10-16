@@ -27,9 +27,8 @@
 -endif.
 
 %% api
--export([handle/2,
-         handle/1,
-         unpack/3,
+-export([handle/1,
+         unpack/2,
          pack/1]).
 
 -opaque endpoint() :: {endpoint, list( endpoint_option())}.
@@ -43,20 +42,6 @@
 -export_type([endpoint/0,
               endpoint_option/0,
               datagram/0]).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc receives datagram from peer_worker, parses & delivers to matching channel
-%% @spec handle_datagram() -> ok
-%% @end
--spec handle({udp, inet:socket(), inet:ip_address(), inet:port_number(),
-              binary()}, any()) -> ok.
-
-handle({udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram}, State) ->
-    Channel = ppspp_channel:get_channel(Maybe_Datagram),
-    Endpoint = build_endpoint(udp, Socket, Peer_IP_Address, Peer_Port, Channel),
-    {ok, Parsed_Datagram} = unpack(Maybe_Datagram, Endpoint, State),
-    % NB usually called from spawned process, so return values are ignored
-    handle(Parsed_Datagram).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc translates raw udp packet into a tidy structure for later use
@@ -84,13 +69,27 @@ build_endpoint(udp, Socket, IP, Port, Channel) ->
     Endpoint.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc receives datagram from peer_worker, parses & delivers to matching channel
+%% @spec handle_datagram() -> ok
+%% @end
+-spec handle( datagram() |
+              {udp, inet:socket(), inet:ip_address(), inet:port_number(),
+               binary()}) -> ok.
+
+handle(_Packet = {udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram}) ->
+    Channel = ppspp_channel:get_channel(Maybe_Datagram),
+    Endpoint = build_endpoint(udp, Socket, Peer_IP_Address, Peer_Port, Channel),
+    {ok, Parsed_Datagram} = unpack(Maybe_Datagram, Endpoint),
+    % NB usually called from spawned process, so return values are ignored
+    handle(Parsed_Datagram);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Extract PPSPP channel ID from header of datagram
 %% <p>  Each PPSPP datagram contains as the first 4 byes the inbount channel ID.
 %% </p>
 %% @end
 
--spec handle(datagram()) -> ok.
-handle(_Datagram = {datagram, Datagram}) ->
+handle(_Datagram = {datagram, _Dgram_as_Dict}) ->
     %% handle/1 needs to become handle/2 as the swarm state and inbound channel
     %% are needed to process the messages correctly.
     %% This also needs to be moved into ppspp_message module wrt opaque typing.
@@ -119,8 +118,8 @@ handle(_Datagram = {datagram, Datagram}) ->
 %% {messages, ppspp_messages()}
 %% ].
 
--spec unpack(binary(), endpoint(), any()) -> {ok, datagram()}.
-unpack(Datagram, _Peer, _State ) ->
+-spec unpack(binary(), endpoint()) -> {ok, datagram()}.
+unpack(Datagram, _Peer) ->
     {Channel, Maybe_Messages} = ppspp_channel:unpack_with_rest(Datagram),
     ?DEBUG("dgram: received on channel ~p~n",
            [ppspp_channel:channel_to_string(Channel)]),
