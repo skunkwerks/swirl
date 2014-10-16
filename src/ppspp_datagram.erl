@@ -27,7 +27,7 @@
 -endif.
 
 %% api
--export([handle_raw/1,
+-export([handle/1,
          handle_datagram/1,
          unpack/2,
          pack/1]).
@@ -77,10 +77,10 @@ build_endpoint(udp, Socket, IP, Port, Channel) ->
 %% @doc receives datagram from peer_worker, parses & delivers to matching channel
 %% @spec handle_datagram() -> ok
 %% @end
--spec handle_raw({udp, inet:socket(), inet:ip_address(), inet:port_number(), binary()})
--> datagram().
+-spec handle({udp, inet:socket(), inet:ip_address(), inet:port_number(), binary()})
+-> ok.
 
-handle_raw(_Packet = {udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram}) ->
+handle(_Packet = {udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram}) ->
     Channel = ppspp_channel:unpack_channel(Maybe_Datagram),
     Endpoint = build_endpoint(udp, Socket, Peer_IP_Address, Peer_Port, Channel),
     {ok, Parsed_Datagram} = unpack(Maybe_Datagram, Endpoint),

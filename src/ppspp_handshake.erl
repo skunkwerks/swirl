@@ -32,7 +32,7 @@
          handle/1]).
 
 -opaque handshake() :: {handshake,
-                        ppspp_datagram:channel(),
+                        ppspp_channel:channel(),
                         ppspp_options:options()}.
 -export_type([handshake/0]).
 
