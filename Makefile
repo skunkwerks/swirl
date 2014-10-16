@@ -18,7 +18,7 @@ distcheck: distclean check
 
 check: clean compile eunit ct dialyze
 
-ct:
+ct: clean compile
 	rebar ct skip_deps=true
 
 eunit:
