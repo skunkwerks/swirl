@@ -27,7 +27,7 @@
 -endif.
 
 %% api
--export([unpack/1,
+-export([unpack_channel/1,
          unpack_with_rest/1,
          pack/1,
          get_channel/1,
@@ -53,9 +53,9 @@
 unpack_with_rest(<<Channel:?PPSPP_CHANNEL_SIZE, Rest/binary>>) ->
     {{channel, Channel}, Rest}.
 
--spec unpack(binary()) -> channel().
-unpack(Binary) ->
-    {Channel, _rest} = unpack_with_rest(Binary),
+-spec unpack_channel(binary()) -> channel().
+unpack_channel(Binary) ->
+    {Channel, _Rest} = unpack_with_rest(Binary),
     Channel.
 
 -spec channel_to_string(channel()) -> string().

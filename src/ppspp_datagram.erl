@@ -77,7 +77,7 @@ build_endpoint(udp, Socket, IP, Port, Channel) ->
                binary()}) -> ok.
 
 handle(_Packet = {udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram}) ->
-    Channel = ppspp_channel:get_channel(Maybe_Datagram),
+    Channel = ppspp_channel:unpack_channel(Maybe_Datagram),
     Endpoint = build_endpoint(udp, Socket, Peer_IP_Address, Peer_Port, Channel),
     {ok, Parsed_Datagram} = unpack(Maybe_Datagram, Endpoint),
     % NB usually called from spawned process, so return values are ignored
