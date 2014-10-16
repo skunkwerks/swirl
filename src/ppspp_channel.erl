@@ -59,8 +59,8 @@ unpack(Binary) ->
     Channel.
 
 -spec channel_to_string(channel()) -> string().
-channel_to_string({channel, Channel}) when is_integer(Channel) ->
-    convert:bin_to_string(Channel).
+channel_to_string(_Channel = {channel, Channel}) ->
+    string:to_lower(integer_to_list(Channel, 16)).
 
 -spec get_channel(channel()) -> channel_option().
 get_channel({channel, Channel}) when is_integer(Channel) -> Channel.

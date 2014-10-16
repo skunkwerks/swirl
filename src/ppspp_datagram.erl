@@ -75,7 +75,7 @@ build_endpoint(udp, Socket, IP, Port, Channel) ->
     Peer_as_String = peer_to_string(IP, Port),
     Endpoint_as_URI = lists:concat([ Peer_as_String, "#", Channel_Name]),
     Endpoint = {endpoint, orddict:from_list([{ip, IP},
-                                             {channel, Channel},
+                                             Channel,
                                              {port, Port},
                                              {uri, Endpoint_as_URI},
                                              {transport, udp},
