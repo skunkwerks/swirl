@@ -35,7 +35,7 @@
          handle/1]).
 
 -opaque channel() :: {channel, channel_option()}.
--opaque channel_option() :: {0..16#ffffffff}.
+-opaque channel_option() :: 0..16#ffffffff.
 -export_type([channel/0, channel_option/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -60,7 +60,7 @@ unpack(Binary) ->
 
 -spec channel_to_string(channel()) -> string().
 channel_to_string({channel, Channel}) when is_integer(Channel) ->
-    convert:bin_to_string().
+    convert:bin_to_string(Channel).
 
 -spec get_channel(channel()) -> channel_option().
 get_channel({channel, Channel}) when is_integer(Channel) -> Channel.
