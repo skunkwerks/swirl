@@ -27,6 +27,7 @@
 
 %% api
 -export([bin_to_hex/1,
+         int_to_hex/1,
          bin_to_string/1,
          hex_string_to_padded_binary/1,
          port_to_atom/1]).
@@ -38,6 +39,10 @@
 -spec bin_to_hex(binary()) -> string().
 bin_to_hex(Binary) when is_binary(Binary) ->
     lists:flatten([io_lib:format("~2.16.0b",[N]) || <<N>> <= Binary]).
+
+-spec int_to_hex(non_neg_integer()) -> string().
+int_to_hex(Int) when is_integer(Int), Int >=0, Int =< 16#ffffffff ->
+    lists:flatten([io_lib:format("0x~8.16.0b",[Int])]).
 
 -spec bin_to_string(binary()) -> string().
 bin_to_string(Binary) when is_binary(Binary) ->
