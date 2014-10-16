@@ -87,7 +87,7 @@ handle_cast(Message, State) ->
 
 -spec handle_info(_,_) -> {noreply,_} | {stop,{error,{unknown_info,_}},_}.
 handle_info(Packet={udp, _Socket, _Peer, _Port, _Maybe_Datagram}, State) ->
-    spawn(ppspp_datagram, handle, [Packet]),
+    spawn(ppspp_datagram, handle_raw, [Packet]),
     {noreply, State};
 handle_info(timeout, State) ->
     ?WARN("peer: timeout: ~p~n", State);
