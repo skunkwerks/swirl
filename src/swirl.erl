@@ -145,6 +145,7 @@ main(_) ->
 -ifdef(TEST).
 -spec peer_random_port_test() -> {ok, pid()}.
 peer_random_port_test() ->
+    start(),
     {ok, start_peer(0)}.
 -endif.
 
