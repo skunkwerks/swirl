@@ -90,11 +90,14 @@ build_endpoint(udp, Socket, IP, Port, Channel) ->
 %% @end
 
 -spec handle(datagram()) -> ok.
-handle(Datagram) ->
-    _Transport = orddict:fetch(transport, Datagram),
-    lists:foreach(
-      fun(Message) -> ppspp_message:handle(Message) end,
-      orddict:fetch(messages,Datagram)),
+handle(_Datagram = {datagram, Datagram}) ->
+    %% handle/1 needs to become handle/2 as the swarm state and inbound channel
+    %% are needed to process the messages correctly.
+    %% This also needs to be moved into ppspp_message module wrt opaque typing.
+    % _Transport = orddict:fetch(transport, Datagram),
+    % lists:foreach(
+    %   fun(Message) -> ppspp_message:handle(Message) end,
+    %   orddict:fetch(messages,Datagram)),
     ok.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -116,13 +119,13 @@ handle(Datagram) ->
 %% {messages, ppspp_messages()}
 %% ].
 
--spec unpack(binary(), endpoint(), any()) -> datagram().
+-spec unpack(binary(), endpoint(), any()) -> {ok, datagram()}.
 unpack(Datagram, _Peer, _State ) ->
     {Channel, Maybe_Messages} = ppspp_channel:unpack_with_rest(Datagram),
     ?DEBUG("dgram: received on channel ~p~n",
            [ppspp_channel:channel_to_string(Channel)]),
     {ok, Parsed_Messages} = ppspp_message:unpack(Maybe_Messages),
-    Datagram = orddict:from_list(Channel, {messages, Parsed_Messages}),
+    Datagram = orddict:from_list([Channel, {messages, Parsed_Messages}]),
     {ok, Datagram}.
 
 -spec pack(datagram()) -> binary().
