@@ -44,12 +44,12 @@
               merkle_tree_hash_function/0,
               content_integrity_protection_method/0,
               chunk_addressing_method/0,
-              ppspp_options/0,
-              ppspp_option/0]).
+              options/0,
+              option/0]).
 
 -opaque root_hash() :: binary().
--opaque ppspp_options() :: {ppspp_options, list({ ppspp_option(), any()})}.
--type ppspp_option() :: supported_version
+-opaque options() :: {options, list({ option(), any()})}.
+-opaque option() :: supported_version
 | minimum_version
 | swarm_id
 | content_integrity_check_method
@@ -85,14 +85,14 @@ chunk_64bit_chunks.
 %% </p>
 %% @end
 
--spec unpack(binary()) -> {ok, ppspp_options(), binary()}.
+-spec unpack(binary()) -> {options(), binary()}.
 %% ppspp_options is an orddict.
 %% [{ok, Options}, Maybe_Messages] = ppspp_options:unpack(Maybe_Options),
 %% unpack ( <<more_options, Rest>>, orddict) -> [{ok, Options}, More_Options].
 unpack(Maybe_Options) ->
     [Options, Maybe_Messages] = unpack(Maybe_Options, orddict:new()),
     Dict_Options = orddict:store(options, Options, orddict:new()),
-    {ok, {ppspp_options, Dict_Options}, Maybe_Messages}.
+    {{options, Dict_Options}, Maybe_Messages}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_SUPPORTED_VERSION,
           Version:?BYTE,
@@ -199,7 +199,7 @@ unpack( <<?PPSPP_SUPPORTED_MESSAGES,
 unpack( <<?PPSPP_END_OPTION, Maybe_Messages/binary>>, Options) ->
     [Options, Maybe_Messages];
 %% if PPPSPP_END_OPTION is not present in the binary, bad things** happen
-unpack( <<>>, _Options) -> {error, ppspp_options_invalid}.
+unpack( <<>>, _Options) -> {error, invalid_ppspp_options}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc get/2 extracts a given parameter from the opaque options
@@ -215,9 +215,9 @@ unpack( <<>>, _Options) -> {error, ppspp_options_invalid}.
 %% <ul>
 %% </p>
 %% @end
--spec get(ppspp_option(), ppspp_options()) -> any().
+-spec get(option(), options()) -> any().
 
-get(Option, {ppspp_options, Options_Dict}) ->
+get(Option, {options, Options_Dict}) ->
     orddict:fetch(Option, Options_Dict).
 
 
@@ -225,7 +225,7 @@ get(Option, {ppspp_options, Options_Dict}) ->
 %% @doc get_chunking_method/1 returns chunking method for the provided swarm
 %% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
 %% @end
--spec get_chunking_method(ppspp_options()) -> any().
+-spec get_chunking_method(options()) -> any().
 
 get_chunking_method(Options) ->
     get(chunk_addressing_method, Options).
@@ -234,7 +234,7 @@ get_chunking_method(Options) ->
 %% @doc content_integrity_check_method/1 returns CIPM for the provided swarm
 %% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
 %% @end
--spec get_content_integrity_check_method(ppspp_options()) -> any().
+-spec get_content_integrity_check_method(options()) -> any().
 
 get_content_integrity_check_method(Options) ->
     get(content_integrity_check_method, Options).
@@ -243,7 +243,7 @@ get_content_integrity_check_method(Options) ->
 %% @doc get_merkle_hash_function/1 returns the hash function for the provided swarm
 %% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
 %% @end
--spec get_merkle_hash_tree_function(ppspp_options()) -> any().
+-spec get_merkle_hash_tree_function(options()) -> any().
 
 get_merkle_hash_tree_function(Options) ->
     get(merkle_hash_tree_function, Options).
@@ -252,7 +252,7 @@ get_merkle_hash_tree_function(Options) ->
 %% @doc get_minimum_version/1 returns the lowest accepted PPSP version for the swarm
 %% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
 %% @end
--spec get_minimum_version(ppspp_options()) -> any().
+-spec get_minimum_version(options()) -> any().
 
 get_minimum_version(Options) ->
     get(minimum_version, Options).
@@ -261,7 +261,7 @@ get_minimum_version(Options) ->
 %% @doc get_swarm_id/1 returns the lowest accepted PPSP version for the swarm
 %% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
 %% @end
--spec get_swarm_id(ppspp_options()) -> root_hash().
+-spec get_swarm_id(options()) -> root_hash().
 
 get_swarm_id(Options) ->
     get(swarm_id, Options).
@@ -271,7 +271,7 @@ get_swarm_id(Options) ->
 %% for the swarm.
 %% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
 %% @end
--spec get_maximum_supported_version(ppspp_options()) -> any().
+-spec get_maximum_supported_version(options()) -> any().
 
 get_maximum_supported_version(Options) ->
     get(supported_version, Options).
@@ -292,10 +292,10 @@ get_maximum_supported_version(Options) ->
 %% </p>
 %% @end
 
--spec use_default_options(root_hash()) -> ppspp_options().
+-spec use_default_options(root_hash()) -> options().
 
 use_default_options(Root_Hash) when is_binary(Root_Hash) ->
-    {ppspp_options,
+    {options,
      orddict:from_list( [{swarm_id, Root_Hash},
                          {chunk_addressing_method, chunking_32bit_chunks},
                          {chunk_size, ?PPSPP_DEFAULT_CHUNK_SIZE},
@@ -314,7 +314,7 @@ use_default_options(Root_Hash) when is_binary(Root_Hash) ->
 %% <ul>
 %% </p>
 %% @end
--spec pack(ppspp_options()) -> binary().
+-spec pack(options()) -> binary().
 
 pack(_) -> <<>>.
 
@@ -323,7 +323,7 @@ pack(_) -> <<>>.
 defaults_test() ->
     Hash ="c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
     Root_Hash = convert:hex_string_to_padded_binary(Hash),
-    Expected = {ppspp_options,
+    Expected = {options,
                 [{chunk_addressing_method,chunking_32bit_chunks},
                  {chunk_size,1024},
                  {content_integrity_check_method,merkle_hash_tree},

@@ -46,11 +46,12 @@
 %% </p>
 %% @end
 
--spec unpack(binary()) -> {ok, handshake(), binary()}.
+-spec unpack(binary()) -> {handshake(), binary()}.
 
-unpack(<<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Options/binary>>) ->
-    {ok, Options, Maybe_Messages} = ppspp_options:unpack(Maybe_Options),
-    {ok, {handshake, {channel, Channel}, Options}, Maybe_Messages}.
+unpack(Message) ->
+    {Channel, Maybe_Options} = ppspp_channel:unpack_with_rest(Message),
+    {Options, Maybe_Messages} = ppspp_options:unpack(Maybe_Options),
+    {{handshake, Channel, Options}, Maybe_Messages}.
 
 -spec pack(ppspp_message:message()) -> binary().
 pack(_Message) -> <<>>.

@@ -67,12 +67,6 @@
 %% </p>
 %% @end
 
-%% message() = [
-%% TODO revisit specs
-%% {options, ppspp_options()},
-%% {message_type, ppspp_message_type()}
-%% ].
-
 -spec unpack(binary()) -> message() | messages().
 
 unpack(Maybe_Messages) when is_binary(Maybe_Messages) ->
@@ -103,20 +97,22 @@ pack_message(_Message) -> <<>>.
 %                                          | {error, any()}.
 % -spec unpack(binary(), messages()) -> {ok, messages()}.
 % %% if the binary is empty, all messages were parsed successfully
+-spec unpack(binary(), message() | messages()) ->
+    messages() | { message(), binary()}.
 unpack( <<>>, Parsed_Messages) ->
-    {ok, lists:reverse(Parsed_Messages)};
+    lists:reverse(Parsed_Messages);
 %% otherwise try to unpack another valid message, peeling off and parsing
 %% recursively the remainder, accumulating valid (parsed) messages.
 %% A failure anywhere in a message ultimately causes the entire datagram
 %% to be rejected.
 unpack(<<Maybe_Message_Type:?PPSPP_MESSAGE_SIZE, Rest/binary>>, Parsed_Messages) ->
     Type = get_message_type(Maybe_Message_Type),
-    {ok, Parsed_Message, Maybe_More_Messages} = unpack(Type, Rest),
+    {Parsed_Message, Maybe_More_Messages} = unpack(Type, Rest),
     unpack(Maybe_More_Messages, [Parsed_Message | Parsed_Messages]);
 
 unpack(handshake, Binary) ->
-    {ok, Handshake, Maybe_Messages} =  ppspp_handshake:unpack(Binary),
-    {ok, Handshake, Maybe_Messages};
+    {Handshake, Maybe_Messages} =  ppspp_handshake:unpack(Binary),
+    {Handshake, Maybe_Messages};
 unpack(_, _Binary) ->
     {error, unsupported_ppspp_message_type}.
 

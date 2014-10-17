@@ -39,7 +39,7 @@
 | {transport, udp}
 | {uri, string()}
 | ppspp_channel:channel().
--opaque datagram() :: {datagram, list(endpoint() | ppspp_messages:messages())}.
+-opaque datagram() :: {datagram, list(endpoint() | ppspp_message:messages())}.
 -export_type([endpoint/0,
               endpoint_option/0,
               datagram/0]).
@@ -84,6 +84,7 @@ handle(_Packet = {udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram}) ->
     Channel = ppspp_channel:unpack_channel(Maybe_Datagram),
     Endpoint = build_endpoint(udp, Socket, Peer_IP_Address, Peer_Port, Channel),
     Datagram = unpack(Maybe_Datagram, Endpoint),
+    ?DEBUG("dgram: got valid datagram ~p~n", [Datagram]),
     % NB usually called from spawned process, so return values are ignored
     handle_datagram(Datagram).
 
@@ -128,7 +129,7 @@ unpack(Raw_Datagram, _Endpoint) ->
     {Channel, Maybe_Messages} = ppspp_channel:unpack_with_rest(Raw_Datagram),
     ?DEBUG("dgram: received on channel ~p~n",
            [ppspp_channel:channel_to_string(Channel)]),
-    {ok, Parsed_Messages} = ppspp_message:unpack(Maybe_Messages),
+    Parsed_Messages = ppspp_message:unpack(Maybe_Messages),
     Parsed_Datagram = orddict:from_list([Channel, {messages, Parsed_Messages}]),
     {datagram, Parsed_Datagram}.
 
