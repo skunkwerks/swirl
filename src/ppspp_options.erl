@@ -48,7 +48,8 @@
               option/0]).
 
 -opaque root_hash() :: binary().
--opaque options() :: {options, list({ option(), any()})}.
+-opaque options() :: {options, options_dict()}.
+-type options_dict() :: list({ option(), any()}).
 -opaque option() :: supported_version
 | minimum_version
 | swarm_id
@@ -66,17 +67,16 @@
 %%  hash_algorithms() = md5 | ripemd160 | sha | sha224 | sha256 | sha384 | sha512
 -opaque merkle_tree_hash_function() :: sha | sha224 | sha256 | sha384 | sha512.
 
--opaque content_integrity_protection_method() :: no_integrity_protection |
-merkle_hash_tree |
-sign_all |
-unified_merkle_hash_tree.
+-opaque content_integrity_protection_method() :: no_integrity_protection
+| merkle_hash_tree
+| sign_all
+| unified_merkle_hash_tree.
 
--opaque chunk_addressing_method() :: chunk_32bit_bins |
-chunk_64bit_bytes |
-chunk_32bit_chunks |
-chunk_64bit_bins |
-chunk_64bit_chunks.
-
+-opaque chunk_addressing_method() :: chunk_32bit_bins
+| chunk_64bit_bytes
+| chunk_32bit_chunks
+| chunk_64bit_bins
+| chunk_64bit_chunks.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc unpack PPPSPP options as encoded in wire format into an orddict
@@ -85,15 +85,13 @@ chunk_64bit_chunks.
 %% </p>
 %% @end
 
--spec unpack(binary()) -> {options(), binary()}.
-%% ppspp_options is an orddict.
-%% [{ok, Options}, Maybe_Messages] = ppspp_options:unpack(Maybe_Options),
-%% unpack ( <<more_options, Rest>>, orddict) -> [{ok, Options}, More_Options].
+-spec unpack(binary()) -> {binary(), options()} | {error, atom()}.
+%% options is an orddict.
 unpack(Maybe_Options) ->
-    [Options, Maybe_Messages] = unpack(Maybe_Options, orddict:new()),
-    Dict_Options = orddict:store(options, Options, orddict:new()),
-    {{options, Dict_Options}, Maybe_Messages}.
+    {Maybe_Messages, Options} = unpack(Maybe_Options, orddict:new()),
+    {Maybe_Messages, {options, Options}}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-spec unpack(binary(), options_dict()) -> { binary(), options_dict()}.
 unpack( <<?PPSPP_SUPPORTED_VERSION,
           Version:?BYTE,
           Maybe_Options/binary >>, Options0) ->
@@ -197,9 +195,9 @@ unpack( <<?PPSPP_SUPPORTED_MESSAGES,
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unpack( <<?PPSPP_END_OPTION, Maybe_Messages/binary>>, Options) ->
-    [Options, Maybe_Messages];
+    {Maybe_Messages, Options};
 %% if PPPSPP_END_OPTION is not present in the binary, bad things** happen
-unpack( <<>>, _Options) -> {error, invalid_ppspp_options}.
+unpack( <<>>, _Options) -> {error, ppspp_invalid_options}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc get/2 extracts a given parameter from the opaque options

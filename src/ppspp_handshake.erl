@@ -50,7 +50,7 @@
 
 unpack(Message) ->
     {Channel, Maybe_Options} = ppspp_channel:unpack_with_rest(Message),
-    {Options, Maybe_Messages} = ppspp_options:unpack(Maybe_Options),
+    {Maybe_Messages, Options} = ppspp_options:unpack(Maybe_Options),
     {{handshake, Channel, Options}, Maybe_Messages}.
 
 -spec pack(ppspp_message:message()) -> binary().
