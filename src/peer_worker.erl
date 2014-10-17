@@ -18,6 +18,7 @@
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
+-spec test() -> term().
 -endif.
 
 %% api
@@ -109,6 +110,7 @@ terminate(Reason, [#state{socket=Socket, port=Port}]) ->
 %% test
 
 -ifdef(TEST).
+-spec start_test() -> term().
 start_test() ->
     {ok, _} = ?MODULE:start_link(?SWIRL_PORT).
 -endif.

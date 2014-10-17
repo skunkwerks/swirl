@@ -22,38 +22,40 @@
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
+-spec test() -> term().
 -endif.
 
 %% api
 -export([bin_to_hex/1,
+         int_to_hex/1,
          bin_to_string/1,
          hex_string_to_padded_binary/1,
-         port_to_atom/1,
-         endpoint_to_string/2,
-         channel_to_string/1]).
+         port_to_atom/1]).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% api
 
+-spec bin_to_hex(binary()) -> string().
 bin_to_hex(Binary) when is_binary(Binary) ->
     lists:flatten([io_lib:format("~2.16.0b",[N]) || <<N>> <= Binary]).
 
+-spec int_to_hex(non_neg_integer()) -> string().
+int_to_hex(Int) when is_integer(Int), Int >=0, Int =< 16#ffffffff ->
+    lists:flatten([io_lib:format("0x~8.16.0b",[Int])]).
+
+-spec bin_to_string(binary()) -> string().
 bin_to_string(Binary) when is_binary(Binary) ->
     lists:flatten(["0x", bin_to_hex(Binary)]).
 
-endpoint_to_string(Peer, Port) ->
-    lists:flatten([[inet_parse:ntoa(Peer)], $:, integer_to_list(Port)]).
-
-channel_to_string(Channel) when is_integer(Channel) ->
-    bin_to_string(<<Channel:?PPSPP_CHANNEL_SIZE>>).
-
+-spec hex_string_to_padded_binary(string()) -> binary().
 hex_string_to_padded_binary(String) when is_list(String) ->
     Bytes_Length = (length(String) + 1) div 2,
     {ok, [Int], []} = io_lib:fread("~16u", String),
     <<Int:Bytes_Length/big-unsigned-integer-unit:8>>.
 
-port_to_atom(Port) when is_integer(Port), Port > 0, Port < 65535 ->
+-spec port_to_atom(inet:port_number()) -> atom().
+port_to_atom(Port) when is_integer(Port), Port >= 0, Port =< 65535 ->
     Port_as_string = lists:flatten("swirl_peer_" ++
                                    io_lib:format("~4.16.0b", [Port])),
     list_to_atom(Port_as_string).

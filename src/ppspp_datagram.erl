@@ -23,70 +23,95 @@
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
+-spec test() -> term().
 -endif.
 
 %% api
--export([handle/2,
-         handle/1,
-         unpack/3,
+-export([handle/1,
+         handle_datagram/1,
+         unpack/2,
          pack/1]).
+
+-opaque endpoint() :: {endpoint, list( endpoint_option())}.
+-opaque endpoint_option() :: {ip, inet:ip_address()}
+| {socket, inet:socket()}
+| {port, inet:port_number()}
+| {transport, udp}
+| {uri, string()}
+| ppspp_channel:channel().
+-opaque datagram() :: {datagram, list(endpoint() | ppspp_message:messages())}.
+-export_type([endpoint/0,
+              endpoint_option/0,
+              datagram/0]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc  helper functions
+%% @end
+-spec peer_to_string(inet:ip_address(), inet:port_number()) -> string().
+
+peer_to_string(Peer, Port) ->
+    lists:flatten([[inet_parse:ntoa(Peer)], $:, integer_to_list(Port)]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc translates raw udp packet into a tidy structure for later use
+%% @spec
+%% @end
+
+-spec build_endpoint(udp, inet:socket(), inet:ip_address(), inet:port_number(),
+                     ppspp_channel:channel()) ->  endpoint().
+
+build_endpoint(udp, Socket, IP, Port, Channel) ->
+    Channel_Name = ppspp_channel:channel_to_string(Channel),
+    Peer_as_String = peer_to_string(IP, Port),
+    Endpoint_as_URI = lists:concat([ Peer_as_String, "#", Channel_Name]),
+    Endpoint = {endpoint, orddict:from_list([{ip, IP},
+                                             Channel,
+                                             {port, Port},
+                                             {uri, Endpoint_as_URI},
+                                             {transport, udp},
+                                             {socket, Socket} ])},
+    ?DEBUG("dgram: received udp from ~s~n", [Endpoint_as_URI]),
+    Endpoint.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc receives datagram from peer_worker, parses & delivers to matching channel
 %% @spec handle_datagram() -> ok
 %% @end
-handle({udp, Socket, Peer, Port, Maybe_Datagram}, State) ->
-    Pretty_Endpoint = convert:endpoint_to_string(Peer, Port),
-    Peer = orddict:from_list([{peer, Peer},
-                              {port, Port},
-                              {endpoint, Pretty_Endpoint},
-                              {transport, udp},
-                              {socket, Socket} ]),
-    ?DEBUG("dgram: received udp from ~s~n", [Pretty_Endpoint]),
-    {ok, Datagram} = unpack(Maybe_Datagram, Peer, State),
-    % NB usually called from spawned process, so return values are ignored
-    handle(Datagram).
+-spec handle({udp, inet:socket(), inet:ip_address(), inet:port_number(),
+              binary()}) -> ok.
 
+handle(_Packet = {udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram}) ->
+    Channel = ppspp_channel:unpack_channel(Maybe_Datagram),
+    Endpoint = build_endpoint(udp, Socket, Peer_IP_Address, Peer_Port, Channel),
+    Datagram = unpack(Maybe_Datagram, Endpoint),
+    ?DEBUG("dgram: got valid datagram ~p~n", [Datagram]),
+    % NB usually called from spawned process, so return values are ignored
+    handle_datagram(Datagram).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% example parsed datagram, containing a single HANDSHAKE message
-% dgram:handle is an orddict containing transport properties, and a list of
-% messages, each of which is a tuple {Message_type, Message_body}:
-% [{channel,0},
-%  {peer,
-%    [{endpoint,"127.0.0.1:54181"},
-%     {peer,{127,0,0,1}},
-%     {port,54181},
-%     {transport,udp}]},
-%  {messages,
-%    [{handshake,
-%       [{channel,1107349116},
-%        {options,
-%          [{ppspp_chunking_method,
-%             ppspp_chunking_32bit_chunks},
-%           {ppspp_content_integrity_check_method,
-%             ppspp_merkle_hash_tree},
-%           {ppspp_merkle_hash_function,ppspp_sha1},
-%           {ppspp_minimum_version,1},
-%           {ppspp_swarm_id,
-%             <<102,161,8,98,186,238,189,255,132,98,231,
-%             69,162,222,24,207,156,225,26,229>>},
-%           {ppspp_version,1}]}]}]}]
+%% @doc Extract PPSPP channel ID from header of datagram
+%% <p>  Each PPSPP datagram contains as the first 4 byes the inbount channel ID.
+%% </p>
+%% @end
 
-handle(Datagram) ->
-    _Transport = orddict:fetch(transport, Datagram),
-    lists:foreach(
-      fun(Message) -> ppspp_message:handle(Message) end,
-      orddict:fetch(messages,Datagram)),
-    {ok, Datagram}.
+-spec handle_datagram(datagram()) -> ok.
+handle_datagram(_Datagram = {datagram, _Dgram_as_Dict}) ->
+    %% handle/1 needs to become handle/2 as the swarm state and inbound channel
+    %% are needed to process the messages correctly.
+    %% This also needs to be moved into ppspp_message module wrt opaque typing.
+    % _Transport = orddict:fetch(transport, Datagram),
+    % lists:foreach(
+    %   fun(Message) -> ppspp_message:handle(Message) end,
+    %   orddict:fetch(messages,Datagram)),
+    ok.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc unpack a UDP packet into a PPSPP datagram using erlang term format
 %% <p>  Deconstruct PPSPP UDP datagram into multiple erlang terms, including
 %% <ul>
-%% <li>orddict for Transport</li>
+%% <li>Endpoint containing opaque information about Transport</li>
 %% <li>list of Messages</li>
-%% <li>orddict for Options, within a handshake message</li>
+%% <li>Opaque orddict for Options, within a handshake message</li>
 %% <ul>
 %% A single datagram MAY contain multiple PPSPP messages; these will be handled
 %% recursively as needed.
@@ -99,14 +124,15 @@ handle(Datagram) ->
 %% {messages, ppspp_messages()}
 %% ].
 
-%%-spec unpack(ppspp_transport(), packet() -> ppspp_datagram()).
-unpack(<<Channel:?PPSPP_CHANNEL_SIZE, Maybe_Messages/binary>>, Peer, State ) ->
-    Channel_Name = convert:channel_to_string(Channel),
-    ?DEBUG("dgram: received on channel ~p~n", [Channel_Name]),
-    {ok, Parsed_Messages} = ppspp_message:unpack(Maybe_Messages),
-    ?DEBUG("dgram: parsed ok on channel ~p~n", [Channel_Name]),
-    Datagram = orddict:store(messages, Parsed_Messages,
-                             orddict:store(channel, Channel, Peer)),
-    {ok, Datagram}.
+-spec unpack(binary(), endpoint()) -> datagram().
+unpack(Raw_Datagram, _Endpoint) ->
+    {Channel, Maybe_Messages} = ppspp_channel:unpack_with_rest(Raw_Datagram),
+    ?DEBUG("dgram: received on channel ~p~n",
+           [ppspp_channel:channel_to_string(Channel)]),
+    Parsed_Messages = ppspp_message:unpack(Maybe_Messages),
+    Parsed_Datagram = orddict:from_list([Channel, {messages, Parsed_Messages}]),
+    {datagram, Parsed_Datagram}.
 
-pack(_) -> ok.
+-spec pack(datagram()) -> binary().
+pack(_Datagram) -> <<>>.
+

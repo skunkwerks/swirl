@@ -17,3 +17,8 @@
 %% <p>description goes here</p>
 %% @end
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-spec test() -> term().
+-endif.
+
