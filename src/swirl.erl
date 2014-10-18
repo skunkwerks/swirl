@@ -91,7 +91,7 @@ stop_peer() ->
     stop_peer(?SWIRL_PORT).
 
 -spec stop_peer(inet:port_number()) -> ok | {error, not_found}.
-stop_peer(Port) when is_integer(Port), Port > 0, Port < 65535 ->
+stop_peer(Port) when is_integer(Port), Port >= 0, Port =< 65535 ->
     Worker_pid = whereis(convert:port_to_atom(Port)),
     supervisor:terminate_child(peer_sup, Worker_pid).
 
