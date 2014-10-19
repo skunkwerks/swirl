@@ -26,57 +26,74 @@
 -spec test() -> term().
 -endif.
 
-%% api
-% -export([unpack/1,
-%          pack/1,
-%          handle/1]).
+% api
+-export([unpack/2,
+         pack/2]).
 
--export_type([addressing_method/0]).
+-export_type([addressing_method/0,
+              spec/0,
+              chunk_range/0,
+              byte_range/0,
+              bin_number/0]).
 
--type addressing_method() :: chunk_32bit_bins
+-type addressing_method() ::
+chunk_32bit_bins
+| chunk_64bit_bins
 | chunk_64bit_bytes
 | chunk_32bit_chunks
-| chunk_64bit_bins
 | chunk_64bit_chunks.
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %% api
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %% @doc unpack a chunk message
-% %% <p>  Deconstruct PPSPP UDP datagram into multiple erlang terms, including
-% %% parsing any additional data within the same segment. Any parsing failure
-% %% is fatal & will propagate back to the attempted datagram unpacking.
-% %% </p>
-% %% @end
+-opaque spec() :: {chunk_spec, chunk_range() | byte_range() | bin_number()}.
+-opaque chunk_range() ::
+{ chunk_32bit_chunks, uint_32bit(), uint_32bit()}
+| { chunk_64bit_chunks, uint_64bit(), uint_64bit()}.
+-opaque byte_range() ::
+{ chunk_64bit_bytes,  uint_64bit(), uint_64bit()}.
+-opaque bin_number() ::
+{ chunk_32bit_bins, uint_32bit()}
+| { chunk_64bit_bins, uint_64bit()}.
 
-% -spec unpack(binary()) -> {chunk(), binary()}.
+-type uint_32bit() :: 0..16#ffffffff.
+-type uint_64bit() :: 0..16#ffffffffffffffff.
 
-% unpack(Message) ->
-%     {Channel, Maybe_Options} = ppspp_channel:unpack_with_rest(Message),
-%     {Maybe_Messages, Options} = ppspp_options:unpack(Maybe_Options),
-%     {{chunk, Channel, Options}, Maybe_Messages}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% api
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc unpack a chunk spec from a message, typically a have message
+%% <p>  Deconstruct PPSPP UDP datagram into multiple erlang terms, including
+%% parsing any additional data within the same segment. Any parsing failure
+%% is fatal & will propagate back to the attempted datagram unpacking.
+%% </p>
+%% @end
 
-% -spec pack(ppspp_message:message()) -> binary().
-% pack(_Message) -> <<>>.
+-spec unpack_uint_32bits(binary()) -> {uint_32bit(), uint_32bit(), binary()}.
+unpack_uint_32bits(<<Uint1:?DWORD, Uint2:?DWORD, Rest/binary>>) ->
+    { Uint1, Uint2, Rest}.
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %%-spec ... handle takes a tuple of {type, message_body} where body is a
-% %%    parsed orddict message and returns either
-% %%    {error, something} or tagged tuple for the unpacked message
-% %%    {ok, reply} where reply is probably an orddict to be sent to the
-% %%    alternate peer.
+-spec unpack_uint_64bits(binary()) -> {uint_64bit(), uint_64bit(), binary()}.
+unpack_uint_64bits(<<Uint1:?QWORD, Uint2:?QWORD, Rest/binary>>) ->
+    { Uint1, Uint2, Rest}.
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% % The payload of the chunk message is a channel ID (see
-% %  Section 3.11) and a sequence of protocol options.  Example options
-% %  are the content integrity protection scheme used and an option to
-% %  specify the swarm identifier.  The complete set of protocol options
-% %  are specified in Section 7.
-% -spec handle(ppspp_message:message()) -> any().
-% handle({chunk, _Body}) ->
-%     {ok, ppspp_message_handler_not_yet_implemented};
+-spec unpack(binary(), addressing_method()) -> {spec(), binary()}.
+%% bin numbers use a single field
+unpack(<<Bin_Number:?DWORD, Rest/binary>>, chunk_32bit_bins) ->
+    {{chunk_spec, {chunk_32bit_bins, Bin_Number}}, Rest};
+unpack(<<Bin_Number:?QWORD, Rest/binary>>, chunk_64bit_bins) ->
+    {{chunk_spec, {chunk_64bit_bins, Bin_Number}}, Rest};
+% others have a start and end range
+unpack(Range, chunk_64bit_bytes) ->
+    {Start, End, Rest} = unpack_uint_64bits(Range),
+    {{chunk_spec, {chunk_64bit_bytes, Start, End}}, Rest};
+%% now the small and large chunk schemes
+unpack(Range, chunk_64bit_chunks) ->
+    {Start, End, Rest} = unpack_uint_64bits(Range),
+    {{chunk_spec, {chunk_64bit_chunks, Start, End}}, Rest};
+unpack(Range, chunk_32bit_chunks) ->
+    {Start, End, Rest} = unpack_uint_32bits(Range),
+    {{chunk_spec, {chunk_32bit_chunks, Start, End}}, Rest}.
 
-% handle(Message) ->
-%     ?DEBUG("message: handler not yet implemented ~p~n", [Message]),
-%     {ok, ppspp_message_handler_not_yet_implemented}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% TODO pack
+-spec pack(spec(), addressing_method()) -> binary().
+pack(_Chunk_Spec, _Addressing_Method) -> <<>>.
 
