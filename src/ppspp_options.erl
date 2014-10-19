@@ -43,7 +43,6 @@
 -export_type([root_hash/0,
               merkle_tree_hash_function/0,
               content_integrity_protection_method/0,
-              chunk_addressing_method/0,
               options/0,
               option/0]).
 
@@ -56,7 +55,7 @@
 | content_integrity_check_method
 | merkle_hash_tree_function
 | live_signature_algorithm
-| chunk_addressing_method
+| ppspp_chunk:addressing_method()
 | live_discard_window
 | supported_messages
 | end_option
@@ -71,12 +70,6 @@
 | merkle_hash_tree
 | sign_all
 | unified_merkle_hash_tree.
-
--opaque chunk_addressing_method() :: chunk_32bit_bins
-| chunk_64bit_bytes
-| chunk_32bit_chunks
-| chunk_64bit_bins
-| chunk_64bit_chunks.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc unpack PPPSPP options as encoded in wire format into an orddict
