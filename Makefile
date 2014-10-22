@@ -1,4 +1,4 @@
-all: distclean compile
+all: deps distclean compile
 
 deps:
 	rebar get-deps update-deps compile
