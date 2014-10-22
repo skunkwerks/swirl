@@ -29,7 +29,6 @@
 %% api
 -export([unpack/1,
          pack/1,
-         get/2,
          get_chunk_addressing_method/1,
          get_content_integrity_check_method/1,
          get_merkle_hash_tree_function/1,
@@ -258,6 +257,7 @@ get_minimum_version(Options) ->
 get_swarm_id(Options) ->
     get(swarm_id, Options).
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc get_maximum_supported_/1 returns the highest accepted PPSP version
 %% for the swarm.
@@ -271,7 +271,7 @@ get_maximum_supported_version(Options) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc use_default_options/1 provides the options set within the PPSP draft
 %% <p> Provides a clean interface for other modules to retrieve PPSP options.
-%% Takes 1 parameter, a binary representing the root hash.
+%% Takes 1 parameter, a binary representing the root hash, or a string in hex.
 %% The returned options and values are:
 %% <ul>
 %% <li>swarm_id: Root_Hash</li>
@@ -284,8 +284,9 @@ get_maximum_supported_version(Options) ->
 %% </p>
 %% @end
 
--spec use_default_options(root_hash()) -> options().
-
+-spec use_default_options(string() | root_hash()) -> options().
+use_default_options(Hex_String) when is_list(Hex_String) ->
+    use_default_options(convert:hex_string_to_padded_binary(Hex_String));
 use_default_options(Root_Hash) when is_binary(Root_Hash) ->
     {options,
      orddict:from_list( [{swarm_id, Root_Hash},

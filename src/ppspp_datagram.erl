@@ -27,7 +27,8 @@
 -endif.
 
 %% api
--export([handle/2,
+-export([handle/1,
+         handle/2,
          handle_datagram/2,
          unpack/3,
          pack/1]).
@@ -77,6 +78,16 @@ build_endpoint(udp, Socket, IP, Port, Channel) ->
 %% @doc receives datagram from peer_worker, parses & delivers to matching channel
 %% @spec handle_datagram() -> ok
 %% @end
+
+%% TODO handle/1 is simply a place holder so we can continue on parser while
+%% integrating a better peer_worker. This code must be purged!
+-spec handle({udp, inet:socket(), inet:ip_address(), inet:port_number(),
+              binary()}) -> ok.
+handle(Packet) ->
+    Root_Hash = "c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
+    handle(Packet, ppspp_options:use_default_options(Root_Hash)),
+    ok.
+
 -spec handle({udp, inet:socket(), inet:ip_address(), inet:port_number(),
               binary()}, ppspp_options:options()) -> ok.
 
