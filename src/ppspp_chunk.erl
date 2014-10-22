@@ -66,13 +66,7 @@ chunk_32bit_bins
 %% </p>
 %% @end
 
--spec unpack_uint_32bits(binary()) -> {uint_32bit(), uint_32bit(), binary()}.
-unpack_uint_32bits(<<Uint1:?DWORD, Uint2:?DWORD, Rest/binary>>) ->
-    { Uint1, Uint2, Rest}.
-
--spec unpack_uint_64bits(binary()) -> {uint_64bit(), uint_64bit(), binary()}.
-unpack_uint_64bits(<<Uint1:?QWORD, Uint2:?QWORD, Rest/binary>>) ->
-    { Uint1, Uint2, Rest}.
+%% TODO add uint32/64 0x7fffffff / 0xffffffff indicators for all/no chunks
 
 -spec unpack(addressing_method(), binary()) -> {spec(), binary()}.
 %% bin numbers use a single field
@@ -97,3 +91,13 @@ unpack(chunk_32bit_chunks, Range) ->
 -spec pack(spec(), addressing_method()) -> binary().
 pack(_Chunk_Spec, _Addressing_Method) -> <<>>.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% internal
+
+-spec unpack_uint_32bits(binary()) -> {uint_32bit(), uint_32bit(), binary()}.
+unpack_uint_32bits(<<Uint1:?DWORD, Uint2:?DWORD, Rest/binary>>) ->
+    { Uint1, Uint2, Rest}.
+
+-spec unpack_uint_64bits(binary()) -> {uint_64bit(), uint_64bit(), binary()}.
+unpack_uint_64bits(<<Uint1:?QWORD, Uint2:?QWORD, Rest/binary>>) ->
+    { Uint1, Uint2, Rest}.
