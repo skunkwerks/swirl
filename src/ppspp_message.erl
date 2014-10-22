@@ -27,7 +27,7 @@
 -endif.
 
 %% api
--export([unpack/1,
+-export([unpack/2,
          pack/1,
          get_message_type/1,
          handle/1]).
@@ -67,10 +67,10 @@
 %% </p>
 %% @end
 
--spec unpack(binary()) -> message() | messages().
+-spec unpack(binary(), ppspp_options:options()) -> message() | messages().
 
-unpack(Maybe_Messages) when is_binary(Maybe_Messages) ->
-    unpack(Maybe_Messages, []).
+unpack(Maybe_Messages, Swarm_Options) when is_binary(Maybe_Messages) ->
+    unpack3(Maybe_Messages, [], Swarm_Options).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -spec pack(messages()) -> {ok, iolist()}.
@@ -93,27 +93,34 @@ pack([], Messages_as_iolist) -> lists:reverse(Messages_as_iolist).
 pack_message(_Message) -> <<>>.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% -spec unpack(message_type(), binary()) ->{ok, message(), binary()}
-%                                          | {error, any()}.
-% -spec unpack(binary(), messages()) -> {ok, messages()}.
 % %% if the binary is empty, all messages were parsed successfully
--spec unpack(binary(), message() | messages()) ->
+-spec unpack3(binary(), message() | messages(), ppspp_options:options()) ->
     messages() | { message(), binary()}.
-unpack( <<>>, Parsed_Messages) ->
+unpack3( <<>>, Parsed_Messages, _) ->
     lists:reverse(Parsed_Messages);
 %% otherwise try to unpack another valid message, peeling off and parsing
 %% recursively the remainder, accumulating valid (parsed) messages.
 %% A failure anywhere in a message ultimately causes the entire datagram
 %% to be rejected.
-unpack(<<Maybe_Message_Type:?PPSPP_MESSAGE_SIZE, Rest/binary>>, Parsed_Messages) ->
+unpack3(<<Maybe_Message_Type:?PPSPP_MESSAGE_SIZE, Rest/binary>>,
+        Parsed_Messages, Swarm_Options) ->
     Type = get_message_type(Maybe_Message_Type),
-    {Parsed_Message, Maybe_More_Messages} = unpack(Type, Rest),
-    unpack(Maybe_More_Messages, [Parsed_Message | Parsed_Messages]);
-
-unpack(handshake, Binary) ->
+    {Parsed_Message, Maybe_More_Messages} = route_to(Type, Rest, Swarm_Options),
+    unpack3(Maybe_More_Messages,
+            [Parsed_Message | Parsed_Messages],
+            Swarm_Options).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% route to specific parser per message type, with swarm options if required
+-spec route_to(message_type(), binary(), ppspp_options:options()) -> 
+    {message(), binary()} | {error, atom()}.
+route_to(handshake, Binary, _) ->
     {Handshake, Maybe_Messages} =  ppspp_handshake:unpack(Binary),
     {Handshake, Maybe_Messages};
-unpack(_, _Binary) ->
+route_to(have, Binary, Swarm_Options) ->
+    Chunk_Method = ppspp_options:get_chunk_addressing_method(Swarm_Options),
+    {Have, Maybe_Messages} =  ppspp_have:unpack(Chunk_Method, Binary),
+    {Have, Maybe_Messages};
+route_to(_, _, _) ->
     {error, unsupported_ppspp_message_type}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

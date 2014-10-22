@@ -28,10 +28,13 @@
 -spec all() -> [atom()].
 all() -> [handshake].
 
+-spec handshake(any()) -> true.
 handshake(_Config) ->
-    ct:comment("ensure handshake parsing of wire format matches erlang term based format"),
+    ct:comment("ensure handshake wire format matches erlang term based format"),
     {ok, [Traces]} = file:consult("../../test/data/handshakes.trace"),
+    Root_Hash = <<200,152,0,191,200,46,208,30,214,227,191,213,64,140,81,
+                  39,68,145,247,212>>,
     Test = fun({Raw, Expected}) ->
-        Expected = ppspp_message:unpack(Raw) end,
+                   Expected = ppspp_message:unpack(Raw, Root_Hash) end,
     lists:map(Test, Traces).
 
