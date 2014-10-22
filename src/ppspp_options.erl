@@ -30,7 +30,7 @@
 -export([unpack/1,
          pack/1,
          get/2,
-         get_chunking_method/1,
+         get_chunk_addressing_method/1,
          get_content_integrity_check_method/1,
          get_merkle_hash_tree_function/1,
          get_minimum_version/1,
@@ -139,6 +139,7 @@ unpack( <<?PPSPP_LIVE_SIGNATURE_ALGORITHM,
     Options = orddict:store(merkle_hash_tree_algorithm, Algorithm, Options0),
     unpack(Maybe_Options, Options);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% TODO this should probably move to ppspp_chunk.erl eventually
 unpack( <<?PPSPP_CHUNK_ADDRESSING_METHOD,
           Maybe_Method:?BYTE,
           Maybe_Options/binary >>, Options0) ->
@@ -213,12 +214,12 @@ get(Option, {options, Options_Dict}) ->
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc get_chunking_method/1 returns chunking method for the provided swarm
+%% @doc get_chunk_addressing_method/1 returns chunking method for the swarm
 %% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
 %% @end
--spec get_chunking_method(options()) -> any().
+-spec get_chunk_addressing_method(options()) -> any().
 
-get_chunking_method(Options) ->
+get_chunk_addressing_method(Options) ->
     get(chunk_addressing_method, Options).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
