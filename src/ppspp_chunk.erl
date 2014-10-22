@@ -71,20 +71,20 @@ chunk_32bit_bins
 -spec unpack(addressing_method(), binary()) -> {spec(), binary()}.
 %% bin numbers use a single field
 unpack(chunk_32bit_bins, <<Bin_Number:?DWORD, Rest/binary>>) ->
-    {chunk_spec, {chunk_32bit_bins, Bin_Number}, Rest};
+    {{chunk_spec, {chunk_32bit_bins, Bin_Number}}, Rest};
 unpack(chunk_64bit_bins, <<Bin_Number:?QWORD, Rest/binary>>) ->
-    {chunk_spec, {chunk_64bit_bins, Bin_Number}, Rest};
+    {{chunk_spec, {chunk_64bit_bins, Bin_Number}}, Rest};
 % others have a start and end range
 unpack(chunk_64bit_bytes, Range) ->
     {Start, End, Rest} = unpack_uint_64bits(Range),
-    {chunk_spec, {chunk_64bit_bytes, Start, End}, Rest};
+    {{chunk_spec, {chunk_64bit_bytes, Start, End}}, Rest};
 %% now the small and large chunk schemes
 unpack(chunk_64bit_chunks, Range) ->
     {Start, End, Rest} = unpack_uint_64bits(Range),
-    {chunk_spec, {chunk_64bit_chunks, Start, End}, Rest};
+    {{chunk_spec, {chunk_64bit_chunks, Start, End}}, Rest};
 unpack(chunk_32bit_chunks, Range) ->
     {Start, End, Rest} = unpack_uint_32bits(Range),
-    {chunk_spec, {chunk_32bit_chunks, Start, End}, Rest}.
+    {{chunk_spec, {chunk_32bit_chunks, Start, End}}, Rest}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% TODO pack
