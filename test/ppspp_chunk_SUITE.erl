@@ -18,23 +18,20 @@
 %% functions for encoding and decoding messages.</p>
 %% @end
 
--module(ppspp_message_SUITE).
+-module(ppspp_chunk_SUITE).
 -include("swirl.hrl").
 -include_lib("common_test/include/ct.hrl").
 
 -export([all/0]).
--export([handshake/1]).
+-export([chunk/1]).
 
 -spec all() -> [atom()].
-all() -> [handshake].
+all() -> [chunk].
 
--spec handshake(any()) -> true.
-handshake(_Config) ->
-    ct:comment("ensure handshake wire format matches erlang term based format"),
-    {ok, [Traces]} = file:consult("../../test/data/handshakes.trace"),
-    Root_Hash = <<200,152,0,191,200,46,208,30,214,227,191,213,64,140,81,
-                  39,68,145,247,212>>,
-    Test = fun({Raw, Expected}) ->
-                   Expected = ppspp_message:unpack(Raw, Root_Hash) end,
+-spec chunk(any()) -> [any()].
+chunk(_Config) ->
+    ct:comment("ensure chunk parsing of wire format matches erlang term based format"),
+    {ok, [Traces]} = file:consult("../../test/data/chunks.trace"),
+    Test = fun({{Spec, Raw}, Expected}) ->
+        Expected = ppspp_chunk:unpack(Spec, Raw) end,
     lists:map(Test, Traces).
-

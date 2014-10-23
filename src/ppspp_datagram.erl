@@ -28,8 +28,9 @@
 
 %% api
 -export([handle/1,
-         handle_datagram/1,
-         unpack/2,
+         handle/2,
+         handle_datagram/2,
+         unpack/3,
          pack/1]).
 
 -opaque endpoint() :: {endpoint, list( endpoint_option())}.
@@ -77,16 +78,27 @@ build_endpoint(udp, Socket, IP, Port, Channel) ->
 %% @doc receives datagram from peer_worker, parses & delivers to matching channel
 %% @spec handle_datagram() -> ok
 %% @end
+
+%% TODO handle/1 is simply a place holder so we can continue on parser while
+%% integrating a better peer_worker. This code must be purged!
 -spec handle({udp, inet:socket(), inet:ip_address(), inet:port_number(),
               binary()}) -> ok.
+handle(Packet) ->
+    Root_Hash = "c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
+    handle(Packet, ppspp_options:use_default_options(Root_Hash)),
+    ok.
 
-handle(_Packet = {udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram}) ->
+-spec handle({udp, inet:socket(), inet:ip_address(), inet:port_number(),
+              binary()}, ppspp_options:options()) -> ok.
+
+handle(_Packet = {udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram},
+       Swarm_Options) ->
     Channel = ppspp_channel:unpack_channel(Maybe_Datagram),
     Endpoint = build_endpoint(udp, Socket, Peer_IP_Address, Peer_Port, Channel),
-    Datagram = unpack(Maybe_Datagram, Endpoint),
+    Datagram = unpack(Maybe_Datagram, Endpoint, Swarm_Options),
     ?DEBUG("dgram: got valid datagram ~p~n", [Datagram]),
     % NB usually called from spawned process, so return values are ignored
-    handle_datagram(Datagram).
+    handle_datagram(Datagram, Swarm_Options).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Extract PPSPP channel ID from header of datagram
@@ -94,8 +106,8 @@ handle(_Packet = {udp, Socket, Peer_IP_Address, Peer_Port, Maybe_Datagram}) ->
 %% </p>
 %% @end
 
--spec handle_datagram(datagram()) -> ok.
-handle_datagram(_Datagram = {datagram, _Dgram_as_Dict}) ->
+-spec handle_datagram(datagram(), ppspp_options:options()) -> ok.
+handle_datagram(_Datagram = {datagram, _Dgram_as_Dict}, _Swarm_Options) ->
     %% handle/1 needs to become handle/2 as the swarm state and inbound channel
     %% are needed to process the messages correctly.
     %% This also needs to be moved into ppspp_message module wrt opaque typing.
@@ -124,12 +136,12 @@ handle_datagram(_Datagram = {datagram, _Dgram_as_Dict}) ->
 %% {messages, ppspp_messages()}
 %% ].
 
--spec unpack(binary(), endpoint()) -> datagram().
-unpack(Raw_Datagram, _Endpoint) ->
+-spec unpack(binary(), endpoint(), ppspp_options:options()) -> datagram().
+unpack(Raw_Datagram, _Endpoint, Swarm_Options) ->
     {Channel, Maybe_Messages} = ppspp_channel:unpack_with_rest(Raw_Datagram),
     ?DEBUG("dgram: received on channel ~p~n",
            [ppspp_channel:channel_to_string(Channel)]),
-    Parsed_Messages = ppspp_message:unpack(Maybe_Messages),
+    Parsed_Messages = ppspp_message:unpack(Maybe_Messages, Swarm_Options),
     Parsed_Datagram = orddict:from_list([Channel, {messages, Parsed_Messages}]),
     {datagram, Parsed_Datagram}.
 

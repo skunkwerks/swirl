@@ -18,23 +18,22 @@
 %% functions for encoding and decoding messages.</p>
 %% @end
 
--module(ppspp_message_SUITE).
+-module(ppspp_have_SUITE).
 -include("swirl.hrl").
 -include_lib("common_test/include/ct.hrl").
 
 -export([all/0]).
--export([handshake/1]).
+-export([have/1]).
 
 -spec all() -> [atom()].
-all() -> [handshake].
+all() -> [have].
 
--spec handshake(any()) -> true.
-handshake(_Config) ->
-    ct:comment("ensure handshake wire format matches erlang term based format"),
-    {ok, [Traces]} = file:consult("../../test/data/handshakes.trace"),
-    Root_Hash = <<200,152,0,191,200,46,208,30,214,227,191,213,64,140,81,
-                  39,68,145,247,212>>,
-    Test = fun({Raw, Expected}) ->
-                   Expected = ppspp_message:unpack(Raw, Root_Hash) end,
-    lists:map(Test, Traces).
-
+-spec have(any()) -> [any()].
+have(_Config) ->
+    ct:comment("have: ensure parsing have() does not consume additional data"),
+    %% have() is a thin wrapper around chunk handling
+    Method = chunk_32bit_chunks,
+    Random = crypto:strong_rand_bytes(10),
+    Chunks = <<15:64, Random/binary>>,
+    Expected = {{have,{chunk_spec,{chunk_32bit_chunks,0,15}}}, Random},
+    Expected = ppspp_have:unpack(Method, Chunks).
