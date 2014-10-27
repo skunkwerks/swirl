@@ -32,13 +32,14 @@ all() -> [start_peer,stop_peer].
 -spec start_peer(any()) -> true.
 start_peer(_Config) ->
     swirl:start(),
-    {ok, Worker} = swirl:start_peer(0),
+    Swarm_Options = ppspp_options:use_default_options(),
+    {ok, Worker} = swirl:start_peer(0, Swarm_Options),
     timer:sleep(100),
     true = erlang:is_process_alive(Worker).
 
 -spec stop_peer(any()) -> false.
 stop_peer(_Config) ->
-    Worker = whereis(convert:port_to_atom(0)),
+    Worker = gproc:lookup_local_name({peer_worker, 0}),
     true = erlang:is_process_alive(Worker),
     swirl:stop_peer(0),
     timer:sleep(100),
