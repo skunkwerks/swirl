@@ -22,8 +22,7 @@
 -endif.
 
 %% api
--export([start_link/1,
-         start_link/2,
+-export([start_link/2,
          stop/1]).
 
 %% callbacks
@@ -42,34 +41,37 @@
 %% api
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc start the server
-
--spec start_link(inet:port_number()) -> {error,_} | {ok,pid()}.
-start_link(Port) when is_integer(Port) ->
-    start_link(Port, convert:port_to_atom(Port)).
-
--spec start_link(inet:port_number(),atom()) -> {error,_} | {ok,pid()}.
-start_link(Port, Name) when is_atom(Name), is_integer(Port) ->
-    gen_server:start_link({local, Name}, ?MODULE, [Port], []).
+%% @doc start the server with a port number, and ppspp options which includes
+%% the root hash and chunk addressing specification. These are required during
+%% subsequent packet parsing, even if the peer supports multiple swarms.
+%% If start_link/2 is called with a root hash, the default ppspp options are
+%% assumed.
+-spec start_link(inet:port_number(), ppspp_options:options()) ->
+    ignore | {error,_} | {ok,pid()}.
+start_link(Port, Swarm_Options) when is_integer(Port) ->
+    Registration = {via, gproc, {n, l, {?MODULE, Port}}},
+    gen_server:start_link(Registration, ?MODULE,
+                          [Port, Swarm_Options], []).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Stops the server.
 
 -spec stop(inet:port_number()) -> ok.
 stop(Port) ->
-    gen_server:call(convert:port_to_atom(Port), stop).
+    gen_server:call(gproc:lookup_local_name({?MODULE, Port}), stop).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks
 
 -spec init(nonempty_string()) -> {ok,[state(), ...]}.
-init([Port]) ->
+init([Port, Swarm_Options]) ->
     process_flag(trap_exit, true),
     {ok, Socket} = gen_udp:open(Port,  [binary,
                                         {reuseaddr, true},
                                         {active, true} ]),
-    ?INFO("peer: ~p listening on udp:~p~n", [self(), Port]),
-    {ok, [#state{port = Port, socket = Socket}] }.
+    ?INFO("peer: ~p listening on udp:~p~n  options: ~p~n",
+          [self(), Port, Swarm_Options]),
+    {ok, [#state{port = Port, socket = Socket, options= Swarm_Options}] }.
 
 -spec handle_call(_,_,_) ->
     {stop,{error,{unknown_call,_}},_}.
@@ -113,5 +115,7 @@ terminate(Reason, [#state{socket=Socket, port=Port}]) ->
 -ifdef(TEST).
 -spec start_test() -> term().
 start_test() ->
-    {ok, _} = ?MODULE:start_link(?SWIRL_PORT).
+    Root_Hash = "c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
+    Swarm_Options = ppspp_options:use_default_options(Root_Hash),
+    {ok, _} = ?MODULE:start_link(?SWIRL_PORT, Swarm_Options).
 -endif.
