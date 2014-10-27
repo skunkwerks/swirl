@@ -104,6 +104,7 @@ code_change(_OldVsn, State, _Extra) ->
 
 -spec terminate(_,[state(), ...]) -> ok.
 terminate(Reason, [#state{socket=Socket, port=Port}]) ->
+    gproc:goodbye(),
     gen_udp:close(Socket),
     {memory, Bytes} = erlang:process_info(self(), memory),
     ?INFO("peer: ~p terminating port ~p, using ~p bytes, due to reason: ~p~n",
@@ -118,4 +119,8 @@ start_test() ->
     Root_Hash = "c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
     Swarm_Options = ppspp_options:use_default_options(Root_Hash),
     {ok, _} = ?MODULE:start_link(?SWIRL_PORT, Swarm_Options).
+
+-spec stop_test() -> term().
+stop_test() ->
+    {ok, _} = ?MODULE:stop(?SWIRL_PORT).
 -endif.
