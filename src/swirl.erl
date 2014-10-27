@@ -29,10 +29,11 @@
          quit/0,
          start_peer/0,
          start_peer/1,
-         start_peers/2,
+         start_peer/2,
+         start_pool/2,
          stop_peer/0,
          stop_peer/1,
-         stop_peers/2,
+         stop_pool/2,
          start/0,
          stop/0]).
 
@@ -61,46 +62,61 @@ quit() ->
     _ = stop(),
     init:stop().
 
-%% @doc start a PPSPP listener (peer) on a given port, or the default port.
+%% @doc start a PPSPP listener (peer) on a given port, or the default port,
+%% using the supplied hash and default PPSPP swarm options, or no hash at all
+%% for an inert peer that can subsequently be controlled by multiple swarms.
 %% @end
+
+%% swarm_options is quite happy with an empty binary for a root hash,
+%% however it will not be useful until a usable root hash is added by a swarm
+%% manager.
 -spec start_peer() -> {ok, pid()} | {error,_}.
 start_peer() ->
-    start_peer(?SWIRL_PORT).
+    start_peer(?SWIRL_PORT, ppspp_options:use_default_options()).
 
--spec start_peer(inet:port_number()) -> {ok, pid()} | {error,_}.
-start_peer(Port) when is_integer(Port), Port >= 0, Port =< 65535 ->
-    supervisor:start_child(peer_sup, [Port]).
+%% start_peer can be handed a root hash and assumes default options.
+-spec start_peer(string() | ppspp_options:root_hash()) ->
+    {ok, pid()} | {error,_}.
+start_peer(Root_Hash) ->
+    Swarm_Options = ppspp_options:use_default_options(Root_Hash),
+    start_peer(?SWIRL_PORT, Swarm_Options).
+
+-spec start_peer(inet:port_number(), ppspp_options:options()) ->
+    {ok, pid()} | {error,_}.
+start_peer(Port, Swarm_Options) when is_integer(Port), Port >= 0, Port =< 65535 ->
+    supervisor:start_child(peer_sup, [Port, Swarm_Options]).
 
 %% @doc start multiple PPSPP listeners (peers) quickly on a given range of
 %% ports. Note there is no guarantee of success nor error checking but it
 %% looks great for demos.
 %% @end
--spec start_peers(inet:port_number(), inet:port_number()) ->
+-spec start_pool(inet:port_number(), inet:port_number()) ->
     [ {{ok, pid()}, inet:port_number() | {error,_}}].
-start_peers(First, Last) when is_integer(First), is_integer(Last), First < Last  ->
+start_pool(First, Last) when is_integer(First), is_integer(Last), First < Last  ->
     Ports = lists:seq(First, Last),
+    Swarm_Options = ppspp_options:use_default_options(),
     lists:map(fun(Port) ->
-                      {start_peer(Port), Port}
+                      {start_peer(Port, Swarm_Options), Port}
               end,
               Ports).
 
 %% @doc stop a PPSPP peer on a given port, or the default port.
 %% @end
--spec stop_peer() -> ok | {error, not_found}.
+-spec stop_peer() -> ok | {error, ppspp_peer_worker_not_found}.
 stop_peer() ->
     stop_peer(?SWIRL_PORT).
 
--spec stop_peer(inet:port_number()) -> ok | {error, not_found}.
+-spec stop_peer(inet:port_number()) -> ok | {error, ppspp_peer_worker_not_found}.
 stop_peer(Port) when is_integer(Port), Port >= 0, Port =< 65535 ->
-    Worker_pid = whereis(convert:port_to_atom(Port)),
-    supervisor:terminate_child(peer_sup, Worker_pid).
+    Worker = gproc:lookup_local_name({peer_worker, Port}),
+    supervisor:terminate_child(peer_sup, Worker).
 
 
 %% @doc stop multiple PPSPP peers on a given range of ports.
 %% @end
--spec stop_peers(inet:port_number(), inet:port_number()) ->
+-spec stop_pool(inet:port_number(), inet:port_number()) ->
     [{ok | {error, _}, inet:port_number()}].
-stop_peers(First, Last) when is_integer(First), is_integer(Last), First < Last  ->
+stop_pool(First, Last) when is_integer(First), is_integer(Last), First < Last  ->
     Ports = lists:seq(First, Last),
     lists:map(fun(Port) ->
                       {stop_peer(Port), Port} end,
@@ -114,18 +130,21 @@ help() ->
     io:format("~s: online help~n", [?SWIRL_APP]),
     Help =["use any of these commands, prefixed by `swirl:` to run:",
            "",
-           "help().                   these help notes",
-           "start().                  starts the swirl application, but no peers or swarms",
-           "stop().                   stops the swirl application, active peers and swarms",
-           "start_peer().             starts a single peer on the default port",
-           "start_peer(Port).         starts a single peer on the given port, e.g. 7777",
-           "start_peers(First, Last). starts peers on consecutive ports from First to Last",
-           "stop_peer().              stops a single peer on the default port",
-           "stop_peer(Port).          stops a single peer on the given port, e.g. 7777",
-           "stop_peers(First, Last).  stops peers on consecutive ports from First to Last",
-           "quit().                   terminates *immediately* the entire BEAM vm",
+           "help().                    these help notes",
+           "start().                   starts the swirl application, but no peers or swarms",
+           "stop().                    stops the swirl application, active peers and swarms",
+           "start_peer().              starts a peer with default port & options",
+           "start_peer(Hash).          starts a peer with defaults and given hash",
+           "start_pool(First, Last).   starts peers on consecutive ports from First to Last",
+           "start_peer(Port, Options). starts a peer with supplied port and options",
+           "stop_peer().               stops a single peer on the default port",
+           "stop_peer(Port).           stops a single peer on the given port",
+           "stop_pool(First, Last).    stops peers on consecutive ports from First to Last",
+           "quit().                    terminates *immediately* the entire BEAM vm",
+           "", "",
+           "e.g. swirl:start_peer(\"c89800bfc82ed01ed6e3bfd5408c51274491f7d4\").",
            "",
-           "use ^c to exit, or type `swirl:quit().`",
+           "use ^c twice to exit, or type `swirl:quit().` for a graceful shutdown.",
            ""],
 
     lists:foreach(fun(Line) ->
@@ -146,6 +165,6 @@ main(_) ->
 -spec peer_random_port_test() -> {ok, pid()}.
 peer_random_port_test() ->
     start(),
-    {ok, start_peer(0)}.
+    {ok, start_peer(0, ppspp_options:use_default_options())}.
 -endif.
 

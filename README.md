@@ -85,51 +85,59 @@ erl -pa ./ebin -I ./include -s crypto -smp \
 		+K true +A 16 \
 		-s swirl -s swirl help
 
-Erlang/OTP 17 [erts-6.0] [source] [64-bit] [smp:8:8] [async-threads:16] [hipe] [kernel-poll:true] [dtrace]
-
-Eshell V6.0  (abort with ^G)
+Erlang/OTP 17 [erts-6.2] [source] [64-bit] [smp:4:4] [ds:4:4:10] [async-threads:64] [hipe] [kernel-poll:true] [dtrace]
+Eshell V6.2  (abort with ^G)
 (swirl@akai)1>
 
-=INFO REPORT==== 28-Feb-2014::12:23:29 ===
-swirl: protocol d-08
+=INFO REPORT==== 27-Oct-2014::23:34:28 ===
+swirl: protocol d-10
 
-=INFO REPORT==== 28-Feb-2014::12:23:29 ===
-swirl: version #f87b4e4
+=INFO REPORT==== 27-Oct-2014::23:34:28 ===
+swirl: version #4e775b9
 swirl: online help
 use any of these commands, prefixed by `swirl:` to run:
 
-help().                   these help notes
-start().                  starts the swirl application, but no peers or swarms
-stop().                   stops the swirl application, active peers and swarms
-start_peer().             starts a single peer on the default port
-start_peer(Port).         starts a single peer on the given port, e.g. 7777
-start_peers(First, Last). starts peers on consecutive ports from First to Last
-stop_peer().              stops a single peer on the default port
-stop_peer(Port).          stops a single peer on the given port, e.g. 7777
-stop_peers(First, Last).  stops peers on consecutive ports from First to Last
-quit().                   terminates *immediately* the entire BEAM vm
+ help().                    these help notes
+ start().                   starts the swirl application, but no peers or swarms
+ stop().                    stops the swirl application, active peers and swarms
+ start_peer().              starts a peer with default port & options
+ start_peer(Hash).          starts a peer with defaults and given hash
+ start_pool(First, Last).   starts peers on consecutive ports from First to Last
+ start_peer(Port, Options). starts a peer with supplied port and options
+ stop_peer().               stops a single peer on the default port
+ stop_peer(Port).           stops a single peer on the given port
+ stop_pool(First, Last).    stops peers on consecutive ports from First to Last
+ quit().                    terminates *immediately* the entire BEAM vm
 
-use ^c to exit, or type `swirl:quit().`
 
+ e.g. swirl:start_peer("c89800bfc82ed01ed6e3bfd5408c51274491f7d4").
+
+ use ^c twice to exit, or type `swirl:quit().` for a graceful shutdown.
 
 (swirl@akai)1> swirl:start_peer().
 
-=INFO REPORT==== 28-Feb-2014::12:23:40 ===
-peer: <0.50.0> listening on udp:7777
-{ok,<0.50.0>}
+=INFO REPORT==== 27-Oct-2014::23:34:56 ===
+peer: <0.55.0> listening on udp:7777
+  options: {options,[{chunk_addressing_method,chunking_32bit_chunks},
+                     {chunk_size,1024},
+                     {content_integrity_check_method,merkle_hash_tree},
+                     {merkle_hash_tree_function,sha},
+                     {minimum_version,1},
+                     {swarm_id,<<>>},
+                     {version,1}]}
+{ok,<0.55.0>}
 
 (swirl@akai)2> swirl:quit().
 
-=INFO REPORT==== 28-Feb-2014::12:23:49 ===
-peer: <0.50.0> terminating port 7777, using 2856 bytes, due to reason: shutdown
+=INFO REPORT==== 27-Oct-2014::23:35:09 ===
+peer: <0.55.0> terminating port 7777, using 5936 bytes, due to reason: shutdown
 
-=INFO REPORT==== 28-Feb-2014::12:23:49 ===
+=INFO REPORT==== 27-Oct-2014::23:35:09 ===
     application: swirl
     exited: stopped
     type: temporary
 ok
 (swirl@akai)3>
-
 🌈  dch@akai %
 ```
 
