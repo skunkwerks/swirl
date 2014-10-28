@@ -1,45 +1,38 @@
-all: deps distclean compile
+PROJECT   = swirl
 
-deps:
-	rebar get-deps update-deps compile
+DEPS      = gproc
+TEST_DEPS = proper
+dep_gproc = git git://github.com/uwiger/gproc.git master
 
-clean:
-	rebar clean skip_deps=true
+ERLC_OPTS = +debug_info
+PLT_APPS += crypto public_key compiler asn1 inets tools
 
-distclean:
-	git clean -fdxe .dialyzer.plt
-	git reset --hard
+include erlang.mk
 
-compile: clean
-	rebar compile escriptize skip_deps=true
+.PHONY : doc publish run console reindent
 
-distcheck: distclean check
+distcheck: distclean all dialyze tests
 	@echo "*** check indentation before git push ***"
 
-check: clean compile eunit ct dialyze
+run:
+	./swirl
 
-ct: clean compile
-	rebar ct skip_deps=true
+console:
+	@erl -pa ./ebin -pz deps/*/ebin \
+			-I ./include -s crypto -smp \
+			-setcookie swirl -sname swirl \
+			+K true +A 16 \
+			-s swirl -s swirl help
 
-eunit:
-	rebar eunit skip_deps=true
+doc:
+	@rm -rf public
+	@echo doc: building site in public/
+	@(cd site && hugo --config=config.yaml --destination=../public -v)
 
-dialyze: .dialyzer.plt
-	dialyzer --plt .dialyzer.plt \
-			-I ./include \
-			--src -r ./src \
-			--fullpath \
-			-Wunmatched_returns \
-			-Werror_handling \
-			-Wrace_conditions \
-			; [ $$? -ne 1 ]  # ignore warning (2) or ok (0) but not error (1)
-
-.dialyzer.plt:
-	@echo "*** dialyzer plt not found -- build takes a wee while ***"
-	dialyzer --build_plt --output_plt .dialyzer.plt --apps \
-			erts kernel stdlib crypto \
-			sasl common_test eunit compiler \
-			| fgrep -v dialyzer.ignore
+publish: doc
+	@echo publish: shipping site from public/ to gs://www.swirl-project.org/
+	@gsutil -m rm -R gs://www.swirl-project.org/**
+	@gsutil -m cp -R -z html,md,css,xml,js,svg  public/* gs://www.swirl-project.org/
 
 reindent:
 	@# requires either vim 7.4, or github.com/vim-erlang/vim-erlang-runtime
@@ -51,30 +44,3 @@ reindent:
 			-c 'args src/*.?rl' \
 			-c 'argdo silent execute "normal gg=G" | update' \
 			-c q
-
-dev:
-	erl -pa ./ebin -I ./include -s crypto -smp \
-			-setcookie swirl -sname swirl \
-			+K true +A 16 \
-			-s swirl -s swirl help
-
-console:
-	erl -pa ./ebin -I ./include -s crypto -smp \
-			-setcookie swirl -sname console \
-			+K true +A 16 \
-			-s swirl -s swirl help
-
-run:
-	./swirl
-
-.PHONY : doc publish
-
-doc:
-	@rm -rf public
-	@echo doc: building site in public/
-	@(cd site && hugo --config=config.yaml --destination=../public -v)
-
-publish: doc
-	@echo publish: shipping site from public/ to gs://www.swirl-project.org/
-	gsutil -m rm -R gs://www.swirl-project.org/**
-	gsutil -m cp -R -z html,md,css,xml,js,svg  public/* gs://www.swirl-project.org/

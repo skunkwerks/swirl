@@ -16,6 +16,7 @@
  [
   {description, "PPSP Protocol Streaming Peer Transport"},
   {vsn, git},
+  {modules, []},
   {registered, [swirl_sup, peer_sup, swarm_sup]},
   {applications, [
                   kernel,

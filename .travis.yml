@@ -9,4 +9,4 @@ branches:
   only:
     - master
     - develop
-    - /^merge-.+/
+    - /^merge.+/
