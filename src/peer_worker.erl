@@ -29,7 +29,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
-%% records
+%% records and state
 -record(state, {
           options :: ppspp_options:options(),
           port    :: inet:port_number(),
@@ -58,12 +58,12 @@ start_link(Port, Swarm_Options) when is_integer(Port) ->
 
 -spec stop(inet:port_number()) -> ok.
 stop(Port) ->
-    gen_server:call(gproc:lookup_local_name({?MODULE, Port}), stop).
+    ok = gen_server:cast(gproc:lookup_local_name({?MODULE, Port}), stop).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks
 
--spec init(nonempty_string()) -> {ok,[state(), ...]}.
+-spec init([inet:port_number() | ppspp_options:options()]) -> {ok,[state()]}.
 init([Port, Swarm_Options]) ->
     process_flag(trap_exit, true),
     {ok, Socket} = gen_udp:open(Port,  [binary,
@@ -73,36 +73,28 @@ init([Port, Swarm_Options]) ->
           [self(), Port, Swarm_Options]),
     {ok, [#state{port = Port, socket = Socket, options= Swarm_Options}] }.
 
--spec handle_call(_,_,_) ->
-    {stop,{error,{unknown_call,_}},_}.
-handle_call(Message, _From, State) ->
-    ?WARN("peer: unexpected call: ~p~n", [Message]),
-    {stop, {error, {unknown_call, Message}}, State}.
-
--spec handle_cast(_,_) ->
-    {stop,normal | {error,{unknown_cast,_}},_}.
-handle_cast(stop, State) ->
-    {stop, normal, State};
+-spec handle_cast(stop | any(), [state()]) -> {noreply, state()}.
+handle_cast(stop, State) -> {stop, normal, State};
 handle_cast(Message, State) ->
-    ?WARN("peer: unexpected cast: ~p~n", [Message]),
-    {stop, {error, {unknown_cast, Message}}, State}.
+    ?WARN("~s: unexpected cast ~p~nin state ~p~n", [?MODULE, Message, State]),
+    {noreply, State}.
 
+-spec handle_call(any(), {pid(), any()}, [state()]) -> {reply, ok, state()}.
+handle_call(Message, From, State) ->
+    ?WARN("~s: unexpected call from ~p ~p~nin state ~p~n",
+          [?MODULE, From, Message, State]),
+    {reply, ok, State}.
 
--spec handle_info(_,_) -> {noreply,_} | {stop,{error,{unknown_info,_}},_}.
+-spec handle_info(_,[state()]) -> {noreply,[state()]} | {stop,{error,{unknown_info,_}},_}.
 handle_info(Packet={udp, _Socket, _Peer, _Port, _Maybe_Datagram}, State) ->
     spawn(ppspp_datagram, handle, [Packet]),
-    {noreply, State};
-handle_info(timeout, State) ->
-    ?WARN("peer: timeout: ~p~n", State);
-handle_info(Message, State) ->
-    ?WARN("peer: unexpected info: ~p~n", [Message]),
-    {stop, {error, {unknown_info, Message}}, State}.
+    {noreply, State}.
 
--spec code_change(_,_,_) -> {ok,_}.
+-spec code_change(_,[state()],_) -> {ok,[state()]}.
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
--spec terminate(_,[state(), ...]) -> ok.
+-spec terminate(_,[state()]) -> ok.
 terminate(Reason, [#state{socket=Socket, port=Port}]) ->
     gproc:goodbye(),
     gen_udp:close(Socket),
@@ -118,9 +110,13 @@ terminate(Reason, [#state{socket=Socket, port=Port}]) ->
 start_test() ->
     Root_Hash = "c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
     Swarm_Options = ppspp_options:use_default_options(Root_Hash),
-    {ok, _} = ?MODULE:start_link(?SWIRL_PORT, Swarm_Options).
+    {ok, Worker} = ?MODULE:start_link(0, Swarm_Options),
+    {ok, true = erlang:is_process_alive(Worker)}.
 
 -spec stop_test() -> term().
 stop_test() ->
-    {ok, _} = ?MODULE:stop(?SWIRL_PORT).
+    Worker = gproc:lookup_local_name({?MODULE, 0}),
+    ?MODULE:stop(0),
+    io:format("worker is ~p~n",[Worker]),
+    {ok, false = erlang:is_process_alive(Worker)}.
 -endif.

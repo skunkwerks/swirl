@@ -108,9 +108,7 @@ stop_peer() ->
 
 -spec stop_peer(inet:port_number()) -> ok | {error, ppspp_peer_worker_not_found}.
 stop_peer(Port) when is_integer(Port), Port >= 0, Port =< 65535 ->
-    Worker = gproc:lookup_local_name({peer_worker, Port}),
-    supervisor:terminate_child(peer_sup, Worker).
-
+    peer_worker:stop(Port).
 
 %% @doc stop multiple PPSPP peers on a given range of ports.
 %% @end
@@ -162,9 +160,13 @@ main(_) ->
     timer:sleep(infinity).
 
 -ifdef(TEST).
--spec peer_random_port_test() -> {ok, pid()}.
-peer_random_port_test() ->
+-spec peer_random_port_start_test() -> {ok, pid()}.
+peer_random_port_start_test() ->
     start(),
     {ok, start_peer(0, ppspp_options:use_default_options())}.
+
+-spec peer_random_port_stop_test() -> ok.
+peer_random_port_stop_test() ->
+    ok =  stop_peer(0).
 -endif.
 
