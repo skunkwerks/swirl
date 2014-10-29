@@ -50,7 +50,6 @@ help::
 		"  app         Compile the project" \
 		"  rel         Build a release for this project, if applicable" \
 		"  docs        Build the documentation for this project" \
-		"  escript     Generate an escript from the compiled project" \
 		"  tests       Run the tests for this project" \
 		"  clean       Delete temporary and output files from most targets" \
 		"  distclean   Delete all temporary and output files" \
@@ -133,8 +132,8 @@ endef
 define dep_target
 $(DEPS_DIR)/$(1):
 	@mkdir -p $(DEPS_DIR)
-	@if [ ! -f $(PKG_FILE2) ]; then $(call core_http_get,$(PKG_FILE2),$(PKG_FILE_URL)); fi
 ifeq (,$(dep_$(1)))
+	@if [ ! -f $(PKG_FILE2) ]; then $(call core_http_get,$(PKG_FILE2),$(PKG_FILE_URL)); fi
 	@DEPPKG=$$$$(awk 'BEGIN { FS = "\t" }; $$$$1 == "$(1)" { print $$$$2 " " $$$$3 " " $$$$4 }' $(PKG_FILE2);); \
 	VS=$$$$(echo $$$$DEPPKG | cut -d " " -f1); \
 	REPO=$$$$(echo $$$$DEPPKG | cut -d " " -f2); \
@@ -218,8 +217,10 @@ app:: erlc-include ebin/$(PROJECT).app
 		echo "Empty modules entry not found in $(PROJECT).app.src. Please consult the erlang.mk README for instructions." >&2; \
 		exit 1; \
 	fi
+	$(eval GITDESCRIBE := $(shell git describe --dirty --abbrev=7 --tags --always --first-parent 2>/dev/null || true))
 	$(appsrc_verbose) cat src/$(PROJECT).app.src \
 		| sed "s/{modules,[[:space:]]*\[\]}/{modules, \[$(MODULES)\]}/" \
+		| sed "s/{id,[[:space:]]*\"git\"}/{id, \"$(GITDESCRIBE)\"}/" \
 		> ebin/$(PROJECT).app
 
 define compile_erl
@@ -279,6 +280,7 @@ help::
 bs_appsrc = "{application, $(PROJECT), [" \
 	"	{description, \"\"}," \
 	"	{vsn, \"0.1.0\"}," \
+	"	{id, \"git\"}," \
 	"	{modules, []}," \
 	"	{registered, []}," \
 	"	{applications, [" \
@@ -291,6 +293,7 @@ bs_appsrc = "{application, $(PROJECT), [" \
 bs_appsrc_lib = "{application, $(PROJECT), [" \
 	"	{description, \"\"}," \
 	"	{vsn, \"0.1.0\"}," \
+	"	{id, \"git\"}," \
 	"	{modules, []}," \
 	"	{registered, []}," \
 	"	{applications, [" \
