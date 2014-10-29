@@ -53,7 +53,7 @@ And here's what a sample session looks like from the above commands:
 
 ```
 🌈  dch@akai % git clone  && cd swirl
-🌈  dch@akai % make all dev
+🌈  dch@akai % make all console
 rebar clean
 ==> git (clean)
 rebar get-deps update-deps
@@ -143,7 +143,6 @@ and you can see more of them at the [hubblesite], and on their [mobile] site.
 
 [ALv2]: http://www.apache.org/licenses/LICENSE-2.0.html
 [PPSP]: http://datatracker.ietf.org/doc/draft-ietf-ppsp-peer-protocol/
-[rebar]: https://github.com/rebar/rebar
 [ESL]: https://www.erlang-solutions.com/downloads/download-erlang-otp
 [Swirl Project]: http://www.swirl-project.org/
 [public domain]: http://hubblesite.org/about_us/copyright.php
