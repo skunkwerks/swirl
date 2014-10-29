@@ -41,6 +41,6 @@ reindent:
 	vim -ENn -u NONE \
 			-c 'filetype plugin indent on' \
 			-c 'set expandtab shiftwidth=4' \
-			-c 'args src/*.?rl' \
+			-c 'args src/*.?rl test/*.?rl' \
 			-c 'argdo silent execute "normal gg=G" | update' \
 			-c q
