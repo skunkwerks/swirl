@@ -33,5 +33,5 @@ chunk(_Config) ->
     ct:comment("ensure chunk parsing of wire format matches erlang term based format"),
     {ok, [Traces]} = file:consult("../../test/data/chunks.trace"),
     Test = fun({{Spec, Raw}, Expected}) ->
-        Expected = ppspp_chunk:unpack(Spec, Raw) end,
+                   Expected = ppspp_chunk:unpack(Spec, Raw) end,
     lists:map(Test, Traces).
