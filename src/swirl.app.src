@@ -15,7 +15,8 @@
 {application, swirl,
  [
   {description, "PPSP Protocol Streaming Peer Transport"},
-  {vsn, git},
+  {vsn, "v0.0.1"},
+  {id, "git"},
   {modules, []},
   {registered, [swirl_sup, peer_sup, swarm_sup]},
   {applications, [
