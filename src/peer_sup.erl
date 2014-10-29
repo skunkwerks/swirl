@@ -52,7 +52,7 @@ init([])->
     MaxRestarts = 10,
     MaxSecondsBetweenRestarts = 60,
     Options = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
-    Restart = permanent,
+    Restart = transient,
     Shutdown = 1000,
     Type = worker,
 

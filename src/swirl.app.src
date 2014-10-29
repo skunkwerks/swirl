@@ -19,6 +19,7 @@
   {modules, []},
   {registered, [swirl_sup, peer_sup, swarm_sup]},
   {applications, [
+                  gproc,
                   kernel,
                   stdlib,
                   crypto
