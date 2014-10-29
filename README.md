@@ -3,7 +3,7 @@
 ![Swirl Mascot, Messier Spiral Galaxy M74, also known as NGC 628][swirl_m74_small]
 
 Swirl is an Erlang/OTP implementation of the draft IETF [PPSP] protocol,
-under the [ALv2] license.
+under the [ALv2] license. It is currently incomplete.
 
 Until the IETF draft status is removed, expect this repo to change quickly
 and without respecting any version numbers. Bugs are expected, but any reports
@@ -14,31 +14,37 @@ or even patches would make my day/week/year.
 - A modern UNIX system, although `swirl` will likely run on Windows the
     compile-time dependencies are more complicated. Please contact the
     project if you want to build or run on windows support.
-- The most recent release of `Erlang/OTP` available. This is `OTP 17.0` at
+- The most recent release of `Erlang/OTP` available. This is `OTP 17.3` at
     time of writing, and is available from [ESL] for most platforms. This
     is strongly advised, instead of using a possibly inconsistent version from
     your OS packaging system.
-- Either build and install Erlang's [rebar] build tool from source, or
-    [download] it and put in your path.
 - A reasonable level of Erlang and PPSPP knowledge is anticipated.
 - If you are developing on / with `swirl` you will need a pre-built dialyzer
-    plt. If you don't know what this is, just run `make dialyzer-setup` each
+    plt. If you don't know what this is, just run `make plt` each
     time you install/upgrade to a new Erlang/OTP release.
 
 ## Usage
 
-- Use `make all` to build, and `./swirl` to start a default implementation
+- Use `make` as usual. It will retrieve depedencies, so internet is needed.
+- After building, a stand-alone command, `./swirl` starts a simple peer
     on `localhost:7777`, without console access.
-- `make dev` loads appropriate erlang apps but you'll need to specify
-    either `swirl:start_peer().` for a single instance, or read the
-    console help via `swirl:help().` to see how to start multiple peers.
+- `make console` loads the full erlang application but you'll need to enter
+  either `swirl:start_peer().` for a single instance, or read the
+  console help via `swirl:help().` to see how to start multiple peers.
+
+## Developers
+
+- `make distcheck` cleans all build files out, compiles, and runs all tests,
+  including eunit, common_test, and dialyzer.
+- `make reindent` uses vim to ensure your indentation is consistent.
+- more information is available in [contributing.md]
 
 ## Example Usage
 
 From a clean git checkout of `git://github.com/skunkwerks/swirl.git`,
 just run:
 
-    make all dev
+    make all console
     # erlang console is automatically launched
     swirl:start_peer().
     swirl:quit().
@@ -47,7 +53,7 @@ And here's what a sample session looks like from the above commands:
 
 ```
 🌈  dch@akai % git clone  && cd swirl
-🌈  dch@akai % make all dev
+🌈  dch@akai % make all console
 rebar clean
 ==> git (clean)
 rebar get-deps update-deps
@@ -137,7 +143,6 @@ and you can see more of them at the [hubblesite], and on their [mobile] site.
 
 [ALv2]: http://www.apache.org/licenses/LICENSE-2.0.html
 [PPSP]: http://datatracker.ietf.org/doc/draft-ietf-ppsp-peer-protocol/
-[rebar]: https://github.com/rebar/rebar
 [ESL]: https://www.erlang-solutions.com/downloads/download-erlang-otp
 [Swirl Project]: http://www.swirl-project.org/
 [public domain]: http://hubblesite.org/about_us/copyright.php
@@ -146,3 +151,5 @@ and you can see more of them at the [hubblesite], and on their [mobile] site.
 [swirl_m74_small]: https://raw.github.com/wiki/skunkwerks/swirl/logo/hs-2007-41-a-thumb.jpg
 [swirl_m74_large]: https://raw.github.com/wiki/skunkwerks/swirl/logo/hs-2007-41-a-web.jpg
 [download]: https://raw.github.com/wiki/skunkwerks/swirl/tools/rebar
+[contributing.md]: https://github.com/skunkwerks/swirl/blob/develop/CONTRIBUTING.md
+

@@ -32,8 +32,9 @@
 
 %% records
 -record(state, {
-          port :: inet:port_number(),
-          socket :: port()
+          options :: ppspp_options:options(),
+          port    :: inet:port_number(),
+          socket  :: port()
          }).
 -type state() :: #state{}.
 
