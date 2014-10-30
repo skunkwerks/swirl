@@ -29,9 +29,7 @@
 -export([bin_to_hex/1,
          int_to_hex/1,
          bin_to_string/1,
-         hex_string_to_padded_binary/1,
-         port_to_atom/1]).
-
+         hex_string_to_padded_binary/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% api
@@ -54,8 +52,3 @@ hex_string_to_padded_binary(String) when is_list(String) ->
     {ok, [Int], []} = io_lib:fread("~16u", String),
     <<Int:Bytes_Length/big-unsigned-integer-unit:8>>.
 
--spec port_to_atom(inet:port_number()) -> atom().
-port_to_atom(Port) when is_integer(Port), Port >= 0, Port =< 65535 ->
-    Port_as_string = lists:flatten("swirl_peer_" ++
-                                   io_lib:format("~4.16.0b", [Port])),
-    list_to_atom(Port_as_string).

@@ -78,11 +78,11 @@ where `1912` is the issue number and `Troubleshooting Guide` the title of
 the issue.
 
 2. Please follow these steps for your work:
-    - create feature branch from master
+    - create feature branch from develop
     - work on feature branch
     - clean up feature branch commits (clean up whitespace in the code area)
-    - rebase feature branch onto current master
-    - merge feature branch into master
+    - rebase feature branch onto current develop
+    - merge feature branch into develop
 
 3. Squash or rebase your work into logical steps - this results in the
 following single commits:
@@ -109,9 +109,9 @@ Swirl is based on the reference IETF protocol document, still in draft, at
 [Peer-to-Peer Streaming Peer
 Protocol](http://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol)
 
-The documentation for the project itself is still a work in progress. You
-can find the first written documentation files within the git branch
-[feature/docs](https://github.com/skunkwerks/swirl/tree/master/doc).
+The [documentation] for the project itself is still a work in progress; please
+[let us know](https://github.com/skunkwerks/swirl/issues/new) if you find
+anything unclear or missing.
 
 ## Coding Style
 
@@ -133,11 +133,11 @@ all the sensible things like license header, emacs and vim tab settings.
 The code of the project is tested. So when sending a pull request from your
 fork or when adding code as a contributor, please add appropriate tests. A
 good place to start is to have a look into the [test
-directory](https://github.com/skunkwerks/swirl/tree/master/test). As a rule
+directory](https://github.com/skunkwerks/swirl/tree/develop/test). As a rule
 of thumb, put API (exported module functions) into a `common_test` module,
 and use `eunit` for internal module tests.
 
-Contributions should pass `make distcheck` before being committed to master
+Contributions should pass `make distcheck` before being committed to `develop`
 or release branches. This cleans the repo, and runs all tests (eunit,
 common_test, and dialyzer) checks on your behalf.
 
@@ -158,3 +158,6 @@ add you as a contributor.
 Please ensure that all contributions are your original work, or credited
 appropriately, and that all the code *you* write must be under the [Apache
 v2 License](http://www.apache.org/licenses/LICENSE-2.0.html).
+
+[documentation]: https://github.com/skunkwerks/swirl/tree/develop/doc
+

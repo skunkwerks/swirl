@@ -31,6 +31,8 @@
          unpack_with_rest/1,
          pack/1,
          get_channel/1,
+         acquire_channel/1,
+         release_channel/1,
          channel_to_string/1,
          handle/1]).
 
@@ -67,6 +69,51 @@ get_channel({channel, Channel}) when is_integer(Channel) -> Channel.
 
 -spec pack(ppspp_message:message()) -> binary().
 pack(_Message) -> <<>>.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% acquire_channel
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc allow requesting process to register an unused channel
+%% <p> Ensure that the channel can  be searched for using the root hash.
+%% A increasing delay is imposed on requesting channels as usage increases
+%% proportional to the previous failed tries, as a way of controlling overall
+%% load for new requesters.
+%% </p>
+%% @end
+-spec acquire_channel(ppspp_options:root_hash()) -> channel().
+acquire_channel(Hash) -> 
+    Channel = find_free_channel(Hash, 0),
+    {channel, Channel}.
+
+-spec find_free_channel(ppspp_options:root_hash(), pos_integer()) ->
+    channel() | {error, any()}.
+find_free_channel(_, 1000) -> {error, ppspp_channel_no_free_channels};
+find_free_channel(Hash, Failed_Tries) when  Failed_Tries < 1000 ->
+    timer:sleep(Failed_Tries * 1000),
+    <<Maybe_Free_Channel:?DWORD>> = crypto:strong_rand_bytes(4),
+    Key = {n,l, {n,l, Maybe_Free_Channel}},
+    Self = self(),
+    %% channel is unique only when returned pid matches self, otherwise
+    %% just try again for a new random channel and increased timeout
+    case gproc:reg_or_locate(Key, Hash) of
+        {Self, Hash} -> Maybe_Free_Channel;
+        {_, _ } -> find_free_channel(Hash, Failed_Tries + 1)
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% release_channel
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc allow requesting process to release an assigned channel
+%% <p> This function will crash if the channel was not registered to this
+%% process, as gproc returns badarg in this case.
+%% </p>
+%% @end
+-spec release_channel(channel()) -> ok.
+release_channel(Channel) ->
+    case gproc:unreg({n,l, Channel}) of
+        true -> ok;
+        _ -> {error, ppspp_channel_free_unassigned_channel}
+    end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%-spec ... handle takes a tuple of {type, message_body} where body is a

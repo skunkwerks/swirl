@@ -35,6 +35,7 @@
          get_minimum_version/1,
          get_swarm_id/1,
          get_maximum_supported_version/1,
+         use_default_options/0,
          use_default_options/1]).
 
 %% types largely as defined in PPSPP RFC
@@ -269,9 +270,11 @@ get_maximum_supported_version(Options) ->
     get(supported_version, Options).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc use_default_options/1 provides the options set within the PPSP draft
+%% @doc use_default_options/0,1 provides the options set within the PPSP draft
 %% <p> Provides a clean interface for other modules to retrieve PPSP options.
-%% Takes 1 parameter, a binary representing the root hash, or a string in hex.
+%% Takes 1 optional parameter, a binary representing the root hash, or a string
+%% in hex. Blank swarm options are used for starting peer_workers that may
+%% handle many peer swarms concurrently on different channels.
 %% The returned options and values are:
 %% <ul>
 %% <li>swarm_id: Root_Hash</li>
@@ -284,6 +287,9 @@ get_maximum_supported_version(Options) ->
 %% </p>
 %% @end
 
+-spec use_default_options() -> options().
+use_default_options() ->
+    use_default_options(<<>>).
 -spec use_default_options(string() | root_hash()) -> options().
 use_default_options(Hex_String) when is_list(Hex_String) ->
     use_default_options(convert:hex_string_to_padded_binary(Hex_String));

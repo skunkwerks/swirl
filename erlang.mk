@@ -12,7 +12,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-.PHONY: all deps app rel docs tests clean distclean help
+.PHONY: all deps app rel docs escript tests clean distclean help
 
 ERLANG_MK_VERSION = 1
 
@@ -50,7 +50,7 @@ help::
 		"  app         Compile the project" \
 		"  rel         Build a release for this project, if applicable" \
 		"  docs        Build the documentation for this project" \
-		"  escript     Generate an escript from the compiled project" \
+		"  escript     Build an escript for this project in the root dir" \
 		"  tests       Run the tests for this project" \
 		"  clean       Delete temporary and output files from most targets" \
 		"  distclean   Delete all temporary and output files" \
@@ -133,8 +133,8 @@ endef
 define dep_target
 $(DEPS_DIR)/$(1):
 	@mkdir -p $(DEPS_DIR)
-	@if [ ! -f $(PKG_FILE2) ]; then $(call core_http_get,$(PKG_FILE2),$(PKG_FILE_URL)); fi
 ifeq (,$(dep_$(1)))
+	@if [ ! -f $(PKG_FILE2) ]; then $(call core_http_get,$(PKG_FILE2),$(PKG_FILE_URL)); fi
 	@DEPPKG=$$$$(awk 'BEGIN { FS = "\t" }; $$$$1 == "$(1)" { print $$$$2 " " $$$$3 " " $$$$4 }' $(PKG_FILE2);); \
 	VS=$$$$(echo $$$$DEPPKG | cut -d " " -f1); \
 	REPO=$$$$(echo $$$$DEPPKG | cut -d " " -f2); \
@@ -218,8 +218,10 @@ app:: erlc-include ebin/$(PROJECT).app
 		echo "Empty modules entry not found in $(PROJECT).app.src. Please consult the erlang.mk README for instructions." >&2; \
 		exit 1; \
 	fi
+	$(eval GITDESCRIBE := $(shell git describe --dirty --abbrev=7 --tags --always --first-parent 2>/dev/null || true))
 	$(appsrc_verbose) cat src/$(PROJECT).app.src \
 		| sed "s/{modules,[[:space:]]*\[\]}/{modules, \[$(MODULES)\]}/" \
+		| sed "s/{id,[[:space:]]*\"git\"}/{id, \"$(GITDESCRIBE)\"}/" \
 		> ebin/$(PROJECT).app
 
 define compile_erl
@@ -279,6 +281,7 @@ help::
 bs_appsrc = "{application, $(PROJECT), [" \
 	"	{description, \"\"}," \
 	"	{vsn, \"0.1.0\"}," \
+	"	{id, \"git\"}," \
 	"	{modules, []}," \
 	"	{registered, []}," \
 	"	{applications, [" \
@@ -291,6 +294,7 @@ bs_appsrc = "{application, $(PROJECT), [" \
 bs_appsrc_lib = "{application, $(PROJECT), [" \
 	"	{description, \"\"}," \
 	"	{vsn, \"0.1.0\"}," \
+	"	{id, \"git\"}," \
 	"	{modules, []}," \
 	"	{registered, []}," \
 	"	{applications, [" \
@@ -778,3 +782,69 @@ build-shell-deps: $(ALL_SHELL_DEPS_DIRS)
 
 shell: build-shell-deps
 	$(gen_verbose) erl $(SHELL_PATH) $(SHELL_OPTS)
+
+# Copyright (c) 2014, Maxim Sokhatsky & Dave Cottlehuber <dch@skunkwerks.at>
+# This file is part of erlang.mk and subject to the terms of the ISC License.
+
+.PHONY: distclean-escript
+
+# User modifiable configuration.
+
+escript_NAME     ?= $(PROJECT)
+escript_COMMENT  ?= $(PROJECT)
+# escript_OPTIONS must have a trailing comma if defined, or be blank
+escript_OPTIONS  ?=
+escript_BEAMS    ?= "ebin/*", \
+					"{apps,deps,lib}/*/ebin/*", \
+					"sys.config", \
+					".applist"
+escript_STATIC   ?= "{apps,deps,lib}/*/priv/**", \
+					"priv/**"
+escript_SHEBANG  ?= /usr/bin/env escript
+escript_EMU_ARGS ?= -smp auto \
+					-pa . \
+					-noshell -noinput  \
+					-sasl errlog_type error \
+					-escript $(escript_NAME)
+
+# Internal configuration.
+
+# please keep the commented out version up to date with the minified version
+define escript_COMMAND
+'Read = fun(F) -> {ok, B} = file:read_file(filename:absname(F)), B end, Files = fun(L) -> A = lists:concat([filelib:wildcard(X)||X<- L ]), [F || F <- A, not filelib:is_dir(F) ] end, Squash = fun(L) -> [{filename:basename(F), Read(F) } || F <- L ] end, Zip = fun(A, L) ->  {ok,{_,Z}} = zip:create(A, L, [{compress,all},memory]), Z end, Ez = fun(Escript) -> Privs = Files([$(escript_STATIC)]), Beams = Squash( Files([$(escript_BEAMS)])), Archive = Beams ++ [{ "static.gz", Zip("static.gz", Privs)}], escript:create(Escript, [ $(escript_OPTIONS) {archive, Archive, [memory]}, {shebang, "$(escript_SHEBANG)"}, {comment, "$(escript_COMMENT)"}, {emu_args, " $(escript_EMU_ARGS)"} ]), file:change_mode(Escript, 8#755) end, Ez("$(escript_NAME)").'
+endef
+
+# based on https://github.com/synrc/mad/blob/master/src/mad_bundle.erl
+# Dharma / modified MIT license, copyright Maxim Sokhatsky
+# Read = fun(F) -> {ok, B} = file:read_file(filename:absname(F)), B end,
+# Files = fun(L) -> A = lists:concat([filelib:wildcard(X)||X<- L ]),
+#   [F || F <- A, not filelib:is_dir(F) ] end,
+# Squash = fun(L) -> [{filename:basename(F), Read(F) } || F <- L ] end,
+# Zip = fun(A, L) ->  {ok,{_,Z}} = zip:create(A, L, [{compress,all},memory]),
+#   Z end,
+# Ez = fun(Escript) ->
+#   Privs = Files([$(escript_STATIC)]),
+#   Beams = Squash(Files([$(escript_BEAMS)])),
+#   Archive = Beams ++ [{ "static.gz", Zip("static.gz", Privs)}],
+#   escript:create(Escript, [ $(escript_OPTIONS)
+#     {archive, Archive, [memory]},
+#     {shebang, "$(escript_SHEBANG)"},
+#     {comment, "$(escript_COMMENT)"},
+#     {emu_args, " $(escript_EMU_ARGS)"}
+#   ]),
+#   file:change_mode(Escript, 8#755)
+# end,
+# Ez("$(escript_NAME)").
+
+# Core targets.
+
+escript:: distclean-escript all
+	$(gen_verbose) erl -noshell -eval $(escript_COMMAND) -s init stop
+
+distclean:: distclean-escript
+
+# Plugin-specific targets.
+
+distclean-escript:
+	$(gen_verbose) rm -f $(escript_NAME)
+
