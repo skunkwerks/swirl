@@ -7,14 +7,16 @@ dep_gproc = git git://github.com/uwiger/gproc.git master
 ERLC_OPTS = +debug_info
 PLT_APPS += crypto public_key compiler asn1 inets tools
 
+escript::
+
 include erlang.mk
 
 .PHONY : doc publish run console reindent
 
-distcheck: distclean all dialyze tests
+distcheck: distclean all escript dialyze tests
 	@echo "*** check indentation before git push ***"
 
-run:
+run: escript
 	./swirl
 
 console:
