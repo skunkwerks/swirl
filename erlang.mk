@@ -50,7 +50,7 @@ help::
 		"  app         Compile the project" \
 		"  rel         Build a release for this project, if applicable" \
 		"  docs        Build the documentation for this project" \
-		"  escript     Build an escript for this project in the root dir" \
+		"  escript     Build an escript for this project" \
 		"  tests       Run the tests for this project" \
 		"  clean       Delete temporary and output files from most targets" \
 		"  distclean   Delete all temporary and output files" \
@@ -109,7 +109,7 @@ deps:: $(ALL_DEPS_DIRS)
 		if [ -f $$dep/GNUmakefile ] || [ -f $$dep/makefile ] || [ -f $$dep/Makefile ] ; then \
 			$(MAKE) -C $$dep ; \
 		else \
-			echo "include $(CURDIR)/erlang.mk" | $(MAKE) -f - -C $$dep ; \
+			echo "include $(CURDIR)/erlang.mk" | ERLC_OPTS=+debug_info $(MAKE) -f - -C $$dep ; \
 		fi ; \
 	done
 
@@ -177,8 +177,10 @@ pkg-search:
 	$(error Usage: make pkg-search q=STRING)
 endif
 
+ifeq ($(PKG_FILE2),$(CURDIR)/.erlang.mk.packages.v2)
 distclean-pkg:
 	$(gen_verbose) rm -f $(PKG_FILE2)
+endif
 
 help::
 	@printf "%s\n" "" \
@@ -627,6 +629,7 @@ DIALYZER_PLT ?= $(CURDIR)/.$(PROJECT).plt
 export DIALYZER_PLT
 
 PLT_APPS ?=
+DIALYZER_DIRS ?= --src -r src
 DIALYZER_OPTS ?= -Werror_handling -Wrace_conditions \
 	-Wunmatched_returns # -Wunderspecs
 
@@ -655,7 +658,71 @@ dialyze:
 else
 dialyze: $(DIALYZER_PLT)
 endif
-	@dialyzer --no_native --src -r src $(DIALYZER_OPTS)
+	@dialyzer --no_native $(DIALYZER_DIRS) $(DIALYZER_OPTS)
+
+# Copyright (c) 2013-2014, Loïc Hoguin <essen@ninenines.eu>
+# This file is part of erlang.mk and subject to the terms of the ISC License.
+
+.PHONY: distclean-edoc
+
+# Configuration.
+
+EDOC_OPTS ?=
+
+# Core targets.
+
+docs:: distclean-edoc
+	$(gen_verbose) erl -noshell \
+		-eval 'edoc:application($(PROJECT), ".", [$(EDOC_OPTS)]), init:stop().'
+
+distclean:: distclean-edoc
+
+# Plugin-specific targets.
+
+distclean-edoc:
+	$(gen_verbose) rm -f doc/*.css doc/*.html doc/*.png doc/edoc-info
+
+# Copyright (c) 2014, Juan Facorro <juan@inaka.net>
+# This file is part of erlang.mk and subject to the terms of the ISC License.
+
+.PHONY: elvis distclean-elvis
+
+# Configuration.
+
+ELVIS_CONFIG ?= $(CURDIR)/elvis.config
+
+ELVIS ?= $(CURDIR)/elvis
+export ELVIS
+
+ELVIS_URL ?= https://github.com/inaka/elvis/releases/download/0.2.3/elvis
+ELVIS_CONFIG_URL ?= https://github.com/inaka/elvis/releases/download/0.2.3/elvis.config
+ELVIS_OPTS ?=
+
+# Core targets.
+
+help::
+	@printf "%s\n" "" \
+		"Elvis targets:" \
+		"  elvis       Run Elvis using the local elvis.config or download the default otherwise"
+
+ifneq ($(wildcard $(ELVIS_CONFIG)),)
+rel:: distclean-elvis
+endif
+
+distclean:: distclean-elvis
+
+# Plugin-specific targets.
+
+$(ELVIS):
+	@$(call core_http_get,$(ELVIS_CONFIG),$(ELVIS_CONFIG_URL))
+	@$(call core_http_get,$(ELVIS),$(ELVIS_URL))
+	@chmod +x $(ELVIS)
+
+elvis: $(ELVIS)
+	@$(ELVIS) rock -c $(ELVIS_CONFIG) $(ELVIS_OPTS)
+
+distclean-elvis:
+	$(gen_verbose) rm -rf $(ELVIS)
 
 # Copyright (c) 2013-2014, Loïc Hoguin <essen@ninenines.eu>
 # This file is part of erlang.mk and subject to the terms of the ISC License.
@@ -683,27 +750,67 @@ ebin/$(PROJECT).app:: $(shell find templates -type f -name \*.dtl 2>/dev/null)
 	$(if $(strip $?),$(call compile_erlydtl,$?))
 endif
 
-# Copyright (c) 2013-2014, Loïc Hoguin <essen@ninenines.eu>
+# Copyright (c) 2014 Dave Cottlehuber <dch@skunkwerks.at>
 # This file is part of erlang.mk and subject to the terms of the ISC License.
 
-.PHONY: distclean-edoc
+.PHONY: distclean-escript
 
-# Configuration.
+# User modifiable configuration.
 
-EDOC_OPTS ?=
+ESCRIPT_NAME ?= $(PROJECT)
+ESCRIPT_COMMENT ?= $(PROJECT)
+
+ESCRIPT_BEAMS ?= "ebin/*", \
+	"{apps,deps,lib}/*/ebin/*", \
+	"sys.config", \
+	".applist"
+ESCRIPT_EMU_ARGS ?= -smp auto \
+	-pa . \
+	-noshell -noinput  \
+	-sasl errlog_type error \
+	-escript $(ESCRIPT_NAME)
+ESCRIPT_SHEBANG ?= /usr/bin/env escript
+ESCRIPT_STATIC ?= "{apps,deps,lib}/*/priv/**", \
+	"priv/**"
+
+# Internal configuration.
+
+# based on https://github.com/synrc/mad/blob/master/src/mad_bundle.erl
+# Dharma / modified MIT license, copyright Maxim Sokhatsky
+define ESCRIPT_RAW
+'Read = fun(F) -> {ok, B} = file:read_file(filename:absname(F)), B end,'\
+'Files = fun(L) -> A = lists:concat([filelib:wildcard(X)||X<- L ]),'\
+'  [F || F <- A, not filelib:is_dir(F) ] end,'\
+'Squash = fun(L) -> [{filename:basename(F), Read(F) } || F <- L ] end,'\
+'Zip = fun(A, L) -> {ok,{_,Z}} = zip:create(A, L, [{compress,all},memory]), Z end,'\
+'Ez = fun(Escript) ->'\
+'  Static = Files([$(ESCRIPT_STATIC)]),'\
+'  Beams = Squash(Files([$(ESCRIPT_BEAMS)])),'\
+'  Archive = Beams ++ [{ "static.gz", Zip("static.gz", Static)}],'\
+'  escript:create(Escript, [ $(ESCRIPT_OPTIONS)'\
+'    {archive, Archive, [memory]},'\
+'    {shebang, "$(ESCRIPT_SHEBANG)"},'\
+'    {comment, "$(ESCRIPT_COMMENT)"},'\
+'    {emu_args, " $(ESCRIPT_EMU_ARGS)"}'\
+'  ]),'\
+'  file:change_mode(Escript, 8#755)'\
+'end,'\
+'Ez("$(ESCRIPT_NAME)").'
+endef
+ESCRIPT_COMMAND = $(subst ' ',,$(ESCRIPT_RAW))
 
 # Core targets.
 
-docs:: distclean-edoc
-	$(gen_verbose) erl -noshell \
-		-eval 'edoc:application($(PROJECT), ".", [$(EDOC_OPTS)]), init:stop().'
+escript:: distclean-escript all
+	$(gen_verbose) erl -noshell -eval $(ESCRIPT_COMMAND) -s init stop
 
-distclean:: distclean-edoc
+distclean:: distclean-escript
 
 # Plugin-specific targets.
 
-distclean-edoc:
-	$(gen_verbose) rm -f doc/*.css doc/*.html doc/*.png doc/edoc-info
+distclean-escript:
+	$(gen_verbose) rm -f $(ESCRIPT_NAME)
+
 
 # Copyright (c) 2013-2014, Loïc Hoguin <essen@ninenines.eu>
 # This file is part of erlang.mk and subject to the terms of the ISC License.
@@ -782,69 +889,3 @@ build-shell-deps: $(ALL_SHELL_DEPS_DIRS)
 
 shell: build-shell-deps
 	$(gen_verbose) erl $(SHELL_PATH) $(SHELL_OPTS)
-
-# Copyright (c) 2014, Maxim Sokhatsky & Dave Cottlehuber <dch@skunkwerks.at>
-# This file is part of erlang.mk and subject to the terms of the ISC License.
-
-.PHONY: distclean-escript
-
-# User modifiable configuration.
-
-escript_NAME     ?= $(PROJECT)
-escript_COMMENT  ?= $(PROJECT)
-# escript_OPTIONS must have a trailing comma if defined, or be blank
-escript_OPTIONS  ?=
-escript_BEAMS    ?= "ebin/*", \
-					"{apps,deps,lib}/*/ebin/*", \
-					"sys.config", \
-					".applist"
-escript_STATIC   ?= "{apps,deps,lib}/*/priv/**", \
-					"priv/**"
-escript_SHEBANG  ?= /usr/bin/env escript
-escript_EMU_ARGS ?= -smp auto \
-					-pa . \
-					-noshell -noinput  \
-					-sasl errlog_type error \
-					-escript $(escript_NAME)
-
-# Internal configuration.
-
-# please keep the commented out version up to date with the minified version
-define escript_COMMAND
-'Read = fun(F) -> {ok, B} = file:read_file(filename:absname(F)), B end, Files = fun(L) -> A = lists:concat([filelib:wildcard(X)||X<- L ]), [F || F <- A, not filelib:is_dir(F) ] end, Squash = fun(L) -> [{filename:basename(F), Read(F) } || F <- L ] end, Zip = fun(A, L) ->  {ok,{_,Z}} = zip:create(A, L, [{compress,all},memory]), Z end, Ez = fun(Escript) -> Privs = Files([$(escript_STATIC)]), Beams = Squash( Files([$(escript_BEAMS)])), Archive = Beams ++ [{ "static.gz", Zip("static.gz", Privs)}], escript:create(Escript, [ $(escript_OPTIONS) {archive, Archive, [memory]}, {shebang, "$(escript_SHEBANG)"}, {comment, "$(escript_COMMENT)"}, {emu_args, " $(escript_EMU_ARGS)"} ]), file:change_mode(Escript, 8#755) end, Ez("$(escript_NAME)").'
-endef
-
-# based on https://github.com/synrc/mad/blob/master/src/mad_bundle.erl
-# Dharma / modified MIT license, copyright Maxim Sokhatsky
-# Read = fun(F) -> {ok, B} = file:read_file(filename:absname(F)), B end,
-# Files = fun(L) -> A = lists:concat([filelib:wildcard(X)||X<- L ]),
-#   [F || F <- A, not filelib:is_dir(F) ] end,
-# Squash = fun(L) -> [{filename:basename(F), Read(F) } || F <- L ] end,
-# Zip = fun(A, L) ->  {ok,{_,Z}} = zip:create(A, L, [{compress,all},memory]),
-#   Z end,
-# Ez = fun(Escript) ->
-#   Privs = Files([$(escript_STATIC)]),
-#   Beams = Squash(Files([$(escript_BEAMS)])),
-#   Archive = Beams ++ [{ "static.gz", Zip("static.gz", Privs)}],
-#   escript:create(Escript, [ $(escript_OPTIONS)
-#     {archive, Archive, [memory]},
-#     {shebang, "$(escript_SHEBANG)"},
-#     {comment, "$(escript_COMMENT)"},
-#     {emu_args, " $(escript_EMU_ARGS)"}
-#   ]),
-#   file:change_mode(Escript, 8#755)
-# end,
-# Ez("$(escript_NAME)").
-
-# Core targets.
-
-escript:: distclean-escript all
-	$(gen_verbose) erl -noshell -eval $(escript_COMMAND) -s init stop
-
-distclean:: distclean-escript
-
-# Plugin-specific targets.
-
-distclean-escript:
-	$(gen_verbose) rm -f $(escript_NAME)
-
