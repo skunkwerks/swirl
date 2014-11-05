@@ -118,6 +118,6 @@ start_test() ->
 stop_test() ->
     Worker = gproc:lookup_local_name({?MODULE, 0}),
     ?MODULE:stop(0),
-    io:format("worker is ~p~n",[Worker]),
+    io:format("worker is ~p~n", [Worker]),
     ?assertEqual(false, erlang:is_process_alive(Worker)).
 -endif.

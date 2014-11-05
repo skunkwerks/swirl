@@ -147,4 +147,3 @@ unpack(Raw_Datagram, _Endpoint, Swarm_Options) ->
 
 -spec pack(datagram()) -> binary().
 pack(_Datagram) -> <<>>.
-

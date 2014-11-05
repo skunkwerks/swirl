@@ -169,4 +169,3 @@ peer_random_port_start_test() ->
 peer_random_port_stop_test() ->
     ?assertEqual(ok, stop_peer(0)).
 -endif.
-

@@ -332,4 +332,3 @@ defaults_test() ->
                  {version,1}]},
     [?_assertEqual( Expected, use_default_options(Root_Hash) )].
 -endif.
-
