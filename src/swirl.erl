@@ -163,10 +163,10 @@ main(_) ->
 -spec peer_random_port_start_test() -> {ok, pid()}.
 peer_random_port_start_test() ->
     start(),
-    {ok, start_peer(0, ppspp_options:use_default_options())}.
+    ?assertMatch({ok, _}, start_peer(0, ppspp_options:use_default_options())).
 
 -spec peer_random_port_stop_test() -> ok.
 peer_random_port_stop_test() ->
-    ok =  stop_peer(0).
+    ?assertEqual(ok, stop_peer(0)).
 -endif.
 
