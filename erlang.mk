@@ -932,7 +932,7 @@ EUNIT_RUN = erl \
 	-noshell \
 	-pa $(realpath test) $(DEPS_DIR)/*/ebin \
 	-pz $(realpath ebin) \
-	-eval 'eunit:test($(EUNIT_OPTS)).' \
+	-eval 'ok = eunit:test($(EUNIT_OPTS)).' \
 	-s init stop
 
 build-eunit:
