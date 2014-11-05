@@ -80,12 +80,12 @@ pack(_Message) -> <<>>.
 %% load for new requesters.
 %% </p>
 %% @end
--spec acquire_channel(ppspp_options:root_hash()) -> channel().
+-spec acquire_channel(ppspp_options:swarm_id()) -> channel().
 acquire_channel(Hash) -> 
     Channel = find_free_channel(Hash, 0),
     {channel, Channel}.
 
--spec find_free_channel(ppspp_options:root_hash(), pos_integer()) ->
+-spec find_free_channel(ppspp_options:swarm_id(), pos_integer()) ->
     channel() | {error, any()}.
 find_free_channel(_, 1000) -> {error, ppspp_channel_no_free_channels};
 find_free_channel(Hash, Failed_Tries) when  Failed_Tries < 1000 ->

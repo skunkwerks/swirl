@@ -75,10 +75,10 @@ start_peer() ->
     start_peer(?SWIRL_PORT, ppspp_options:use_default_options()).
 
 %% start_peer can be handed a root hash and assumes default options.
--spec start_peer(string() | ppspp_options:root_hash()) ->
+-spec start_peer(string() | ppspp_options:swarm_id()) ->
     {ok, pid()} | {error,_}.
-start_peer(Root_Hash) ->
-    Swarm_Options = ppspp_options:use_default_options(Root_Hash),
+start_peer(Swarm_id) ->
+    Swarm_Options = ppspp_options:use_default_options(Swarm_id),
     start_peer(?SWIRL_PORT, Swarm_Options).
 
 -spec start_peer(inet:port_number(), ppspp_options:options()) ->
