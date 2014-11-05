@@ -108,15 +108,16 @@ terminate(Reason, [#state{socket=Socket, port=Port}]) ->
 -ifdef(TEST).
 -spec start_test() -> term().
 start_test() ->
+    {ok, _} = application:ensure_all_started(swirl),
     Root_Hash = "c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
     Swarm_Options = ppspp_options:use_default_options(Root_Hash),
     {ok, Worker} = ?MODULE:start_link(0, Swarm_Options),
-    {ok, true = erlang:is_process_alive(Worker)}.
+    ?assertEqual(true, erlang:is_process_alive(Worker)).
 
 -spec stop_test() -> term().
 stop_test() ->
     Worker = gproc:lookup_local_name({?MODULE, 0}),
     ?MODULE:stop(0),
     io:format("worker is ~p~n",[Worker]),
-    {ok, false = erlang:is_process_alive(Worker)}.
+    ?assertEqual(false, erlang:is_process_alive(Worker)).
 -endif.
