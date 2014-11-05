@@ -13,7 +13,7 @@ include erlang.mk
 
 .PHONY : doc publish run console reindent
 
-distcheck: distclean all escript dialyze tests
+distcheck: distclean all plt dialyze tests escript
 	@echo "*** check indentation before git push ***"
 
 run: escript
