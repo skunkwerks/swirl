@@ -51,4 +51,3 @@ init([]) ->
 
     % summon the supervisors
     {ok, {{one_for_one, 10, 60}, Supervisors}}.
-

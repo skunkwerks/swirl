@@ -76,4 +76,3 @@ handle({handshake, _Body}) ->
 handle(Message) ->
     ?DEBUG("message: handler not yet implemented ~p~n", [Message]),
     {ok, ppspp_message_handler_not_yet_implemented}.
-

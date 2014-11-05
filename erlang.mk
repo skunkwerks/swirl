@@ -12,7 +12,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-.PHONY: all deps app rel docs escript tests clean distclean help
+.PHONY: all deps app rel docs tests clean distclean help erlang-mk
 
 ERLANG_MK_VERSION = 1
 
@@ -50,7 +50,6 @@ help::
 		"  app         Compile the project" \
 		"  rel         Build a release for this project, if applicable" \
 		"  docs        Build the documentation for this project" \
-		"  escript     Build an escript for this project" \
 		"  tests       Run the tests for this project" \
 		"  clean       Delete temporary and output files from most targets" \
 		"  distclean   Delete all temporary and output files" \
@@ -72,6 +71,18 @@ define core_http_get
 	erl -noshell -eval 'ssl:start(), inets:start(), case httpc:request(get, {"$(2)", []}, [{autoredirect, true}], []) of {ok, {{_, 200, _}, _, Body}} -> case file:write_file("$(1)", Body) of ok -> ok; {error, R1} -> halt(R1) end; {error, R2} -> halt(R2) end, halt(0).'
 endef
 endif
+
+# Automated update.
+
+ERLANG_MK_BUILD_CONFIG ?= build.config
+ERLANG_MK_BUILD_DIR ?= .erlang.mk.build
+
+erlang-mk:
+	git clone https://github.com/ninenines/erlang.mk $(ERLANG_MK_BUILD_DIR)
+	if [ -f $(ERLANG_MK_BUILD_CONFIG) ]; then cp $(ERLANG_MK_BUILD_CONFIG) $(ERLANG_MK_BUILD_DIR); fi
+	cd $(ERLANG_MK_BUILD_DIR) && make
+	cp $(ERLANG_MK_BUILD_DIR)/erlang.mk ./erlang.mk
+	rm -rf $(ERLANG_MK_BUILD_DIR)
 
 # Copyright (c) 2013-2014, Loïc Hoguin <essen@ninenines.eu>
 # This file is part of erlang.mk and subject to the terms of the ISC License.
@@ -753,30 +764,39 @@ endif
 # Copyright (c) 2014 Dave Cottlehuber <dch@skunkwerks.at>
 # This file is part of erlang.mk and subject to the terms of the ISC License.
 
-.PHONY: distclean-escript
+.PHONY: distclean-escript escript
 
-# User modifiable configuration.
+# Configuration.
 
 ESCRIPT_NAME ?= $(PROJECT)
-ESCRIPT_COMMENT ?= $(PROJECT)
+ESCRIPT_COMMENT ?= -*- erlang -*-
 
 ESCRIPT_BEAMS ?= "ebin/*", \
-	"{apps,deps,lib}/*/ebin/*", \
-	"sys.config", \
-	".applist"
-ESCRIPT_EMU_ARGS ?= -smp auto \
-	-pa . \
+	"deps/*/ebin/*", \
+	"sys.config"
+ESCRIPT_EMU_ARGS ?= -pa . \
 	-noshell -noinput  \
 	-sasl errlog_type error \
-	-escript $(ESCRIPT_NAME)
+	-escript main $(ESCRIPT_NAME)
 ESCRIPT_SHEBANG ?= /usr/bin/env escript
-ESCRIPT_STATIC ?= "{apps,deps,lib}/*/priv/**", \
-	"priv/**"
+ESCRIPT_STATIC ?= "deps/*/priv/**", "priv/**"
 
-# Internal configuration.
+# Core targets.
 
-# based on https://github.com/synrc/mad/blob/master/src/mad_bundle.erl
-# Dharma / modified MIT license, copyright Maxim Sokhatsky
+distclean:: distclean-escript
+
+help::
+	@printf "%s\n" "" \
+		"Escript targets:" \
+		"  escript     Build an executable escript archive" \
+
+# Plugin-specific targets.
+
+# Based on https://github.com/synrc/mad/blob/master/src/mad_bundle.erl
+# Copyright (c) 2013 Maxim Sokhatsky, Synrc Research Center
+# Modified MIT License, https://github.com/synrc/mad/blob/master/LICENSE :
+# Software may only be used for the great good and the true happiness of all
+# sentient beings.
 define ESCRIPT_RAW
 'Read = fun(F) -> {ok, B} = file:read_file(filename:absname(F)), B end,'\
 'Files = fun(L) -> A = lists:concat([filelib:wildcard(X)||X<- L ]),'\
@@ -799,18 +819,11 @@ define ESCRIPT_RAW
 endef
 ESCRIPT_COMMAND = $(subst ' ',,$(ESCRIPT_RAW))
 
-# Core targets.
-
 escript:: distclean-escript all
 	$(gen_verbose) erl -noshell -eval $(ESCRIPT_COMMAND) -s init stop
 
-distclean:: distclean-escript
-
-# Plugin-specific targets.
-
 distclean-escript:
 	$(gen_verbose) rm -f $(ESCRIPT_NAME)
-
 
 # Copyright (c) 2013-2014, Loïc Hoguin <essen@ninenines.eu>
 # This file is part of erlang.mk and subject to the terms of the ISC License.
@@ -889,3 +902,50 @@ build-shell-deps: $(ALL_SHELL_DEPS_DIRS)
 
 shell: build-shell-deps
 	$(gen_verbose) erl $(SHELL_PATH) $(SHELL_OPTS)
+
+# Copyright (c) 2014, Dave Cottlehuber <dch@skunkwerks.at>
+# This file is contributed to erlang.mk and subject to the terms of the ISC License.
+
+.PHONY: tests-eunit distclean-eunit clean-eunit build-eunit
+
+# Configuration
+
+EUNIT_ERLC_OPTS ?= +debug_info +warn_export_vars +warn_shadow_vars +warn_obsolete_guard
+EUNIT_ERLC_OPTS += -DTEST=1 -DEXTRA=1
+
+EUNIT_OPTS ?= {dir, "test"}, [verbose, {report,{eunit_surefire,[{dir,"logs"}]}}]
+
+# Core targets.
+
+tests:: tests-eunit
+
+distclean:: distclean-eunit
+
+help::
+	@printf "%s\n" "" \
+		"All modules in ebin/ will be tested with eunit, results in logs/."
+
+# Plugin-specific targets.
+
+EUNIT_RUN = erl \
+	-no_auto_compile \
+	-noshell \
+	-pa $(realpath test) $(DEPS_DIR)/*/ebin \
+	-pz $(realpath ebin) \
+	-eval 'eunit:test($(EUNIT_OPTS)).' \
+	-s init stop
+
+build-eunit:
+	$(gen_verbose) erlc -v $(EUNIT_ERLC_OPTS) -I include/ -o test/ \
+		$(wildcard src/*.erl src/*/*.erl) -pa ebin/
+
+tests-eunit: ERLC_OPTS = $(EUNIT_ERLC_OPTS)
+tests-eunit: clean deps app build-eunit
+	$(gen_verbose) mkdir -p logs
+	$(gen_verbose) $(EUNIT_RUN)
+
+clean-eunit:
+	$(gen_verbose) rm -rf test/*.beam
+
+distclean-eunit:
+	$(gen_verbose) rm -rf $(EUNIT_REPORT_DIR)
