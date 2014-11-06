@@ -37,7 +37,6 @@
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
-%%-spec start_child(port()) -> ok.
 -spec start_child([ppspp_options:options()]) ->
     {error,_} | {ok, pid()}.
 start_child([Swarm_Options]) ->
