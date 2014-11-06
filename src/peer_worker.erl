@@ -56,9 +56,22 @@ start_link(Port, Swarm_Options) when is_integer(Port) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Stops the server.
 
--spec stop(inet:port_number()) -> ok.
+-spec stop(inet:port_number()) -> ok | {error, any()}.
 stop(Port) ->
-    ok = gen_server:cast(gproc:lookup_local_name({?MODULE, Port}), stop).
+    case where_is(Port) of
+        {error, Reason} -> {error, Reason};
+        {ok, Pid} -> gen_server:cast(Pid, stop)
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc Looks up the pid for a given port.
+
+-spec where_is(inet:port_number()) -> {ok, pid()} | {error,_}.
+where_is(Port) when is_integer(Port), Port >= 0, Port =< 65535 ->
+    case Pid = gproc:lookup_local_name({?MODULE, Port}) of
+        undefined -> {error, ppspp_peer_worker_not_found};
+        _ -> {ok, Pid}
+    end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks
@@ -109,8 +122,7 @@ terminate(Reason, [#state{socket=Socket, port=Port}]) ->
 -spec start_test() -> term().
 start_test() ->
     {ok, _} = application:ensure_all_started(swirl),
-    Root_Hash = "c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
-    Swarm_Options = ppspp_options:use_default_options(Root_Hash),
+    Swarm_Options = ppspp_options:use_default_options(),
     {ok, Worker} = ?MODULE:start_link(0, Swarm_Options),
     ?assertEqual(true, erlang:is_process_alive(Worker)).
 

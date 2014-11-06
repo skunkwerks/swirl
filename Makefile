@@ -19,12 +19,15 @@ distcheck: distclean all plt dialyze tests escript
 run: escript
 	./swirl
 
+dev: SWIRL_CONSOLE_OPTS ?= -s observer
+dev: console
+
 console:
 	@erl -pa ./ebin -pz deps/*/ebin \
 			-I ./include -s crypto -smp \
 			-setcookie swirl -sname swirl \
 			+K true +A 16 \
-			-s swirl -s swirl help
+			-s swirl -s swirl help $(SWIRL_CONSOLE_OPTS)
 
 doc:
 	@rm -rf public
