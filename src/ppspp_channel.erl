@@ -74,7 +74,7 @@ pack(_Message) -> <<>>.
 %% <p> Ensure that the channel can  be searched for using the swarm id.
 %% A increasing delay is imposed on requesting channels as usage increases
 %% proportional to the previous failed tries, as a way of controlling overall
-%% load for new requesters.
+%% load for new requesters. The timeout is approximately 60 seconds.
 %% </p>
 %% @end
 -spec acquire_channel(ppspp_options:swarm_id()) -> channel().
@@ -84,8 +84,8 @@ acquire_channel(Swarm_id) ->
 
 -spec find_free_channel(ppspp_options:swarm_id(), pos_integer()) ->
     channel() | {error, any()}.
-find_free_channel(_, 1000) -> {error, ppspp_channel_no_channels_free};
-find_free_channel(Swarm_id, Failed_Tries) when Failed_Tries < 1000 ->
+find_free_channel(_, 30) -> {error, ppspp_channel_no_channels_free};
+find_free_channel(Swarm_id, Failed_Tries) when Failed_Tries < 30 ->
     timer:sleep(Failed_Tries * 1000),
     <<Maybe_Free_Channel:?DWORD>> = crypto:strong_rand_bytes(4),
     Channel = {channel, Maybe_Free_Channel},
