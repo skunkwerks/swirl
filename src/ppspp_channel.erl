@@ -89,7 +89,7 @@ find_free_channel(Swarm_id, Failed_Tries) when Failed_Tries < 30 ->
     timer:sleep(Failed_Tries * 1000),
     <<Maybe_Free_Channel:?DWORD>> = crypto:strong_rand_bytes(4),
     Channel = {channel, Maybe_Free_Channel},
-    Key = {n,l, Channel},
+    Key = {n, l, Channel},
     Self = self(),
     %% channel is unique only when returned pid matches self, otherwise
     %% just try again for a new random channel and increased timeout
