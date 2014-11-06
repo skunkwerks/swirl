@@ -30,7 +30,7 @@
 -export([unpack_channel/1,
          unpack_with_rest/1,
          pack/1,
-         get_channel/1,
+         where_is/1,
          acquire_channel/1,
          release_channel/1,
          channel_to_string/1,
@@ -64,9 +64,6 @@ unpack_channel(Binary) ->
 channel_to_string(_Channel = {channel, Channel}) ->
     string:to_lower(integer_to_list(Channel, 16)).
 
--spec get_channel(channel()) -> channel_option().
-get_channel({channel, Channel}) when is_integer(Channel) -> Channel.
-
 -spec pack(ppspp_message:message()) -> binary().
 pack(_Message) -> <<>>.
 
@@ -74,30 +71,31 @@ pack(_Message) -> <<>>.
 %% acquire_channel
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc allow requesting process to register an unused channel
-%% <p> Ensure that the channel can  be searched for using the root hash.
+%% <p> Ensure that the channel can  be searched for using the swarm id.
 %% A increasing delay is imposed on requesting channels as usage increases
 %% proportional to the previous failed tries, as a way of controlling overall
 %% load for new requesters.
 %% </p>
 %% @end
 -spec acquire_channel(ppspp_options:swarm_id()) -> channel().
-acquire_channel(Hash) -> 
-    Channel = find_free_channel(Hash, 0),
+acquire_channel(Swarm_id) ->
+    Channel = find_free_channel(Swarm_id, 0),
     {channel, Channel}.
 
 -spec find_free_channel(ppspp_options:swarm_id(), pos_integer()) ->
     channel() | {error, any()}.
-find_free_channel(_, 1000) -> {error, ppspp_channel_no_free_channels};
-find_free_channel(Hash, Failed_Tries) when  Failed_Tries < 1000 ->
+find_free_channel(_, 1000) -> {error, ppspp_channel_no_channels_free};
+find_free_channel(Swarm_id, Failed_Tries) when Failed_Tries < 1000 ->
     timer:sleep(Failed_Tries * 1000),
     <<Maybe_Free_Channel:?DWORD>> = crypto:strong_rand_bytes(4),
-    Key = {n,l, {n,l, Maybe_Free_Channel}},
+    Channel = {channel, Maybe_Free_Channel},
+    Key = {n,l, Channel},
     Self = self(),
     %% channel is unique only when returned pid matches self, otherwise
     %% just try again for a new random channel and increased timeout
-    case gproc:reg_or_locate(Key, Hash) of
-        {Self, Hash} -> Maybe_Free_Channel;
-        {_, _ } -> find_free_channel(Hash, Failed_Tries + 1)
+    case gproc:reg_or_locate(Key, Swarm_id) of
+        {Self, Swarm_id} -> Maybe_Free_Channel;
+        {_, _ } -> find_free_channel(Swarm_id, Failed_Tries + 1)
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -113,6 +111,24 @@ release_channel(Channel) ->
     case gproc:unreg({n,l, Channel}) of
         true -> ok;
         _ -> {error, ppspp_channel_free_unassigned_channel}
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% where_is
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc looks up pid of the owning swarm for a given channel
+%% <p> Channels are only registered to swarm_workers; and peer_worker however
+%% may receive inbound packets for a particular swarm and will use the received
+%% channel to look it up before retrieving swarm options. It is used to locate
+%% the owning swarm in a channel when unpacking messages.
+%% </p>
+%% @end
+
+-spec where_is(channel()) -> {ok, pid()} | {error, any()}.
+where_is(Ref = {channel, _}) ->
+    case Pid = gproc:lookup_local_name(Ref) of
+        undefined -> {error, ppspp_channel_not_found};
+        _ -> {ok, Pid}
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -135,3 +151,13 @@ handle({channel, _Body}) ->
 handle(Message) ->
     ?DEBUG("message: handler not yet implemented ~p~n", [Message]),
     {ok, ppspp_message_handler_not_yet_implemented}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% test
+
+% -ifdef(TEST).
+% -spec _test() -> {ok, pid()}.
+% _test() ->
+%     start(),
+%     ?assertMatch({ok, _}, ).
+% -endif.
