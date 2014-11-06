@@ -23,6 +23,7 @@
 
 %% api
 -export([start_link/1,
+         where_is/1,
          stop/1]).
 
 %% callbacks
@@ -53,9 +54,26 @@ start_link(Swarm_Options)  ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Stops the server.
 
--spec stop(ppspp_options:swarm_id()) -> ok.
+-spec stop(ppspp_options:swarm_id()) -> ok | {error, any()}.
 stop(Swarm_id) ->
-    ok = gen_server:cast(gproc:lookup_local_name({?MODULE, Swarm_id}), stop).
+    case where_is(Swarm_id) of
+        {error, Reason} -> {error, Reason};
+        {ok, Pid} -> gen_server:cast(Pid, stop)
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc Looks up the pid for a given swarm id, either as string or binary.
+
+-spec where_is(string() | ppspp_options:swarm_id()) -> {ok, pid()} | {error,_}.
+where_is(Root_Hash) when is_list(Root_Hash) ->
+    Swarm_Options = ppspp_options:use_default_options(Root_Hash),
+    Swarm_id = ppspp_options:get_swarm_id(Swarm_Options),
+    where_is(Swarm_id);
+where_is(Swarm_id) ->
+    case Pid = gproc:lookup_local_name({?MODULE, Swarm_id}) of
+        undefined -> {error, ppspp_swarm_worker_not_found};
+        _ -> {ok, Pid}
+    end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks

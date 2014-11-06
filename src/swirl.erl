@@ -34,6 +34,8 @@
          stop_peer/0,
          stop_peer/1,
          stop_pool/2,
+         start_swarm/1,
+         stop_swarm/1,
          start/0,
          stop/0]).
 
@@ -61,6 +63,9 @@ stop() ->
 quit() ->
     _ = stop(),
     init:stop().
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% peer API
 
 %% @doc start a PPSPP listener (peer) on a given port, or the default port,
 %% using the supplied hash and default PPSPP swarm options, or no hash at all
@@ -120,6 +125,33 @@ stop_pool(First, Last) when is_integer(First), is_integer(Last), First < Last  -
                       {stop_peer(Port), Port} end,
               Ports).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% swarm API
+
+%% @doc start a PPSPP swarm, using the supplied hash and PPSPP swarm options.
+%% If either a string (root hash), or a binary (swarm id) are supplied, then
+%% start_swarm will do the right thing and assume default PPSPP options. Note
+%% that the hashing algorithm and chunk size must match for this to work.
+%% -- caveat coder
+-spec start_swarm(string()
+                  | ppspp_options:swarm_id()
+                  | ppspp_options:options()) ->
+    {ok, pid()} | {error,_}.
+start_swarm(Swarm_id) when is_binary(Swarm_id); is_list(Swarm_id) ->
+    Swarm_Options = ppspp_options:use_default_options(Swarm_id),
+    start_swarm(Swarm_Options);
+start_swarm(Swarm_Options) ->
+    supervisor:start_child(swarm_sup, [Swarm_Options]).
+
+%% @doc stop a PPSPP swarm for a given root_hash or swarm_id.
+%% @end
+-spec stop_swarm(string() | ppspp_options:swarm_id()) ->
+    ok | {error, ppspp_swarm_worker_not_found}.
+stop_swarm(Swarm) when is_binary(Swarm); is_list(Swarm) ->
+    Swarm_Options = ppspp_options:use_default_options(Swarm),
+    swarm_worker:stop(ppspp_options:get_swarm_id(Swarm_Options)).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc help for console users
 %% Provides a summary of available commands options within the erlang console
 %% @end
@@ -151,6 +183,7 @@ help() ->
                   Help),
     ok.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% for escript support
 -spec main(any()) -> no_return().
 main(_) ->
@@ -158,6 +191,9 @@ main(_) ->
     start(),
     _ = start_peer(),
     timer:sleep(infinity).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% test
 
 -ifdef(TEST).
 -spec peer_random_port_start_test() -> {ok, pid()}.

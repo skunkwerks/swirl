@@ -23,11 +23,13 @@
 -include_lib("common_test/include/ct.hrl").
 
 -export([all/0]).
--export([start_peer/1,
+-export([start_swarm/1,
+         stop_swarm/1,
+         start_peer/1,
          stop_peer/1]).
 
 -spec all() -> [atom()].
-all() -> [start_peer,stop_peer].
+all() -> [start_peer,stop_peer, start_swarm, stop_swarm].
 
 -spec start_peer(any()) -> true.
 start_peer(_Config) ->
@@ -42,5 +44,22 @@ stop_peer(_Config) ->
     Worker = gproc:lookup_local_name({peer_worker, 0}),
     true = erlang:is_process_alive(Worker),
     swirl:stop_peer(0),
+    timer:sleep(100),
+    false = erlang:is_process_alive(Worker).
+
+-spec start_swarm(any()) -> true.
+start_swarm(_Config) ->
+    swirl:start(),
+    Swarm_Options = ppspp_options:use_default_options("c89800bfc82ed01ed6e3bfd5408c51274491f7d4"),
+    {ok, Worker} = swirl:start_swarm(Swarm_Options),
+    timer:sleep(100),
+    true = erlang:is_process_alive(Worker).
+
+-spec stop_swarm(any()) -> false.
+stop_swarm(_Config) ->
+    Swarm_Options = ppspp_options:use_default_options("c89800bfc82ed01ed6e3bfd5408c51274491f7d4"),
+    Swarm_id = ppspp_options:get_swarm_id(Swarm_Options),
+    {ok, Worker} = swarm_worker:where_is(Swarm_id),
+    swirl:stop_swarm(Swarm_id),
     timer:sleep(100),
     false = erlang:is_process_alive(Worker).
