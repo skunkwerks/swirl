@@ -18,7 +18,7 @@
 %% functions for encoding and decoding messages.</p>
 %% @end
 
--module(ppspp_message_SUITE).
+-module(ppspp_handshake_SUITE).
 -include("swirl.hrl").
 -include_lib("common_test/include/ct.hrl").
 
