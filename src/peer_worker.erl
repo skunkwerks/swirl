@@ -122,8 +122,7 @@ terminate(Reason, [#state{socket=Socket, port=Port}]) ->
 -spec start_test() -> term().
 start_test() ->
     {ok, _} = application:ensure_all_started(swirl),
-    Root_Hash = "c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
-    Swarm_Options = ppspp_options:use_default_options(Root_Hash),
+    Swarm_Options = ppspp_options:use_default_options(),
     {ok, Worker} = ?MODULE:start_link(0, Swarm_Options),
     ?assertEqual(true, erlang:is_process_alive(Worker)).
 

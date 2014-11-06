@@ -320,7 +320,7 @@ pack(_) -> <<>>.
 -ifdef(TEST).
 -spec defaults_test() -> term().
 defaults_test() ->
-    Root_Hash ="c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
+    Root_Hash ="c39e",
     Swarm_id = convert:hex_string_to_padded_binary(Root_Hash),
     Expected = {options,
                 [{chunk_addressing_method,chunking_32bit_chunks},

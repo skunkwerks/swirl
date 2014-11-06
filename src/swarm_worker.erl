@@ -121,14 +121,14 @@ terminate(Reason, State=#state{swarm_id=Swarm_id}) ->
 -spec start_test() -> term().
 start_test() ->
     application:ensure_all_started(swirl),
-    Root_Hash = "c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
+    Root_Hash = "c39e",
     Swarm_Options = ppspp_options:use_default_options(Root_Hash),
     {ok, Worker} = ?MODULE:start_link(Swarm_Options),
     ?assertEqual(true, erlang:is_process_alive(Worker)).
 
 -spec stop_test() -> term().
 stop_test() ->
-    Root_Hash = "c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
+    Root_Hash = "c39e",
     Swarm_Options = ppspp_options:use_default_options(Root_Hash),
     Swarm_id = ppspp_options:get_swarm_id(Swarm_Options),
     Worker = gproc:lookup_local_name({?MODULE, Swarm_id}),

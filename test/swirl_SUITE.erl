@@ -50,14 +50,14 @@ stop_peer(_Config) ->
 -spec start_swarm(any()) -> true.
 start_swarm(_Config) ->
     swirl:start(),
-    Swarm_Options = ppspp_options:use_default_options("c89800bfc82ed01ed6e3bfd5408c51274491f7d4"),
+    Swarm_Options = ppspp_options:use_default_options("c39e"),
     {ok, Worker} = swirl:start_swarm(Swarm_Options),
     timer:sleep(100),
     true = erlang:is_process_alive(Worker).
 
 -spec stop_swarm(any()) -> false.
 stop_swarm(_Config) ->
-    Swarm_Options = ppspp_options:use_default_options("c89800bfc82ed01ed6e3bfd5408c51274491f7d4"),
+    Swarm_Options = ppspp_options:use_default_options("c39e"),
     Swarm_id = ppspp_options:get_swarm_id(Swarm_Options),
     {ok, Worker} = swarm_worker:where_is(Swarm_id),
     swirl:stop_swarm(Swarm_id),

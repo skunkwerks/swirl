@@ -84,7 +84,7 @@ build_endpoint(udp, Socket, IP, Port, Channel) ->
 -spec handle({udp, inet:socket(), inet:ip_address(), inet:port_number(),
               binary()}) -> ok.
 handle(Packet) ->
-    Root_Hash = "c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
+    Root_Hash = "c39e",
     handle(Packet, ppspp_options:use_default_options(Root_Hash)),
     ok.
 
