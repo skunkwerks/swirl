@@ -63,13 +63,9 @@ stop(Swarm_id) ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc Looks up the pid for a given swarm id, either as string or binary.
+%% @doc Looks up the pid for a given swarm id.
 
--spec where_is(string() | ppspp_options:swarm_id()) -> {ok, pid()} | {error,_}.
-where_is(Root_Hash) when is_list(Root_Hash) ->
-    Swarm_Options = ppspp_options:use_default_options(Root_Hash),
-    Swarm_id = ppspp_options:get_swarm_id(Swarm_Options),
-    where_is(Swarm_id);
+-spec where_is(ppspp_options:swarm_id()) -> {ok, pid()} | {error,_}.
 where_is(Swarm_id) ->
     case Pid = gproc:lookup_local_name({?MODULE, Swarm_id}) of
         undefined -> {error, ppspp_swarm_worker_not_found};
@@ -79,12 +75,12 @@ where_is(Swarm_id) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Looks up the swarm options for a given swarm id, either as string or binary.
 
--spec get_swarm_options(string() | ppspp_options:swarm_id()) ->
+-spec get_swarm_options(ppspp_options:swarm_id()) ->
     {ok, ppspp_options:options() } | {error, any()}.
-get_swarm_options(Swarm) ->
-    case where_is(Swarm) of
-        {ok, Pid} -> gen_server:call(Pid, get_swarm_options);
-        Error -> Error
+get_swarm_options(Swarm_id) ->
+    case gproc:lookup_local_properties({?MODULE, Swarm_id}) of
+        [] -> {error, ppspp_swarm_not_registered};
+        [{_Pid, Swarm_Options} | _ ] -> {ok, Swarm_Options }
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -93,6 +89,7 @@ get_swarm_options(Swarm) ->
 -spec init([ppspp_options:swarm_id() | ppspp_options:options()]) -> {ok,state()}.
 init([Swarm_id , Swarm_Options]) ->
     process_flag(trap_exit, true),
+    gproc:add_local_property({?MODULE, Swarm_id}, Swarm_Options),
     ?INFO("swarm: ~p started with swarm_id:~p~n and options: ~p~n",
           [self(), Swarm_id , Swarm_Options]),
     {ok, #state{swarm_id = Swarm_id , options= Swarm_Options} }.
