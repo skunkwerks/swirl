@@ -24,6 +24,7 @@
 %% api
 -export([start_link/1,
          where_is/1,
+         get_swarm_options/1,
          stop/1]).
 
 %% callbacks
@@ -73,6 +74,17 @@ where_is(Swarm_id) ->
     case Pid = gproc:lookup_local_name({?MODULE, Swarm_id}) of
         undefined -> {error, ppspp_swarm_worker_not_found};
         _ -> {ok, Pid}
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc Looks up the swarm options for a given swarm id, either as string or binary.
+
+-spec get_swarm_options(string() | ppspp_options:swarm_id()) ->
+    {ok, ppspp_options:options() } | {error, any()}.
+get_swarm_options(Swarm) ->
+    case where_is(Swarm) of
+        {ok, Pid} -> gen_server:call(Pid, get_swarm_options);
+        Error -> Error
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
