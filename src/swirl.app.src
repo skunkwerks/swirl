@@ -23,6 +23,7 @@
                   gproc,
                   kernel,
                   stdlib,
+                  sasl,
                   crypto
                  ]},
   {mod, { swirl_app, []}},

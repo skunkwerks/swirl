@@ -100,7 +100,7 @@ handle_call(Message, From, State) ->
 
 -spec handle_info(_,[state()]) -> {noreply,[state()]} | {stop,{error,{unknown_info,_}},_}.
 handle_info(Packet={udp, _Socket, _Peer, _Port, _Maybe_Datagram}, State) ->
-    spawn(ppspp_datagram, handle, [Packet]),
+    proc_lib:spawn(ppspp_datagram, handle, [Packet]),
     {noreply, State}.
 
 -spec code_change(_,[state()],_) -> {ok,[state()]}.
