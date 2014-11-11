@@ -29,8 +29,13 @@ console:
 			+K true +A 16 \
 			-s swirl -s swirl help $(SWIRL_CONSOLE_OPTS)
 
-doc:
+clean:: doc-clean
+
+doc-clean:
+	@echo " GEN    clean-doc"
 	@rm -rf public
+
+doc: clean
 	@echo doc: building site in public/
 	@(cd site && hugo --config=config.yaml --destination=../public -v)
 
