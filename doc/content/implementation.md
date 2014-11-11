@@ -1,7 +1,10 @@
 ---
 title: Swirl Implementation
 date: 2014-04-29
-categories: overview, funding, development
+tags:
+    - overview
+    - funding
+    - development
 ---
 
 The Swirl project aims to deliver a fully functional implementation of the PPSP

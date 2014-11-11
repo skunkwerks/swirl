@@ -1,7 +1,9 @@
 ---
 title: Merkle Hash Trees
 date: 2014-04-29
-categories: overview, development
+tags:
+    - overview
+    - development
 ---
 
 In PPSP, by design, the integrity of any given chunk of data can be verified

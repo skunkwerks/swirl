@@ -21,4 +21,6 @@ params:
   copyright: "Copyright (c) 2014 - 2038 Skunkwerks GmbH; all rights reserved."
   github: https://github.com/skunkwerks
   twitter: http://twitter.com/swirl_project
+taxonomies:
+    tag: tags
 ...
