@@ -1,28 +1,21 @@
-Documentation info
-==================
+# Swirl Documentation
 
-The documentation is written in Markdown. You can find all files in `doc/content/`. We are using the tool [Hugo](https://github.com/spf13/hugo/releases) to create plain HTML files from the documentation source. The following sections explain how to create the documentation.
+The documentation is written in markdown, found in `/doc/content/`. We are using
+[Hugo] to generate the both the website and the documentation directly from
+markdown source.
 
-Install Hugo
-------------
+The HTML for the website itself is stored in '/site/layouts/root/', and the
+standard hugo files `config.yaml` and the theme can be found in `/site/`
+directly.
 
-To be able to create the HTML documentation, you will need to install Hugo. This is very straight forward. You just have to download the appropriate binary for your operating system. Please refer to the [Hugo releases site](https://github.com/spf13/hugo/releases) to find the correct binary.
+You can either build hugo from source, or more conveniently, download a static
+pre-built binary. Both are covered in Hugo's [installation guide].
 
-You can also compile Hugo by yourself. Please refer to the [Hugo Github repository](https://github.com/spf13/hugo) for instructions.
+[Hugo]: http://gohugo.io/
+[installation guide]: http://gohugo.io/overview/installing/
 
-After the successfull instllation you should 
+To build, or re-build the documentation, simply run `make doc` or `make publish`
+to regenerate the docs. `publish` requires permissions to update the google
+storage site, if you don't have this, simply send a pull request to the project
+and we'll rebuild it when merging your contribution.
 
-* Follow the [installation steps](http://hugo.spf13.com/overview/installing)
-* Check out the [quick start guide](http://hugo.spf13.com/overview/quickstart)
-
-Structure of the documentation
-------------------------------
-
-
-
-Add or edit documentation parts
--------------------------------
-
-
-
- 
