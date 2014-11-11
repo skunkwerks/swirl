@@ -4,6 +4,8 @@ date: 2014-04-29
 tags:
     - development
     - erlang
+menu: main
+weight: 20
 ---
 
 # Swirl Supervision

@@ -4,6 +4,8 @@ date: 2014-04-29
 tags:
     - overview
     - development
+menu: main
+weight: 40
 ---
 
 In PPSP, by design, the integrity of any given chunk of data can be verified

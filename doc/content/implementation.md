@@ -1,6 +1,8 @@
 ---
 title: Swirl Implementation
 date: 2014-04-29
+menu: main
+weight: 5
 tags:
     - overview
     - funding

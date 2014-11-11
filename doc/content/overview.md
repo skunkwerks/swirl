@@ -3,9 +3,11 @@ title: PPSPP Overview
 date: 2014-04-29
 tags:
     - overview
+menu: main
+weight: 10
 ---
 
-# PPSP Overview
+# An Overview of the PPSP Protocol
 
 PPSP is a transport protocol — it transfers a stream of opaque binary data from
 one location to another. It is unique amongst transport protocols as it is a
