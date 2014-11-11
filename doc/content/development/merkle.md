@@ -1,11 +1,8 @@
-+++
-title = "Merkle Hash Trees"
-description = ""
-date = "2014-04-29"
-categories = [
-    "Development"
-]
-+++
+---
+title: Merkle Hash Trees
+date: 2014-04-29
+categories: overview, development
+---
 
 In PPSP, by design, the integrity of any given chunk of data can be verified
 efficiently using a cryptographic signature scheme. The hashing algorithm
@@ -15,7 +12,9 @@ itself is the well-known Merkle hash tree:
 
 By transmitting with each new datagram, a set of new chunk hashes, and the new data,
 a peer can verify using any already downloaded / hashed data, and the new data, if in
-fact, is valid (untampered with during transit) and part of the desired data, by comparing all the way up to the root hash, which was obtained outside the PPSP protocol, from a trusted endpoint.
+fact, is valid (untampered with during transit) and part of the desired data, by
+comparing all the way up to the root hash, which was obtained outside the PPSP
+protocol, from a trusted endpoint.
 
 This is a significant advantage over BitTorrent, which requires downloading in advance
 all required hash data, and in addition, forces seeding peers to maintain a full list
@@ -39,7 +38,8 @@ nodes within the tree, and can still maintain cryptographically secure chunk dis
 - move "up" a level in the tree again
 - this time, hash the hash digests from the second layer, not the bottom layer
 - repeat this process using only the newly generated hashes, across the whole file
-- finally, repeat this entire process until there is a single hash digest of the entire file
+- finally, repeat this entire process until there is a single hash digest of the
+  entire file
 
 ## Verification
 
