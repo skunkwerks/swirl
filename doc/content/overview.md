@@ -35,16 +35,18 @@ both the integrity of the data, and also of other nearby chunks within the tree.
 
 The protocol itself is quite straightforwards:
 
-- peers locate each other initially via a separate [tracker] protocol they send
-- handshake messages, selecting a common set of protocol options, including the
-- root hash of the content that the swarm is managing subsequently they exchange
-- messages including: chunks requested from other peers an updated list of
-- chunks that other peers now have any new peers that have joined the scheme
-- performance information, including choke and unchoke messages once sufficient
-- chunks have been retrieved, the peer may disconnect, or remain connected to
-- help share the data within the swarm peers that repeatedly send invalid chunks
-- are eventually ignored either
-faulty or malicious, and are subsequently ignored
+- peers locate each other initially via a separate [tracker] protocol
+- they send handshake messages, selecting a common set of protocol options,
+  including the root hash of the content that the swarm is managing
+- subsequently they exchange messages including:
+    - chunks requested from other peers
+    - an updated list of chunks that other peers now have
+    - any new peers that have joined the scheme
+    - performance information, including choke and unchoke messages
+- once sufficient chunks have been retrieved, the peer may disconnect, or
+  remain connected to help share the data within the swarm
+- peers that repeatedly send invalid chunks are eventually ignored, whether
+  faulty or malicious, and therefore become excluded from the swarm
 
 See the PPSPP draft, [section 2] for a longer introduction.
 
@@ -111,8 +113,7 @@ The hash tree is simple, shown with this graphic from the [tribler] project.
 Note that the data chunks are laid out along the bottom row of the graphic, and
 concatenated hashes occupy the tree's roots:
 
-![merkle hash
-tree](https://github.com/skunkwerks/swirl/wiki/images/merkletree-v4.png)
+![merkle hash tree](https://github.com/skunkwerks/swirl/wiki/images/merkletree-v4.png)
 
 This final hash is known as the Root Hash in PPSPP, and the root hash, along
 with a select set of hashes as specific nodes further down the tree, is what
@@ -122,9 +123,9 @@ in this specific swarm's data.
 
 For more details, refer to this project's [merkle] hash tree documentation.
 
-[SHA1]: http://tools.ietf.org/html/rfc3174 [tribler]: http://www.tribler.org/
+[SHA1]: http://tools.ietf.org/html/rfc3174
+[tribler]: http://www.tribler.org/
 [tracker]: http://tools.ietf.org/html/draft-ietf-ppsp-base-tracker-protocol
 [PPSPP]: https://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol
 [datatracker]: https://datatracker.ietf.org/doc/draft-ietf-ppsp-peer-protocol
-[live streaming]:
-http://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol#section-6
+[live streaming]: http://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol#section-6
