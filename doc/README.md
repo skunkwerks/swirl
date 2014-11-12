@@ -4,7 +4,7 @@ The documentation is written in markdown, found in `/doc/content/`. We are using
 [Hugo] to generate the both the website and the documentation directly from
 markdown source.
 
-The HTML for the website itself is stored in '/site/layouts/root/', and the
+The HTML for the website itself is stored in `/site/layouts/root/`, and the
 standard hugo files `config.yaml` and the theme can be found in `/site/`
 directly.
 
