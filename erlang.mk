@@ -210,17 +210,27 @@ ERLC_OPTS ?= -Werror +debug_info +warn_export_all +warn_export_vars \
 	+warn_shadow_vars +warn_obsolete_guard # +bin_opt_info +warn_missing_spec
 COMPILE_FIRST ?=
 COMPILE_FIRST_PATHS = $(addprefix src/,$(addsuffix .erl,$(COMPILE_FIRST)))
+ERLC_EXCLUDE ?=
+ERLC_EXCLUDE_PATHS = $(addprefix src/,$(addsuffix .erl,$(ERLC_EXCLUDE)))
+
+ERLC_MIB_OPTS ?=
+COMPILE_MIB_FIRST ?=
+COMPILE_MIB_FIRST_PATHS = $(addprefix mibs/,$(addsuffix .mib,$(COMPILE_MIB_FIRST)))
 
 # Verbosity.
 
 appsrc_verbose_0 = @echo " APP   " $(PROJECT).app.src;
 appsrc_verbose = $(appsrc_verbose_$(V))
 
-erlc_verbose_0 = @echo " ERLC  " $(filter %.erl %.core,$(?F));
+erlc_verbose_0 = @echo " ERLC  " $(filter-out $(patsubst %,%.erl,$(ERLC_EXCLUDE)),\
+	$(filter %.erl %.core,$(?F)));
 erlc_verbose = $(erlc_verbose_$(V))
 
 xyrl_verbose_0 = @echo " XYRL  " $(filter %.xrl %.yrl,$(?F));
 xyrl_verbose = $(xyrl_verbose_$(V))
+
+mib_verbose_0 = @echo " MIB   " $(filter %.bin %.mib,$(?F));
+mib_verbose = $(mib_verbose_$(V))
 
 # Core targets.
 
@@ -239,7 +249,8 @@ app:: erlc-include ebin/$(PROJECT).app
 
 define compile_erl
 	$(erlc_verbose) erlc -v $(ERLC_OPTS) -o ebin/ \
-		-pa ebin/ -I include/ $(COMPILE_FIRST_PATHS) $(1)
+		-pa ebin/ -I include/ $(filter-out $(ERLC_EXCLUDE_PATHS),\
+		$(COMPILE_FIRST_PATHS) $(1))
 endef
 
 define compile_xyrl
@@ -248,9 +259,21 @@ define compile_xyrl
 	@rm ebin/*.erl
 endef
 
+define compile_mib
+	$(mib_verbose) erlc -v $(ERLC_MIB_OPTS) -o priv/mibs/ \
+		-I priv/mibs/ $(COMPILE_MIB_FIRST_PATHS) $(1)
+	$(mib_verbose) erlc -o include/ -- priv/mibs/*.bin
+endef
+
 ifneq ($(wildcard src/),)
 ebin/$(PROJECT).app::
 	@mkdir -p ebin/
+
+ifneq ($(wildcard mibs/),)
+ebin/$(PROJECT).app:: $(shell find mibs -type f -name \*.mib)
+	@mkdir -p priv/mibs/ include
+	$(if $(strip $?),$(call compile_mib,$?))
+endif
 
 ebin/$(PROJECT).app:: $(shell find src -type f -name \*.erl) \
 		$(shell find src -type f -name \*.core)
@@ -271,7 +294,8 @@ erlc-include:
 	fi
 
 clean-app:
-	$(gen_verbose) rm -rf ebin/
+	$(gen_verbose) rm -rf ebin/ priv/mibs/
+	$(gen_verbose) rm -f $(addprefix include/,$(addsuffix .hrl,$(notdir $(basename $(wildcard mibs/*.mib)))))
 
 # Copyright (c) 2014, Loïc Hoguin <essen@ninenines.eu>
 # This file is part of erlang.mk and subject to the terms of the ISC License.
@@ -551,6 +575,111 @@ endif
 list-templates:
 	@echo Available templates: $(sort $(patsubst tpl_%,%,$(filter tpl_%,$(.VARIABLES))))
 
+# Copyright (c) 2014, Loïc Hoguin <essen@ninenines.eu>
+# This file is part of erlang.mk and subject to the terms of the ISC License.
+
+.PHONY: clean-c_src distclean-c_src-env
+# todo
+
+# Configuration.
+
+C_SRC_DIR = $(CURDIR)/c_src
+C_SRC_ENV ?= $(C_SRC_DIR)/env.mk
+C_SRC_OUTPUT ?= $(CURDIR)/priv/$(PROJECT).so
+
+# System type and C compiler/flags.
+
+UNAME_SYS := $(shell uname -s)
+ifeq ($(UNAME_SYS), Darwin)
+	CC ?= cc
+	CFLAGS ?= -O3 -std=c99 -arch x86_64 -flat_namespace -undefined suppress -finline-functions -Wall -Wmissing-prototypes
+	CXXFLAGS ?= -O3 -arch x86_64 -flat_namespace -undefined suppress -finline-functions -Wall
+else ifeq ($(UNAME_SYS), FreeBSD)
+	CC ?= cc
+	CFLAGS ?= -O3 -std=c99 -finline-functions -Wall -Wmissing-prototypes
+	CXXFLAGS ?= -O3 -finline-functions -Wall
+else ifeq ($(UNAME_SYS), Linux)
+	CC ?= gcc
+	CFLAGS ?= -O3 -std=c99 -finline-functions -Wall -Wmissing-prototypes
+	CXXFLAGS ?= -O3 -finline-functions -Wall
+endif
+
+CFLAGS += -fPIC -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTERFACE_INCLUDE_DIR)
+CXXFLAGS += -fPIC -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTERFACE_INCLUDE_DIR)
+
+LDLIBS += -L $(ERL_INTERFACE_LIB_DIR) -lerl_interface -lei
+LDFLAGS += -shared
+
+# Verbosity.
+
+c_verbose_0 = @echo " C     " $(?F);
+c_verbose = $(c_verbose_$(V))
+
+cpp_verbose_0 = @echo " CPP   " $(?F);
+cpp_verbose = $(cpp_verbose_$(V))
+
+link_verbose_0 = @echo " LD    " $(@F);
+link_verbose = $(link_verbose_$(V))
+
+# Targets.
+
+ifeq ($(wildcard $(C_SRC_DIR)),)
+else ifneq ($(wildcard $(C_SRC_DIR)/Makefile),)
+app::
+	$(MAKE) -C $(C_SRC_DIR)
+
+clean::
+	$(MAKE) -C $(C_SRC_DIR) clean
+
+else
+SOURCES := $(shell find $(C_SRC_DIR) -type f -regex ".*\.\(C\|cc?\|cpp\)")
+OBJECTS = $(addsuffix .o, $(basename $(SOURCES)))
+
+COMPILE_C = $(c_verbose) $(CC) $(CFLAGS) $(CPPFLAGS) -c
+COMPILE_CPP = $(cpp_verbose) $(CXX) $(CXXFLAGS) $(CPPFLAGS) -c
+
+app:: $(C_SRC_ENV) $(C_SRC_OUTPUT)
+
+$(C_SRC_OUTPUT): $(OBJECTS)
+	@mkdir -p priv/
+	$(link_verbose) $(CC) $(OBJECTS) $(LDFLAGS) $(LDLIBS) -o $(C_SRC_OUTPUT)
+
+%.o: %.c
+	$(COMPILE_C) $(OUTPUT_OPTION) $<
+
+%.o: %.cc
+	$(COMPILE_CPP) $(OUTPUT_OPTION) $<
+
+%.o: %.C
+	$(COMPILE_CPP) $(OUTPUT_OPTION) $<
+
+%.o: %.cpp
+	$(COMPILE_CPP) $(OUTPUT_OPTION) $<
+
+$(C_SRC_ENV):
+	@erl -noshell -noinput -eval "file:write_file(\"$(C_SRC_ENV)\", \
+		io_lib:format( \
+			\"ERTS_INCLUDE_DIR ?= ~s/erts-~s/include/~n\" \
+			\"ERL_INTERFACE_INCLUDE_DIR ?= ~s~n\" \
+			\"ERL_INTERFACE_LIB_DIR ?= ~s~n\", \
+			[code:root_dir(), erlang:system_info(version), \
+			code:lib_dir(erl_interface, include), \
+			code:lib_dir(erl_interface, lib)])), \
+		erlang:halt()."
+
+clean:: clean-c_src
+
+clean-c_src:
+	$(gen_verbose) rm -f $(C_SRC_OUTPUT) $(OBJECTS)
+
+distclean:: distclean-c_src-env
+
+distclean-c_src-env:
+	$(gen_verbose) rm -f $(C_SRC_ENV)
+
+-include $(C_SRC_ENV)
+endif
+
 # Copyright (c) 2013-2014, Loïc Hoguin <essen@ninenines.eu>
 # This file is part of erlang.mk and subject to the terms of the ISC License.
 
@@ -769,11 +898,10 @@ endif
 # Configuration.
 
 ESCRIPT_NAME ?= $(PROJECT)
-ESCRIPT_COMMENT ?= -*- erlang -*-
+ESCRIPT_COMMENT ?= This is an -*- erlang -*- file
 
-ESCRIPT_BEAMS ?= "ebin/*", \
-	"deps/*/ebin/*", \
-	"sys.config"
+ESCRIPT_BEAMS ?= "ebin/*", "deps/*/ebin/*"
+ESCRIPT_SYS_CONFIG ?= "rel/sys.config"
 ESCRIPT_EMU_ARGS ?= -pa . \
 	-noshell -noinput  \
 	-sasl errlog_type error \
@@ -805,7 +933,7 @@ define ESCRIPT_RAW
 'Zip = fun(A, L) -> {ok,{_,Z}} = zip:create(A, L, [{compress,all},memory]), Z end,'\
 'Ez = fun(Escript) ->'\
 '  Static = Files([$(ESCRIPT_STATIC)]),'\
-'  Beams = Squash(Files([$(ESCRIPT_BEAMS)])),'\
+'  Beams = Squash(Files([$(ESCRIPT_BEAMS), $(ESCRIPT_SYS_CONFIG)])),'\
 '  Archive = Beams ++ [{ "static.gz", Zip("static.gz", Static)}],'\
 '  escript:create(Escript, [ $(ESCRIPT_OPTIONS)'\
 '    {archive, Archive, [memory]},'\
@@ -819,11 +947,88 @@ define ESCRIPT_RAW
 endef
 ESCRIPT_COMMAND = $(subst ' ',,$(ESCRIPT_RAW))
 
-escript:: distclean-escript all
+escript:: distclean-escript deps app
 	$(gen_verbose) erl -noshell -eval $(ESCRIPT_COMMAND) -s init stop
 
 distclean-escript:
 	$(gen_verbose) rm -f $(ESCRIPT_NAME)
+
+# Copyright (c) 2014, Enrique Fernandez <enrique.fernandez@erlang-solutions.com>
+# This file is contributed to erlang.mk and subject to the terms of the ISC License.
+
+.PHONY: help-eunit build-eunit eunit distclean-eunit
+
+# Configuration
+
+EUNIT_ERLC_OPTS ?= +debug_info +warn_export_vars +warn_shadow_vars +warn_obsolete_guard -DTEST
+
+EUNIT_DIR ?=
+EUNIT_DIRS = $(sort $(EUNIT_DIR) ebin)
+EXT_EUNIT_DIRS = $(filter-out ebin,$(EUNIT_DIRS))
+TAGGED_EUNIT_DIRS = $(foreach dir,$(EUNIT_DIRS),\
+	$(shell echo $(dir) | sed -e 's/\(.*\)/{dir,"\1"}/g'))
+
+EUNIT_OPTS ?= verbose {report,{eunit_surefire,[{dir,"logs"}]}}
+
+# Utility functions
+
+# stringify function
+DQUOTE = "
+# This coment is required to avoid syntax highlighting issues "
+ESCDQUOTE = \"
+stringify="$(subst $(DQUOTE),$(ESCDQUOTE),$(strip $(1)))"
+
+define str-join
+	$(shell set +B; echo "$(call stringify, $(1))" | sed -e "s/ /,/g"; set -B)
+endef
+
+# Core targets.
+
+help:: help-eunit
+
+tests:: eunit
+
+clean:: clean-eunit
+
+distclean:: distclean-eunit
+
+# Plugin-specific targets.
+
+EUNIT_RUN = erl \
+	-no_auto_compile \
+	-noshell \
+	-pa $(realpath $(EUNIT_DIR)) $(DEPS_DIR)/*/ebin \
+	-pz $(realpath ebin) \
+	-eval 'eunit:test([$(call str-join,$(TAGGED_EUNIT_DIRS))], [$(call str-join,$(EUNIT_OPTS))]).' \
+	-s erlang halt
+
+help-eunit:
+	@printf "%s\n" "" \
+		"EUnit targets:" \
+		"  eunit       Run all the EUnit tests for this project"
+
+ifeq ($(strip $(EUNIT_DIR)),)
+build-eunit:
+else ifeq ($(strip $(EUNIT_DIR)),ebin)
+build-eunit:
+else
+build-eunit:
+	$(gen_verbose) erlc -v $(EUNIT_ERLC_OPTS) -I include/ -o $(EUNIT_DIR) \
+		$(wildcard $(EUNIT_DIR)/*.erl $(EUNIT_DIR)/*/*.erl) -pa ebin/
+endif
+
+eunit: ERLC_OPTS = $(EUNIT_ERLC_OPTS)
+eunit: clean deps app build-eunit
+	@echo '$(EUNIT_OPTS)' | perl -ne \
+		'mkdir $$1 if /{report,{eunit_surefire,\[{dir,"(.*)"}\]}}/'
+	$(gen_verbose) $(EUNIT_RUN)
+
+clean-eunit:
+	$(gen_verbose) $(foreach dir,$(EUNIT_DIRS),rm -rf $(dir)/*.beam)
+
+distclean-eunit:
+	@echo '$(EUNIT_OPTS)' | perl -ne \
+		'rmdir $$1 if /{report,{eunit_surefire,\[{dir,"(.*)"}\]}}/'
 
 # Copyright (c) 2013-2014, Loïc Hoguin <essen@ninenines.eu>
 # This file is part of erlang.mk and subject to the terms of the ISC License.
@@ -902,50 +1107,3 @@ build-shell-deps: $(ALL_SHELL_DEPS_DIRS)
 
 shell: build-shell-deps
 	$(gen_verbose) erl $(SHELL_PATH) $(SHELL_OPTS)
-
-# Copyright (c) 2014, Dave Cottlehuber <dch@skunkwerks.at>
-# This file is contributed to erlang.mk and subject to the terms of the ISC License.
-
-.PHONY: tests-eunit distclean-eunit clean-eunit build-eunit
-
-# Configuration
-
-EUNIT_ERLC_OPTS ?= +debug_info +warn_export_vars +warn_shadow_vars +warn_obsolete_guard
-EUNIT_ERLC_OPTS += -DTEST=1 -DEXTRA=1
-
-EUNIT_OPTS ?= {dir, "test"}, [verbose, {report,{eunit_surefire,[{dir,"logs"}]}}]
-
-# Core targets.
-
-tests:: tests-eunit
-
-distclean:: distclean-eunit
-
-help::
-	@printf "%s\n" "" \
-		"All modules in ebin/ will be tested with eunit, results in logs/."
-
-# Plugin-specific targets.
-
-EUNIT_RUN = erl \
-	-no_auto_compile \
-	-noshell \
-	-pa $(realpath test) $(DEPS_DIR)/*/ebin \
-	-pz $(realpath ebin) \
-	-eval 'ok = eunit:test($(EUNIT_OPTS)).' \
-	-s init stop
-
-build-eunit:
-	$(gen_verbose) erlc -v $(EUNIT_ERLC_OPTS) -I include/ -o test/ \
-		$(wildcard src/*.erl src/*/*.erl) -pa ebin/
-
-tests-eunit: ERLC_OPTS = $(EUNIT_ERLC_OPTS)
-tests-eunit: clean deps app build-eunit
-	$(gen_verbose) mkdir -p logs
-	$(gen_verbose) $(EUNIT_RUN)
-
-clean-eunit:
-	$(gen_verbose) rm -rf test/*.beam
-
-distclean-eunit:
-	$(gen_verbose) rm -rf $(EUNIT_REPORT_DIR)
