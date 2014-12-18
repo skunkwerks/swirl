@@ -29,43 +29,43 @@ provided generously by [NLNet] for the first stages:
 3. [storage] layer comprising merkle tree, binmap lookups and key-value storage
 4. simple [deployment] including FreeBSD and Linux/docker support
 
-However, none of this can be implemented effectively, unless the overall
-framework of the project is in place. Work on the decoder in particular became
-blocked, as the simplistic approach used initially to manager the UDP port
-handlers, got in the way of passing the appropriate swarm and peer information
-through to the right package parsers.
+To make the most sense, it's recommended to read in orer:
 
-This is in the process of being ripped out now, and as a bonus of this work, the
-[supervision] tree (the OTP structure of applications including peers and
-swarms) is being cleaned up in the [peer-supervisor] branch.
+- code [layout]
+- the [supervision]
+- further sections per module as you like
 
 ## Future Plans
 
 Further phases are planned, currently:
 
-1. live [streaming] support
-2. [zeroconf] / MDNS support (also known as bonjour protocol) for identifying local peers
-3. NAT [traversal] support, via STUN/TURN/ICE etc, depending on the outcome of
+- live [streaming] support
+- [zeroconf] / MDNS support (also known as bonjour protocol) for identifying local peers
+- NAT [traversal] support, via STUN/TURN/ICE etc, depending on the outcome of
    the IETF standardisation process
-4. [browser] support
-5. [mobile] device support
-6. [embedded] systems
-
+- [browser] support
+- native [mobile] device support
+- [embedded] systems such as desktop boxes and digital television
+- support for [billing] functionality
+- enabling [traffic] management and shaping functionality and interfaces
 
 [Erlang/OTP]: http://www.erlang.org/
 [NLNet]: http://nlnet.nl/news/2013/20130901-awards.html
-[peer-supervisor]: https://github.com/skunkwerks/swirl/blob/feature/add-peer-supervisor/src/swirl_sup.erl
 
-[decoder]: decoder.md
-[encoder]: encoder.md
-[supervision]: supervision.md
-[overview]: overview.md
-[merkle]: merkle.md
-[deployment]: deployment.md
-[storage]: storage.md
-[streaming]: /streaming.md
-[zeroconf]: zeroconf.md
-[traversal]: /development/traversal/
+[billing]: billing.md
 [browser]: browser.md
-[mobile]: mobile.md
+[decoder]: decoder.md
+[deployment]: deployment.md
 [embedded]: embedded.md
+[encoder]: encoder.md
+[layout]: layout.md
+[merkle]: merkle.md
+[mobile]: mobile.md
+[overview]: overview.md
+[storage]: storage.md
+[streaming]: streaming.md
+[supervision]: supervision.md
+[traffic]: traffic.md
+[traversal]: traversal.md
+[usage]: usage.md
+[zeroconf]: zeroconf.md

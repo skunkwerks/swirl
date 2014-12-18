@@ -50,7 +50,8 @@ nodes within the tree, and can still maintain cryptographically secure chunk dis
 Note that the root hash represents a significant proof of work by the bearer,
 that, if provided with an appropriate set of hashes further down the tree,
 can be used to determine even from a very small number of chunks, if the
-provided data is in fact a valid part of the original file / hash.
+provided data is in fact a valid part of the original file / hash, and
+therefore if we can trust the content, and the supplying peer.
 
 For example, given the very first chunk in a file, it will be only necessary
 to provide the hash of the adjacent siblings repeatedly to the top of the
