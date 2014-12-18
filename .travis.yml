@@ -1,7 +1,7 @@
 language: erlang
 notifications:
   irc: "irc.freenode.net#swirlproject"
-script: "make distcheck"
+script: "V=1 make distcheck"
 otp_release:
   - 17.0
   - 17.1

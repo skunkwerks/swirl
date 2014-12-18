@@ -23,22 +23,42 @@
 -behaviour(supervisor).
 
 %% api
--export([start_link/0]).
+-export([start_link/0,
+         start_child/1 ]).
 
 %% callbacks
 -export([init/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% api
--spec start_link() -> {ok, pid()} | {error, any()}.
+
+-spec start_link() -> {ok, pid()} | ignore | {error, any()}.
 
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
+-spec start_child([ppspp_options:options()]) ->
+    {error,_} | {ok, pid()}.
+start_child([Swarm_Options]) ->
+    supervisor:start_child(?MODULE, [Swarm_Options]).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks
--spec init([]) -> {ok,{{one_for_one, 10,60}, [] }}.
-init([]) ->
-    Workers = [],
-    {ok, {{one_for_one, 10, 60}, Workers}}.
 
+-spec init([]) -> {ok,{{simple_one_for_one, 10,60}, [supervisor:child_spec()] }}.
+init([])->
+    RestartStrategy = simple_one_for_one,
+    MaxRestarts = 10,
+    MaxSecondsBetweenRestarts = 60,
+    Options = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
+    Restart = transient,
+    Shutdown = 1000,
+    Type = worker,
+
+    Worker = {swarm_worker, {swarm_worker, start_link, []},
+              Restart,
+              Shutdown,
+              Type,
+              [swarm_worker]},
+
+    {ok, {Options, [Worker]}}.

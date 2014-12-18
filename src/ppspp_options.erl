@@ -40,13 +40,13 @@
 
 %% types largely as defined in PPSPP RFC
 
--export_type([root_hash/0,
+-export_type([swarm_id/0,
               merkle_tree_hash_function/0,
               content_integrity_protection_method/0,
               options/0,
               option/0]).
 
--opaque root_hash() :: binary().
+-opaque swarm_id() :: binary().
 -opaque options() :: {options, options_dict()}.
 -type options_dict() :: list({ option(), any()}).
 -opaque option() :: supported_version
@@ -253,7 +253,7 @@ get_minimum_version(Options) ->
 %% @doc get_swarm_id/1 returns the lowest accepted PPSP version for the swarm
 %% <p>Provides a clean interface for other modules to retrieve PPSP options.</p>
 %% @end
--spec get_swarm_id(options()) -> root_hash().
+-spec get_swarm_id(options()) -> swarm_id().
 
 get_swarm_id(Options) ->
     get(swarm_id, Options).
@@ -277,7 +277,7 @@ get_maximum_supported_version(Options) ->
 %% handle many peer swarms concurrently on different channels.
 %% The returned options and values are:
 %% <ul>
-%% <li>swarm_id: Root_Hash</li>
+%% <li>swarm_id: Swarm_id</li>
 %% <li>chunk_addressing_method: chunk_32bit_chunks</li>
 %% <li>content_integrity_check_method: merkle_hash_tree</li>
 %% <li>merkle_hash_tree_function: sha</li>
@@ -290,12 +290,12 @@ get_maximum_supported_version(Options) ->
 -spec use_default_options() -> options().
 use_default_options() ->
     use_default_options(<<>>).
--spec use_default_options(string() | root_hash()) -> options().
+-spec use_default_options(string() | swarm_id()) -> options().
 use_default_options(Hex_String) when is_list(Hex_String) ->
     use_default_options(convert:hex_string_to_padded_binary(Hex_String));
-use_default_options(Root_Hash) when is_binary(Root_Hash) ->
+use_default_options(Swarm_id) when is_binary(Swarm_id) ->
     {options,
-     orddict:from_list( [{swarm_id, Root_Hash},
+     orddict:from_list( [{swarm_id, Swarm_id},
                          {chunk_addressing_method, chunking_32bit_chunks},
                          {chunk_size, ?PPSPP_DEFAULT_CHUNK_SIZE},
                          {content_integrity_check_method, merkle_hash_tree},
@@ -320,16 +320,15 @@ pack(_) -> <<>>.
 -ifdef(TEST).
 -spec defaults_test() -> term().
 defaults_test() ->
-    Hash ="c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
-    Root_Hash = convert:hex_string_to_padded_binary(Hash),
+    Root_Hash ="c39e",
+    Swarm_id = convert:hex_string_to_padded_binary(Root_Hash),
     Expected = {options,
                 [{chunk_addressing_method,chunking_32bit_chunks},
                  {chunk_size,1024},
                  {content_integrity_check_method,merkle_hash_tree},
                  {merkle_hash_tree_function,sha},
                  {minimum_version,1},
-                 {swarm_id, Root_Hash},
+                 {swarm_id, Swarm_id},
                  {version,1}]},
-    [?_assertEqual( Expected, use_default_options(Root_Hash) )].
+    ?assertEqual( Expected, use_default_options(Swarm_id)).
 -endif.
-

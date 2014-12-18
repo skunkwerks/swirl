@@ -56,9 +56,22 @@ start_link(Port, Swarm_Options) when is_integer(Port) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Stops the server.
 
--spec stop(inet:port_number()) -> ok.
+-spec stop(inet:port_number()) -> ok | {error, any()}.
 stop(Port) ->
-    ok = gen_server:cast(gproc:lookup_local_name({?MODULE, Port}), stop).
+    case where_is(Port) of
+        {error, Reason} -> {error, Reason};
+        {ok, Pid} -> gen_server:cast(Pid, stop)
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc Looks up the pid for a given port.
+
+-spec where_is(inet:port_number()) -> {ok, pid()} | {error,_}.
+where_is(Port) when is_integer(Port), Port >= 0, Port =< 65535 ->
+    case Pid = gproc:lookup_local_name({?MODULE, Port}) of
+        undefined -> {error, ppspp_peer_worker_not_found};
+        _ -> {ok, Pid}
+    end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks
@@ -87,7 +100,7 @@ handle_call(Message, From, State) ->
 
 -spec handle_info(_,[state()]) -> {noreply,[state()]} | {stop,{error,{unknown_info,_}},_}.
 handle_info(Packet={udp, _Socket, _Peer, _Port, _Maybe_Datagram}, State) ->
-    spawn(ppspp_datagram, handle, [Packet]),
+    proc_lib:spawn(ppspp_datagram, handle, [Packet]),
     {noreply, State}.
 
 -spec code_change(_,[state()],_) -> {ok,[state()]}.
@@ -108,15 +121,15 @@ terminate(Reason, [#state{socket=Socket, port=Port}]) ->
 -ifdef(TEST).
 -spec start_test() -> term().
 start_test() ->
-    Root_Hash = "c89800bfc82ed01ed6e3bfd5408c51274491f7d4",
-    Swarm_Options = ppspp_options:use_default_options(Root_Hash),
+    {ok, _} = application:ensure_all_started(swirl),
+    Swarm_Options = ppspp_options:use_default_options(),
     {ok, Worker} = ?MODULE:start_link(0, Swarm_Options),
-    {ok, true = erlang:is_process_alive(Worker)}.
+    ?assertEqual(true, erlang:is_process_alive(Worker)).
 
 -spec stop_test() -> term().
 stop_test() ->
     Worker = gproc:lookup_local_name({?MODULE, 0}),
     ?MODULE:stop(0),
-    io:format("worker is ~p~n",[Worker]),
-    {ok, false = erlang:is_process_alive(Worker)}.
+    io:format("worker is ~p~n", [Worker]),
+    ?assertEqual(false, erlang:is_process_alive(Worker)).
 -endif.

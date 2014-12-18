@@ -34,6 +34,8 @@
          stop_peer/0,
          stop_peer/1,
          stop_pool/2,
+         start_swarm/1,
+         stop_swarm/1,
          start/0,
          stop/0]).
 
@@ -62,6 +64,9 @@ quit() ->
     _ = stop(),
     init:stop().
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% peer API
+
 %% @doc start a PPSPP listener (peer) on a given port, or the default port,
 %% using the supplied hash and default PPSPP swarm options, or no hash at all
 %% for an inert peer that can subsequently be controlled by multiple swarms.
@@ -75,10 +80,10 @@ start_peer() ->
     start_peer(?SWIRL_PORT, ppspp_options:use_default_options()).
 
 %% start_peer can be handed a root hash and assumes default options.
--spec start_peer(string() | ppspp_options:root_hash()) ->
+-spec start_peer(string() | ppspp_options:swarm_id()) ->
     {ok, pid()} | {error,_}.
-start_peer(Root_Hash) ->
-    Swarm_Options = ppspp_options:use_default_options(Root_Hash),
+start_peer(Swarm_id) ->
+    Swarm_Options = ppspp_options:use_default_options(Swarm_id),
     start_peer(?SWIRL_PORT, Swarm_Options).
 
 -spec start_peer(inet:port_number(), ppspp_options:options()) ->
@@ -120,6 +125,33 @@ stop_pool(First, Last) when is_integer(First), is_integer(Last), First < Last  -
                       {stop_peer(Port), Port} end,
               Ports).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% swarm API
+
+%% @doc start a PPSPP swarm, using the supplied hash and PPSPP swarm options.
+%% If either a string (root hash), or a binary (swarm id) are supplied, then
+%% start_swarm will do the right thing and assume default PPSPP options. Note
+%% that the hashing algorithm and chunk size must match for this to work.
+%% -- caveat coder
+-spec start_swarm(string()
+                  | ppspp_options:swarm_id()
+                  | ppspp_options:options()) ->
+    {ok, pid()} | {error,_}.
+start_swarm(Swarm_id) when is_binary(Swarm_id); is_list(Swarm_id) ->
+    Swarm_Options = ppspp_options:use_default_options(Swarm_id),
+    start_swarm(Swarm_Options);
+start_swarm(Swarm_Options) ->
+    supervisor:start_child(swarm_sup, [Swarm_Options]).
+
+%% @doc stop a PPSPP swarm for a given root_hash or swarm_id.
+%% @end
+-spec stop_swarm(string() | ppspp_options:swarm_id()) ->
+    ok | {error, ppspp_swarm_worker_not_found}.
+stop_swarm(Swarm) when is_binary(Swarm); is_list(Swarm) ->
+    Swarm_Options = ppspp_options:use_default_options(Swarm),
+    swarm_worker:stop(ppspp_options:get_swarm_id(Swarm_Options)).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc help for console users
 %% Provides a summary of available commands options within the erlang console
 %% @end
@@ -131,14 +163,16 @@ help() ->
            "help().                    these help notes",
            "start().                   starts the swirl application, but no peers or swarms",
            "stop().                    stops the swirl application, active peers and swarms",
+           "start_swarm(Options | Id). starts a swarm using given options or swarm id",
+           "stop_swarm(Options | Id).  stops a swarm using given options or swarm id",
            "start_peer().              starts a peer with default port & options",
            "start_peer(Hash).          starts a peer with defaults and given hash",
            "start_pool(First, Last).   starts peers on consecutive ports from First to Last",
-           "start_peer(Port, Options). starts a peer with supplied port and options",
+           "start_peer(Port, Options). starts a peer with given port and options",
            "stop_peer().               stops a single peer on the default port",
            "stop_peer(Port).           stops a single peer on the given port",
            "stop_pool(First, Last).    stops peers on consecutive ports from First to Last",
-           "quit().                    terminates *immediately* the entire BEAM vm",
+           "quit().                    immediately terminates the entire BEAM vm",
            "", "",
            "e.g. swirl:start_peer(\"c89800bfc82ed01ed6e3bfd5408c51274491f7d4\").",
            "",
@@ -151,6 +185,7 @@ help() ->
                   Help),
     ok.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% for escript support
 -spec main(any()) -> no_return().
 main(_) ->
@@ -159,14 +194,16 @@ main(_) ->
     _ = start_peer(),
     timer:sleep(infinity).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% test
+
 -ifdef(TEST).
 -spec peer_random_port_start_test() -> {ok, pid()}.
 peer_random_port_start_test() ->
     start(),
-    {ok, start_peer(0, ppspp_options:use_default_options())}.
+    ?assertMatch({ok, _}, start_peer(0, ppspp_options:use_default_options())).
 
 -spec peer_random_port_stop_test() -> ok.
 peer_random_port_stop_test() ->
-    ok =  stop_peer(0).
+    ?assertEqual(ok, stop_peer(0)).
 -endif.
-

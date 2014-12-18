@@ -33,7 +33,7 @@ have(_Config) ->
     ct:comment("have: ensure parsing have() does not consume additional data"),
     %% have() is a thin wrapper around chunk handling
     Method = chunk_32bit_chunks,
-    Random = crypto:strong_rand_bytes(10),
-    Chunks = <<15:64, Random/binary>>,
-    Expected = {{have,{chunk_spec,{chunk_32bit_chunks,0,15}}}, Random},
+    Garbage = crypto:strong_rand_bytes(10),
+    Chunks = <<15:64, Garbage/binary>>,
+    Expected = {{have,{chunk_spec,{chunk_32bit_chunks,0,15}}}, Garbage},
     Expected = ppspp_have:unpack(Method, Chunks).

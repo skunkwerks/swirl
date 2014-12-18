@@ -13,21 +13,29 @@ include erlang.mk
 
 .PHONY : doc publish run console reindent
 
-distcheck: distclean all escript dialyze tests
+distcheck: distclean all plt dialyze tests escript
 	@echo "*** check indentation before git push ***"
 
 run: escript
 	./swirl
+
+dev: SWIRL_CONSOLE_OPTS ?= -s observer
+dev: console
 
 console:
 	@erl -pa ./ebin -pz deps/*/ebin \
 			-I ./include -s crypto -smp \
 			-setcookie swirl -sname swirl \
 			+K true +A 16 \
-			-s swirl -s swirl help
+			-s swirl -s swirl help $(SWIRL_CONSOLE_OPTS)
 
-doc:
+clean:: doc-clean
+
+doc-clean:
+	@echo " GEN    clean-doc"
 	@rm -rf public
+
+doc: clean
 	@echo doc: building site in public/
 	@(cd site && hugo --config=config.yaml --destination=../public -v)
 
