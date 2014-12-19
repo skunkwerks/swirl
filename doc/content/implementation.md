@@ -26,13 +26,13 @@ provided generously by [NLNet] for the first stages:
 
 1. a [decoder], taking internet / wire format to internal parsed format
 2. an [encoder], performing the reverse step from internal format to the wire
-3. [storage] layer comprising merkle tree, binmap lookups and key-value storage
+3. a [storage] layer comprising merkle tree, binmap lookups and key-value storage
 4. simple [deployment] including FreeBSD and Linux/docker support
 
-To make the most sense, it's recommended to read in orer:
+To make the most sense of the application itself, it's recommended to read in orer:
 
-- code [layout]
-- the [supervision]
+- high-level code [layout] introducing the general structure of the modules
+- the [supervision] tree (application hierarchy) implemented in Erlang/OTP
 - further sections per module as you like
 
 ## Future Plans
@@ -52,20 +52,20 @@ Further phases are planned, currently:
 [Erlang/OTP]: http://www.erlang.org/
 [NLNet]: http://nlnet.nl/news/2013/20130901-awards.html
 
-[billing]: billing.md
-[browser]: browser.md
-[decoder]: decoder.md
-[deployment]: deployment.md
-[embedded]: embedded.md
-[encoder]: encoder.md
-[layout]: layout.md
-[merkle]: merkle.md
-[mobile]: mobile.md
-[overview]: overview.md
-[storage]: storage.md
-[streaming]: streaming.md
-[supervision]: supervision.md
-[traffic]: traffic.md
-[traversal]: traversal.md
-[usage]: usage.md
-[zeroconf]: zeroconf.md
+[billing]: ../billing
+[browser]: ../browser
+[decoder]: ../decoder
+[deployment]: ../deployment
+[embedded]: ../embedded
+[encoder]: ../encoder
+[layout]: ../layout
+[merkle]: ../merkle
+[mobile]: ../mobile
+[overview]: ../overview
+[storage]: ../storage
+[streaming]: ../streaming
+[supervision]: ../supervision
+[traffic]: ../traffic
+[traversal]: ../traversal
+[usage]: ../usage
+[zeroconf]: ../zeroconf
