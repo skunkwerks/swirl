@@ -3,8 +3,8 @@ notifications:
   irc: "irc.freenode.net#swirlproject"
 script: "V=1 make distcheck"
 otp_release:
-  - 17.0
   - 17.1
+  - 17.4
 branches:
   only:
     - master
