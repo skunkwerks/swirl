@@ -1,7 +1,6 @@
 PROJECT   = swirl
 
 DEPS      = gproc
-TEST_DEPS = proper
 dep_gproc = git git://github.com/uwiger/gproc.git master
 
 ERLC_OPTS = +debug_info
