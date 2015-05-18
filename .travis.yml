@@ -1,12 +1,14 @@
 language: erlang
 notifications:
-  irc: "irc.freenode.net#swirlproject"
-script: "V=1 make distcheck"
+  irc: irc.freenode.net#swirlproject
+  slack:
+    secure: NzsTh8t8lshkf9jEcp+INLW4Oo0sihS07UwLO7UE3EOIpcMNGd/GzDQSWydcE2ddv6yPCUDEsXQCp0dSRJoRQMPgnlkKC31O1G0zZrZij5kg+tSuQHh4SMlLJ28g/6inUYmmxbpmLHsokr1N625DQAhgiGgglBF1xbT0PEv8z70=
+script: V=1 make distcheck
 otp_release:
-  - 17.0
   - 17.1
+  - 17.4
 branches:
   only:
-    - master
-    - develop
-    - /^merge.+/
+  - master
+  - develop
+  - "/^merge.+/"
