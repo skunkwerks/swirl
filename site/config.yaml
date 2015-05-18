@@ -1,4 +1,4 @@
-baseurl: http://www.swirl-project.org/
+BaseURL: http://www.swirl-project.org
 languageCode: en-nz
 title: Bringing Peer-to-Peer Streaming to the World
 author:
@@ -7,6 +7,7 @@ builddrafts: false
 theme: hyde-x
 metadataformat: yaml
 canonifyurls: false
+relativeURLs: true
 contentdir: ../doc
 publishdir: ../public
 permalinks:
