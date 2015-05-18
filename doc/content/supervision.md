@@ -139,6 +139,6 @@ All other functionality runs from within these supervisor trees, triggered by
 messages between proceses, and external packets coming from the network, or used
 as a library application from within one of the above supervisors and workers.
 
-[gproc]: https://github.com/uwiger/gproc [ets]:
-http://erlang.org/doc/man/ets.html [riak_core]:
-https://github.com/basho/riak_core
+[gproc]: https://github.com/uwiger/gproc
+[ets]: http://erlang.org/doc/man/ets.html
+[riak_core]: https://github.com/basho/riak_core
