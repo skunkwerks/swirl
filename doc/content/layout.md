@@ -1,5 +1,6 @@
 ---
 title: Code Layout
+description: A walk through of the software repository for code and docs
 date: 2014-12-18
 menu: main
 weight: 10
