@@ -34,9 +34,17 @@ doc-clean:
 	@echo " GEN    clean-doc"
 	@rm -rf public
 
-doc: clean
+doc: doc-clean
 	@echo doc: building site in public/
 	@(cd site && hugo --config=config.yaml --destination=../public -v)
+
+post:
+	@echo doc: creating ./doc/content/post/$(post).md
+	@(cd site && hugo --config=config.yaml --format=yaml new post/$(post).md )
+
+page:
+	@echo doc: creating ./doc/content/$(page).md
+	@(cd site && hugo --config=config.yaml --format=yaml new content/$(page).md )
 
 publish: doc
 	@echo publish: shipping site from public/ to gs://www.swirl-project.org/
