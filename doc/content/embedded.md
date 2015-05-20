@@ -2,7 +2,7 @@
 title: Embedded Devices
 description: Embedding Swirl in small form-factor appliances and devices
 menu: main
-weight: 5
+weight: 1000
 draft: true
 ---
 

@@ -2,7 +2,7 @@
 title: NAT & firewall traversal
 description: Using STUN/ICE/NAT strategies with swirl
 menu: main
-weight: 5
+weight: 1000
 draft: true
 ---
 

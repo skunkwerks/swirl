@@ -2,7 +2,7 @@
 title: Billing Capabilities
 description: Design for optional billing and usage tracking capabilities
 menu: main
-weight: 5
+weight: 1000
 draft: true
 ---
 

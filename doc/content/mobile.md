@@ -1,8 +1,8 @@
 ---
 title: Mobile Implementations
-description: Implementing Swirl on mobile devices and platforms
+description: Implementing Swirl as native code on mobile devices and platforms
 menu: main
-weight: 5
+weight: 1000
 draft: true
 ---
 

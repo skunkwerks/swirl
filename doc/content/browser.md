@@ -1,8 +1,8 @@
 ---
-title: Browser Support
-description: Design for native & javascript based browser plugins
+title: Browser and JavaScript Support
+description: Design for javascript-based browser and nodejs support
 menu: main
-weight: 5
+weight: 1000
 draft: true
 ---
 

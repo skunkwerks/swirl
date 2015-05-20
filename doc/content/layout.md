@@ -3,15 +3,12 @@ title: Code Layout
 description: A walk through of the software repository for code and docs
 date: 2014-12-18
 menu: main
-weight: 10
+weight: 30
 tags:
     - overview
     - code
     - structure
 ---
-
-
-## Code Layout
 
 The usual incantations for cloning a repo are found in the main [README].
 

@@ -2,7 +2,7 @@
 title: Deployment Options
 description: build OTP releases for Vagrant, FreeBSD, docker/LXC targets
 menu: main
-weight: 5
+weight: 90
 draft: false
 ---
 

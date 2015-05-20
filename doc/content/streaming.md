@@ -2,7 +2,7 @@
 title: Live Streaming
 description: How the live streaming functionality is implemented
 menu: main
-weight: 5
+weight: 1000
 draft: true
 ---
 

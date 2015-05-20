@@ -3,7 +3,7 @@ title: Swirl Implementation
 description: Overview of the project implementation phases
 date: 2014-04-29
 menu: main
-weight: 5
+weight: 10
 tags:
     - overview
     - funding

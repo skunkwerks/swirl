@@ -2,7 +2,7 @@
 title: Storage Layer
 description: Design & Implementation of the Storage layer
 menu: main
-weight: 5
+weight: 70
 draft: false
 ---
 

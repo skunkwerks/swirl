@@ -2,7 +2,7 @@
 title: ZeroConf Support
 description: Swirl supports peer and stream detection via mDNS or ZeroConf protocol
 menu: main
-weight: 5
+weight: 1000
 draft: true
 ---
 
