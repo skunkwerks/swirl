@@ -5,7 +5,7 @@
 
     <div class="introduction">
       <br/>
-      <p><a href="http://www.swirl-project.org/">Swirl</a>
+      <p><a href="{{ .Site.BaseURL }}">Swirl</a>
       is an open source, and open development project in its
       infancy. As yet, few firm decisions have been made, other than the
       license, and using Erlang for the core server application.
@@ -23,7 +23,7 @@
       <div class="col-sm-6">
         <h4>Where is the Source?</h4>
         <p>All the code is available on
-        <a href="https://github.com/skunkwerks/swirl">GitHub</a>,
+        <a href="{{ .Site.Params.github }}">GitHub</a>,
         including issues. For discussions, please use the mailing list.
         </p>
       </div>
@@ -45,23 +45,23 @@
       <div class="col-sm-6">
         <h4>Where's the Documentation?</h4>
         <p>The project documentation can be found on this
-        <a href="http://www.swirl-project.org/content/about/">website</a>, but the
+        <a href="{{ .Site.BaseURL }}/content/about/">website</a>, but the
         best source of information is still the
         <a href="http://datatracker.ietf.org/doc/draft-ietf-ppsp-peer-protocol/">
           IETF draft</a>, along with the project source code -- both are
           changing rapidly. The latest project documentation is available in the
-        <a href="https://github.com/skunkwerks/swirl/blob/develop/doc/content/">
+        <a href="{{ .Site.Params.github }}/tree/develop/doc/content/">
         source repository</a>, matching any recent code commits.</p>
       </div>
     </div>
     <div class="row">
       <div class="col-sm-6">
         <h4>What License is Swirl released under?</h4>
-        <p>Like most Erlang projects, <a href="http://www.swirl-project.org/">Swirl</a>
+        <p>Like most Erlang projects, <a href="{{ .Site.BaseURL }}">Swirl</a>
         is released under the well-known and commercially friendly
         <a href="https://www.apache.org/licenses/LICENSE-2.0.html">
         Apache v2 License</a> and includes a number of
-        <a href="https://github.com/skunkwerks/swirl/blob/develop/NOTICE.md">
+        <a href="{{ .Site.Params.github }}/tree/develop/NOTICE.md">
         amazing 3rd party components</a>, without which this project wouldn't be
         the same.</p>
       </div>

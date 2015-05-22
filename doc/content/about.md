@@ -40,4 +40,4 @@ infrastructure without rearchitecting or forklift upgrades.
 
 The menu on this page includes a link to the various components of Swirl.
 You will find it easiest to read them in order, at least initially, starting
-off with the {{< relref "implementation" >}}.
+off with the [implementation]({{< relref "implementation.md" >}}) guide.

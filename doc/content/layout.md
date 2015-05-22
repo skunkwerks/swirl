@@ -63,7 +63,7 @@ some internal tests in many modules in the `/src/` tree using the less flexible
 
 [headers]: https://github.com/skunkwerks/swirl/tree/master/include
 [source]: https://github.com/skunkwerks/swirl/tree/master/src
-[documentation]: https://github.com/skunkwerks/swirl/blob/master/doc/README.md
+[documentation]: https://github.com/skunkwerks/swirl/tree/master/doc/README.md
 [hugo]: https://gohugo.io/
 [hyde-x]: https://github.com/zyro/hyde-x
 [highlighting]: http://highlightjs.org/
@@ -158,26 +158,10 @@ receives.
 
 ## Usage
 
-See the [usage] section for more information on running [swirl] in practice.
+See the [usage]({{< relref "usage.md" >}}) section for more information on
+running [swirl] in practice.
 
-[billing]: billing.md
-[browser]: browser.md
-[decoder]: decoder.md
-[deployment]: deployment.md
-[embedded]: embedded.md
-[encoder]: encoder.md
-[layout]: layout.md
-[merkle]: merkle.md
-[mobile]: mobile.md
-[overview]: overview.md
-[storage]: storage.md
-[streaming]: streaming.md
-[supervision]: supervision.md
-[traffic]: traffic.md
-[traversal]: traversal.md
-[usage]: usage.md
-[zeroconf]: zeroconf.md
-[README]: https://github.com/skunkwerks/swirl/blob/master/README.md
+[README]: https://github.com/skunkwerks/swirl/tree/master/README.md
 
 [release]: http://www.erlang.org/doc/design_principles/release_structure.html
 [gen_server]: http://www.erlang.org/doc/man/gen_server.html

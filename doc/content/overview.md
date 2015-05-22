@@ -121,7 +121,8 @@ enables a given peer to determine, without having the entire data stream already
 downloaded, whether the data sent by the other peer is both valid, and present
 in this specific swarm's data.
 
-For more details, refer to this project's [merkle] hash tree documentation.
+For more details, refer to this project's [merkle]({{< relref "merkle.md" >}})
+hash tree documentation.
 
 [SHA1]: http://tools.ietf.org/html/rfc3174
 [tribler]: http://www.tribler.org/
