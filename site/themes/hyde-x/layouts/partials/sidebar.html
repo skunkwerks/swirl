@@ -7,13 +7,14 @@
     </div>
 
     <ul class="sidebar-nav">
-      <li class="sidebar-nav-item"><a href="{{ .Site.BaseURL }}/">Blog</a></li>
       {{ range .Site.Menus.main }}
       <li class="sidebar-nav-item"><a href="{{ .URL }}">{{ .Name }}</a></li>
       {{end}}
     </ul>
 
     <ul class="sidebar-nav">
+      {{ with .Site.Params.blog }}<li class="sidebar-nav-item"><a href="{{ .  }}">Blog</a></li>{{ end }}
+      {{ with .Site.Params.api }}<li class="sidebar-nav-item"><a href="{{ .  }}">API</a></li>{{ end }}
       {{ with .Site.Params.github }}<li class="sidebar-nav-item"><a href="{{ . }}">GitHub</a></li>{{ end }}
       {{ with .Site.Params.linkedin }}<li class="sidebar-nav-item"><a href="{{ . }}">LinkedIn</a></li>{{ end }}
       {{ with .Site.Params.googleplus }}<li class="sidebar-nav-item"><a href="{{ . }}">Google+</a></li>{{ end }}
