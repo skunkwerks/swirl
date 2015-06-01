@@ -12,7 +12,7 @@ tags:
 
 The Swirl project aims to deliver a fully functional implementation of the
 new [IETF] Transport Protocol [Peer-to-Peer Streaming Peer Protocol], known
-as [PPSP], in a number of languages and frameworks.
+as `PPSP`, in a number of languages and frameworks.
 
 The first implementation is being written in [Erlang/OTP], which is a
 functional programming language combined with a robust set of application
