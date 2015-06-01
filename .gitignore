@@ -11,3 +11,4 @@ _rel
 /relx
 test/*.beam
 .erlang.mk
+doc/api

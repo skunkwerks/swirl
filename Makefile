@@ -6,6 +6,15 @@ dep_gproc = git git://github.com/uwiger/gproc.git master
 ERLC_OPTS = +debug_info
 PLT_APPS += crypto public_key compiler asn1 inets tools
 
+DOC_DEPS  = edown
+EDOC_OPTS = {dir, "doc/api"}, \
+		{application, ["swirl"]}, \
+		{doclet, edown_doclet}, \
+		{subpackages, false}, \
+		{todo, false}, \
+		{report_missing_types, false}, \
+		{title, "Swirl API documentation"}, \
+		{pretty_printer, erl_pp}
 escript::
 
 include erlang.mk
@@ -33,9 +42,11 @@ clean:: doc-clean
 
 doc-clean:
 	@echo " GEN    clean-doc"
-	@rm -rf public
+	@rm -rf public doc/api
 
-doc: doc-clean
+doc: doc-clean edoc
+	@echo doc: hacking up doc/api/README.md file
+	@(cd doc/api && mv README.md index.md && perl -pi -e 's!href="(\w+)\.md"!href="\1"!g' index.md)
 	@echo doc: building site in public/
 	@(cd site && hugo --config=config.yaml --destination=../public -v)
 
@@ -46,6 +57,10 @@ post:
 page:
 	@echo doc: creating ./doc/content/$(page).md
 	@(cd site && hugo --config=config.yaml --format=yaml new content/$(page).md )
+
+watch: doc-clean edoc
+	@echo doc: watching for changes
+	@(cd site && hugo server --config=config.yaml --destination=../public --verbose --watch)
 
 publish: doc
 	@echo publish: shipping site from public/ to gs://www.swirl-project.org/
