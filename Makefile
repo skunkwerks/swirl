@@ -10,12 +10,13 @@ escript::
 
 include erlang.mk
 
-.PHONY : doc publish run console reindent
+.PHONY : doc publish quick console reindent
 
 distcheck: distclean all plt dialyze tests escript
 	@echo "*** check indentation before git push ***"
 
-run: escript
+quick: escript
+	@echo quick: a fast start app
 	./swirl
 
 dev: SWIRL_CONSOLE_OPTS ?= -s observer
