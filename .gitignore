@@ -10,3 +10,4 @@ _rel
 /logs
 /relx
 test/*.beam
+.erlang.mk
