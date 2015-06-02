@@ -1,26 +1,27 @@
 /*
 
-Monokai Sublime style. Derived from Monokai by noformnocontent http://nn.mit-license.org/
+Darkula color scheme from the JetBrains family of IDEs
 
 */
+
 
 .hljs {
   display: block;
   overflow-x: auto;
   padding: 0.5em;
-  background: #23241f;
+  background: #2b2b2b;
   -webkit-text-size-adjust: none;
 }
 
 .hljs,
 .hljs-tag,
+.hljs-title,
 .css .hljs-rule,
 .css .hljs-value,
 .aspectj .hljs-function,
-.css .hljs-function
-.hljs-preprocessor,
+.css .hljs-function .hljs-preprocessor,
 .hljs-pragma {
-  color: #f8f8f2;
+  color: #bababa;
 }
 
 .hljs-strongemphasis,
@@ -37,12 +38,11 @@ Monokai Sublime style. Derived from Monokai by noformnocontent http://nn.mit-lic
 .alias .hljs-keyword,
 .hljs-literal,
 .hljs-hexcolor {
-  color: #ae81ff;
+  color: #6896ba;
 }
 
 .hljs-tag .hljs-value,
 .hljs-code,
-.hljs-title,
 .css .hljs-class,
 .hljs-class .hljs-title:last-child {
   color: #a6e22e;
@@ -50,11 +50,6 @@ Monokai Sublime style. Derived from Monokai by noformnocontent http://nn.mit-lic
 
 .hljs-link_url {
   font-size: 80%;
-}
-
-.hljs-strong,
-.hljs-strongemphasis {
-  font-weight: bold;
 }
 
 .hljs-emphasis,
@@ -83,7 +78,7 @@ Monokai Sublime style. Derived from Monokai by noformnocontent http://nn.mit-lic
 .css .hljs-tag,
 .css .unit,
 .css .hljs-important {
-  color: #f92672;
+  color: #cb7832;
 }
 
 .hljs-function .hljs-keyword,
@@ -91,16 +86,15 @@ Monokai Sublime style. Derived from Monokai by noformnocontent http://nn.mit-lic
 .hljs-aspect .hljs-keyword:first-child,
 .hljs-constant,
 .hljs-typename,
-.hljs-name,
 .css .hljs-attribute {
-  color: #66d9ef;
+  color: #cb7832;
 }
 
 .hljs-variable,
 .hljs-params,
 .hljs-class .hljs-title,
 .hljs-aspect .hljs-title {
-  color: #f8f8f2;
+  color: #b9b9b9;
 }
 
 .hljs-string,
@@ -125,20 +119,24 @@ Monokai Sublime style. Derived from Monokai by noformnocontent http://nn.mit-lic
 .tex .hljs-command,
 .hljs-prompt,
 .hljs-link_label,
-.hljs-link_url {
-  color: #e6db74;
+.hljs-link_url,
+.hljs-name {
+  color: #e0c46c;
 }
 
 .hljs-comment,
 .hljs-annotation,
-.hljs-decorator,
 .hljs-pi,
 .hljs-doctype,
 .hljs-deletion,
 .hljs-shebang,
 .apache .hljs-sqbracket,
 .tex .hljs-formula {
-  color: #75715e;
+  color: #7f7f7f;
+}
+
+.hljs-decorator {
+  color: #bab429;
 }
 
 .coffeescript .javascript,

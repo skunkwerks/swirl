@@ -1,13 +1,14 @@
-/**
- * Obsidian style
- * ported by Alexander Marenin (http://github.com/ioncreature)
- */
+/*
+
+Brown Paper style from goldblog.com.ua (c) Zaripov Yura <yur4ik7@ukr.net>
+
+*/
 
 .hljs {
   display: block;
   overflow-x: auto;
   padding: 0.5em;
-  background: #282b2e;
+  background:#b7a68e url(./brown_papersq.png);
   -webkit-text-size-adjust: none;
 }
 
@@ -17,75 +18,34 @@
 .hljs-winutils,
 .hljs-flow,
 .nginx .hljs-title,
-.css .hljs-id,
-.tex .hljs-special {
-  color: #93c763;
+.tex .hljs-special,
+.hljs-request,
+.hljs-status {
+  color:#005599;
+  font-weight:bold;
 }
 
-.hljs-number {
-  color: #ffcd22;
-}
-
-.hljs {
-  color: #e0e2e4;
-}
-
-.css .hljs-tag,
-.css .hljs-pseudo {
-  color: #d0d2b5;
-}
-
-.hljs-attribute,
-.hljs .hljs-constant {
-  color: #668bb0;
-}
-
-.xml .hljs-attribute {
-  color: #b3b689;
-}
-
-.xml .hljs-tag .hljs-value {
-  color: #e8e2b7;
-}
-
-.hljs-code,
-.hljs-class .hljs-title,
-.hljs-header {
-  color: white;
-}
-
-.hljs-class,
-.hljs-hexcolor {
-  color: #93c763;
-}
-
-.hljs-regexp {
-  color: #d39745;
-}
-
-.hljs-at_rule,
-.hljs-at_rule .hljs-keyword {
-  color: #a082bd;
-}
-
-.hljs-doctype {
-  color: #557182;
-}
-
-.hljs-link_url,
-.hljs-tag,
-.hljs-tag .hljs-title,
-.hljs-bullet,
+.hljs,
 .hljs-subst,
-.hljs-emphasis,
+.hljs-tag .hljs-keyword {
+  color: #363c69;
+}
+
+.hljs-string,
+.hljs-title,
 .hljs-type,
+.hljs-tag .hljs-value,
+.css .hljs-rule .hljs-value,
 .hljs-preprocessor,
 .hljs-pragma,
+.ruby .hljs-symbol,
+.ruby .hljs-symbol .hljs-string,
 .ruby .hljs-class .hljs-parent,
 .hljs-built_in,
 .django .hljs-template_tag,
 .django .hljs-variable,
 .smalltalk .hljs-class,
+.ruby .hljs-string,
 .django .hljs-filter .hljs-argument,
 .smalltalk .hljs-localvars,
 .smalltalk .hljs-array,
@@ -96,27 +56,22 @@
 .hljs-envvar,
 .apache .hljs-tag,
 .apache .hljs-cbracket,
-.tex .hljs-command,
-.hljs-prompt,
+.tex .hljs-number,
 .hljs-name {
-  color: #8cbbad;
-}
-
-.hljs-string {
-  color: #ec7600;
+  color: #2c009f;
 }
 
 .hljs-comment,
 .hljs-annotation,
-.hljs-blockquote,
-.hljs-horizontal_rule,
 .hljs-decorator,
 .hljs-pi,
+.hljs-doctype,
 .hljs-deletion,
 .hljs-shebang,
 .apache .hljs-sqbracket,
+.nginx .hljs-built_in,
 .tex .hljs-formula {
-  color: #818e96;
+  color: #802022;
 }
 
 .hljs-keyword,
@@ -124,7 +79,6 @@
 .css .hljs-id,
 .hljs-doctag,
 .hljs-title,
-.hljs-header,
 .hljs-type,
 .vbscript .hljs-built_in,
 .rsl .hljs-built_in,
@@ -134,10 +88,7 @@
 .hljs-winutils,
 .bash .hljs-variable,
 .apache .hljs-tag,
-.tex .hljs-special,
-.hljs-request,
-.hljs-at_rule .hljs-keyword,
-.hljs-status {
+.tex .hljs-command {
   font-weight: bold;
 }
 
@@ -148,5 +99,5 @@
 .xml .vbscript,
 .xml .css,
 .xml .hljs-cdata {
-  opacity: 0.5;
+  opacity: 0.8;
 }
