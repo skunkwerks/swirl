@@ -10,24 +10,27 @@
   <title>{{ .Title }} &middot; {{ .Site.Author.name }}</title>
 
   <!-- CSS -->
-  <link rel="stylesheet" href="{{ .Site.BaseUrl }}/css/poole.css">
-  <link rel="stylesheet" href="{{ .Site.BaseUrl }}/css/hyde.css">
-  <link rel="stylesheet" href="{{ .Site.BaseUrl }}/css/poole-overrides.css">
-  <link rel="stylesheet" href="{{ .Site.BaseUrl }}/css/hyde-overrides.css">
-  <link rel="stylesheet" href="{{ .Site.BaseUrl }}/css/hyde-x.css">
-  {{ if isset .Site.Params "highlight" }}<link rel="stylesheet" href="{{ .Site.BaseUrl }}/css/highlight/{{ .Site.Params.highlight }}.css">{{ end }}
-  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
+  <link rel="stylesheet" href="{{ .Site.BaseURL }}/css/poole.css">
+  <link rel="stylesheet" href="{{ .Site.BaseURL }}/css/hyde.css">
+  <link rel="stylesheet" href="{{ .Site.BaseURL }}/css/poole-overrides.css">
+  <link rel="stylesheet" href="{{ .Site.BaseURL }}/css/hyde-overrides.css">
+  <link rel="stylesheet" href="{{ .Site.BaseURL }}/css/hyde-x.css">
+  {{ if isset .Site.Params "highlight" }}<link rel="stylesheet" href="{{ .Site.BaseURL }}/css/highlight/{{ .Site.Params.highlight }}.css">{{ end }}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
 
   <!-- Icons -->
   <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
   <link href="/favicon.png" rel="icon">
 
   <!-- RSS -->
-  <link href="{{ .RSSlink }}" rel="alternate" type="application/rss+xml" title="{{ .Site.Title }} &middot; {{ .Site.Author.name }}" />
+  {{ $siteTitle := .Site.Title }}
+  {{ $authorName := .Site.Author.name }}
+  {{ with .RSSLink }}<link href="{{ . }}" rel="alternate" type="application/rss+xml" title="{{ $siteTitle }} &middot; {{ $authorName }}" />{{ end }}
 
   <meta name="description" content="{{ if ne .Description "" }}{{ .Description }}{{ else }}{{ .Site.Params.defaultDescription }}{{ end }}">
   <meta name="keywords" content="{{ range $index, $element := .Keywords }}{{ if gt $index 0 }},{{ end }}{{ . }}{{ else }}{{ .Site.Params.defaultKeywords }}{{ end }}">
   {{ with .Site.Params.googleAuthorship }}<link rel="author" href="http://plus.google.com/{{ . }}">{{ end }}
 </head>
 <body{{ with .Site.Params.theme }} class="{{ . }}"{{ end }}>
-{{ template "theme/partials/sidebar.html" . }}
+{{ partial "sidebar.html" . }}

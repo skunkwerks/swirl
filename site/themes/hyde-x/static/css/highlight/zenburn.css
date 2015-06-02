@@ -40,7 +40,8 @@ based on dark.css by Ivan Sagalaev
 .dos .hljs-envvar,
 .dos .hljs-stream,
 .hljs-variable,
-.apache .hljs-sqbracket {
+.apache .hljs-sqbracket,
+.hljs-name {
   color: #efdcbc;
 }
 
@@ -84,11 +85,10 @@ based on dark.css by Ivan Sagalaev
 .hljs-preprocessor,
 .hljs-pragma,
 .hljs-built_in,
-.hljs-javadoc,
 .smalltalk .hljs-class,
 .smalltalk .hljs-localvars,
 .smalltalk .hljs-array,
-.css .hljs-rules .hljs-value,
+.css .hljs-rule .hljs-value,
 .hljs-attr_selector,
 .hljs-pseudo,
 .apache .hljs-cbracket,
@@ -101,7 +101,6 @@ based on dark.css by Ivan Sagalaev
 .diff .hljs-addition,
 .hljs-comment,
 .hljs-annotation,
-.hljs-template_comment,
 .hljs-pi,
 .hljs-doctype {
   color: #7f9f7f;
