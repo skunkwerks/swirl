@@ -11,6 +11,7 @@ relativeURLs: true
 contentdir: ../doc
 publishdir: ../public
 permalinks:
+  page: pages/:filename
   blog: :year/:month/:day/:filename
   talk: talks/:year/:filename
 Params:

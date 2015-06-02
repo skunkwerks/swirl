@@ -48,19 +48,19 @@ doc: doc-clean edoc
 	@echo doc: hacking up doc/api/README.md file
 	@(cd doc/api && mv README.md index.md && perl -pi -e 's!href="(\w+)\.md"!href="\1"!g' index.md)
 	@echo doc: building site in public/
-	@(cd site && hugo --config=config.yaml --destination=../public -v)
+	@(cd site && hugo --verbose )
 
-post:
-	@echo doc: creating ./doc/content/post/$(post).md
-	@(cd site && hugo --config=config.yaml --format=yaml new post/$(post).md )
+newpost:
+	@echo doc: creating ./doc/blog/$(name).md
+	@(cd site && hugo new --kind=post blog/$(name).md )
 
-page:
-	@echo doc: creating ./doc/content/$(page).md
-	@(cd site && hugo --config=config.yaml --format=yaml new content/$(page).md )
+newpage:
+	@echo doc: creating ./doc/content/$(name).md
+	@(cd site && hugo new --kind=page content/$(name).md )
 
 watch: doc-clean edoc
 	@echo doc: watching for changes
-	@(cd site && hugo server --config=config.yaml --destination=../public --verbose --watch)
+	@(cd site && hugo server --verbose --watch )
 
 publish: doc
 	@echo publish: shipping site from public/ to gs://www.swirl-project.org/
