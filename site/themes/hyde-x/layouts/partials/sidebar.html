@@ -7,9 +7,15 @@
     </div>
 
     <ul class="sidebar-nav">
-      <li class="sidebar-nav-item"><a href="{{ .Site.BaseUrl }}/">Blog</a></li>
+      <li class="sidebar-nav-item"><a href="{{ .Site.BaseURL }}">Site</a></li>
+      <li class="sidebar-nav-item"><a href="{{ .Site.BaseURL }}/content/about/">Docs</a></li>
+      {{ with .Site.Params.api }}<li class="sidebar-nav-item"><a href="{{ .  }}">API</a></li>{{ end }}
+      {{ with .Site.Params.blog }}<li class="sidebar-nav-item"><a href="{{ .  }}">Blog</a></li>{{ end }}
       {{ range .Site.Menus.main }}
-      <li class="sidebar-nav-item"><a href="{{ .Url }}">{{ .Name }}</a></li>
+      <li class="sidebar-nav-item"><a href="{{ .URL }}">{{ .Name }}</a></li>
+      {{end}}
+      {{ range .Site.Menus.design }}
+      <li class="sidebar-nav-item"><a href="{{ .URL }}">{{ .Name }}</a></li>
       {{end}}
     </ul>
 
@@ -24,7 +30,7 @@
       </li>
     </ul>
 
-    <p>Copyright &copy; {{ .Now.Format "2006" }} <a href="{{ .Site.BaseUrl }}/license">License</a><br/>
+    <p>Copyright &copy; {{ .Now.Format "2006" }} <a href="{{ .Site.BaseURL }}/license">License</a><br/>
        Powered by <a href="http://gohugo.io">Hugo</a> and <a href="https://github.com/zyro/hyde-x">Hyde-X</a></p>
   </div>
 </div>
