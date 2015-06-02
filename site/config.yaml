@@ -11,17 +11,20 @@ relativeURLs: true
 contentdir: ../doc
 publishdir: ../public
 permalinks:
-  post: blog/:year/:month/:day/:filename
-  archive: archive/:year/:month/:day/:filename
+  page: pages/:filename
+  blog: :year/:month/:day/:filename
   talk: talks/:year/:filename
-params:
+Params:
   defaultDescription: Bringing Peer-to-Peer Streaming to the World
-  defaultKeywords: p2p,ppsp,streaming
+  defaultKeywords: p2p,ppspp,streaming
   highlight: monokai_sublime
   tagline: Bringing Peer-to-Peer Streaming to the World
   copyright: "Copyright (c) 2014 - 2038 Skunkwerks GmbH; all rights reserved."
-  github: https://github.com/skunkwerks
+  blog: http://www.swirl-project.org/blog/
+  api: http://www.swirl-project.org/api/
+  github: https://github.com/skunkwerks/swirl
   twitter: http://twitter.com/swirl_project
 taxonomies:
     tag: tags
+    category: categories
 ...

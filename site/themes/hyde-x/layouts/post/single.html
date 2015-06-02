@@ -1,8 +1,13 @@
-{{ template "theme/partials/head.html" . }}
+{{ partial "head.html" . }}
 <div class="content container">
   <div class="post">
     <h1>{{ .Title }}</h1>
-    <span class="post-date">{{ .Date.Format "Jan 2, 2006" }} &middot; {{ .ReadingTime }} minute read{{ if .Site.DisqusShortname }} &middot; <a href="{{ .Permalink }}#disqus_thread">Comments</a>{{ end }}</span>
+    <span class="post-date">{{ .Date.Format "Jan 2, 2006" }} &middot; {{ .ReadingTime }} minute read{{ if .Site.DisqusShortname }} &middot; <a href="{{ .Permalink }}#disqus_thread">Comments</a>{{ end }}
+    {{ if isset .Params "categories" }}
+    <br/>
+    {{ $baseURL := .Site.BaseURL }}
+    {{ range .Params.categories }}<a class="label" href="{{ $baseURL }}/categories/{{ . | urlize }}">{{ . }}</a>{{ end }}
+    {{ end }}</span>
     {{ .Content }}
   </div>
   {{ if .Site.DisqusShortname }}<div id="disqus_thread"></div>{{ end }}
@@ -32,4 +37,4 @@ var disqus_shortname = {{ . }};
 <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
 {{ end }}
-{{ template "theme/partials/foot.html" . }}
+{{ partial "foot.html" . }}
