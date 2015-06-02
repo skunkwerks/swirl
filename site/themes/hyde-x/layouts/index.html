@@ -1,16 +1,23 @@
-{{ template "theme/partials/head.html" . }}
+{{ partial "head.html" . }}
 <div class="content container">
   <div class="posts">
-    {{ range .Data.Pages }}{{ if eq .Section "post" }}
+    {{ $paginator := .Paginate (where .Data.Pages "Type" "post") }}
+    {{ range $paginator.Pages }}
     <div class="post">
       <h1 class="post-title">
         <a href="{{ .Permalink }}">{{ .Title }}</a>
       </h1>
-      <span class="post-date">{{ .Date.Format "Jan 2, 2006" }} &middot; {{ .ReadingTime }} minute read{{ if .Site.DisqusShortname }} &middot; <a href="{{ .Permalink }}#disqus_thread">Comments</a>{{ end }}</span>
+      <span class="post-date">{{ .Date.Format "Jan 2, 2006" }} &middot; {{ .ReadingTime }} minute read{{ if .Site.DisqusShortname }} &middot; <a href="{{ .Permalink }}#disqus_thread">Comments</a>{{ end }}
+      {{ if isset .Params "categories" }}
+      <br/>
+      {{ $baseUrl := .Site.BaseUrl }}
+      {{ range .Params.categories }}<a class="label" href="{{ $baseUrl }}/categories/{{ . | urlize }}">{{ . }}</a>{{ end }}
+      {{ end }}</span>
       <p>{{ .Description }}</p>
       <a href="{{ .Permalink }}">Read On &rarr;</a>
     </div>
-    {{ end }}{{ end }}
+    {{ end }}
+    {{ template "_internal/pagination.html" . }}
   </div>
 </div>
 
@@ -25,4 +32,4 @@ var disqus_shortname = {{ . }};
 }());
 </script>
 {{ end }}
-{{ template "theme/partials/foot.html" . }}
+{{ partial "foot.html" . }}
