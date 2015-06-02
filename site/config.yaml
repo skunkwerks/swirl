@@ -11,8 +11,7 @@ relativeURLs: true
 contentdir: ../doc
 publishdir: ../public
 permalinks:
-  post: blog/:year/:month/:day/:filename
-  archive: archive/:year/:month/:day/:filename
+  blog: :year/:month/:day/:filename
   talk: talks/:year/:filename
 Params:
   defaultDescription: Bringing Peer-to-Peer Streaming to the World
@@ -20,7 +19,7 @@ Params:
   highlight: monokai_sublime
   tagline: Bringing Peer-to-Peer Streaming to the World
   copyright: "Copyright (c) 2014 - 2038 Skunkwerks GmbH; all rights reserved."
-  blog: http://www.swirl-project.org/blog
+  blog: http://www.swirl-project.org/blog/
   api: http://www.swirl-project.org/api/
   github: https://github.com/skunkwerks/swirl
   twitter: http://twitter.com/swirl_project
