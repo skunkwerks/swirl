@@ -13,11 +13,69 @@
 %% the License.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc title goes here
-%% <p>description goes here</p>
+%% @doc
+%% A wonderful Template Title
+%% 
+%% This description line behaves nicely when used with EDoc/EDown and Hugo.
+%% <div>
+%% ## Nota Bene
+%% You can of course embed [markdown] for hugo to deal with, via divs.
+%% [markdown]: http://daringfireball.net/projects/markdown/syntax
+%% </div>
+%% And code samples just as easily:
+%% <pre lang="erlang">
+%% incr(X) ->
+%%   %% This should be formatted with Erlang syntax highlighting
+%%   X + 1.
+%% </pre>
 %% @end
+
+-module(template).
+-include("swirl.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
--spec test() -> term().
 -endif.
+
+%% api
+-export([beautiful/1]).
+
+-opaque mytype() :: {ok, binary()}.
+-export_type([lovely/0]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%% A Beautiful Function.
+%% 
+%% The same elements can be used for functions, too. So let's
+%% document a beautiful function, including:
+%% <ul>
+%% <li>Purpose</li>
+%% <li>Data Structures</li>
+%% <li>Parameters</li>
+%% <li>Return Codes</li>
+%% </ul>
+%% Here is a long-form comment about our beautiful function, with JSON.
+%% <pre lang="json">
+%% {
+%%     "couchdb": "Welcome",
+%%     "uuid": "43cc0662c3dd3dbf1b7262ccc4f60af3",
+%%     "version": "1.6.1"
+%% }
+%% </pre>
+%% @end
+
+-spec beautiful(binary()) -> term().
+beautiful(Binary) when is_binary(Binary) ->
+    %% @TODO better do this
+    {ok, Binary}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% test
+
+% -ifdef(TEST).
+% -spec _test() -> {ok, pid()}.
+% _test() ->
+%     start(),
+%     ?assertMatch({ok, _}, ).
+% -endif.
