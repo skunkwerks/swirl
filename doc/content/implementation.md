@@ -35,13 +35,19 @@ provided generously by [NLNet] for the first stages:
 4. simple [deployment]({{< relref "deployment.md" >}}) including FreeBSD and
     Linux/docker support
 
-To make the most sense of the application itself, it's recommended to read in orer:
+Further information on timeframes can be found in the high level
+[planning]({{< relref "planning.md">}}) guide.
+
+## Understanding the Codebase
+
+To make the most sense of the application itself, it's recommended to read
+in order:
 
 - high-level code [layout]({{< relref "layout.md" >}}) introducing the
   general structure of the modules
 - the [supervision]({{< relref "supervision.md" >}}) tree (application
   hierarchy) implemented in Erlang/OTP
-- further sections per module as you like
+- specific information per [module](../api/)
 
 ## Future Plans
 

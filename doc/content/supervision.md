@@ -22,8 +22,16 @@ discarded, until either the input or function that causes the error is disposed
 of, or is eliminated from the system. This approach is what gives the BEAM its
 well-known reliability and robustness.
 
+A key focus in any Erlang application, then, is where and how to manage state,
+and how to recover from it in the event of unplanned messages or failures. For
+swirl, while there are many related modules performing subsidiary tasks such
+as parsing and generating packets, or read and writing from storage, these
+activities are largely pure functions - given a certain state, execute a
+function to transform that state and then pass it on to another module.
+
 This section outlines the high level supervisor structure for the swirl app,
-running within the BEAM VM.
+running within the BEAM VM. Implementation details are covered in
+[Core State]({{< relref "core.md" >}}).
 
 ## Major Components
 
@@ -105,7 +113,7 @@ actually writing data to the network, or updating the swarm_worker on
 significant changes. Loss of a single channel (or external peer) should have
 little to no effect on the swarm as a whole, or the available UDP ports.
 
-If the channel_worker process crashes, it is automatically restarted, picking up
+If the `channel_worker` process crashes, it is automatically restarted, picking up
 the channel options from the supervisor. Information about this specific peer is
 lost, other than its transport address, but no other channels, peers nor swarms
 are impacted. Information about this specific remote peer is effectively rebuilt
@@ -142,3 +150,4 @@ as a library application from within one of the above supervisors and workers.
 [gproc]: https://github.com/uwiger/gproc
 [ets]: http://erlang.org/doc/man/ets.html
 [riak_core]: https://github.com/basho/riak_core
+8
