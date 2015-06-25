@@ -46,7 +46,10 @@ doc-clean:
 
 doc: doc-clean edoc
 	@echo doc: hacking up doc/api/README.md file
-	@(cd doc/api && mv README.md index.md && perl -pi -e 's!href="(\w+)\.md"!href="\1"!g' index.md)
+	@mv doc/api/README.md doc/api/index.md
+	@perl -pi -e 's!href="(\w+)\.md"!href="\1"!g' doc/api/index.md
+	@echo doc: hacking up doc/api typespec links from edown for pretty urls
+	@perl -pi -e 's!href="(\w+)\.md(#type-\w+)"!href="../\1\2"!g' doc/api/*.md
 	@echo doc: building site in public/
 	@(cd site && hugo --verbose )
 
@@ -58,7 +61,11 @@ newpage:
 	@echo doc: creating ./doc/content/$(name).md
 	@(cd site && hugo new --kind=page content/$(name).md )
 
-watch: doc-clean edoc
+newddoc:
+	@echo doc: creating ./doc/content/$(name).md
+	@(cd site && hugo new --kind=design content/$(name).md )
+
+watch:
 	@echo doc: watching for changes
 	@(cd site && hugo server --verbose --watch )
 
