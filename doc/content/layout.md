@@ -22,7 +22,7 @@ application, ready for deployment.
 [application]: http://www.erlang.org/doc/design_principles/applications.html#id71171
 [escript]: http://www.erlang.org/doc/man/escript.html
 [relx]: https://github.com/erlware/relx
-    
+
 
     ├── doc
     │   └── content

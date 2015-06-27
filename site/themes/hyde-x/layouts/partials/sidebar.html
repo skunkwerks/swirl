@@ -9,8 +9,8 @@
     <ul class="sidebar-nav">
       <li class="sidebar-nav-item"><a href="{{ .Site.BaseURL }}">Site</a></li>
       <li class="sidebar-nav-item"><a href="{{ .Site.BaseURL }}/content/about/">Docs</a></li>
-      {{ with .Site.Params.api }}<li class="sidebar-nav-item"><a href="{{ .  }}">API</a></li>{{ end }}
-      {{ with .Site.Params.blog }}<li class="sidebar-nav-item"><a href="{{ .  }}">Blog</a></li>{{ end }}
+      {{ with .Site.BaseURL }}<li class="sidebar-nav-item"><a href="{{ .  }}/api">API</a></li>{{ end }}
+      {{ with .Site.BaseURL }}<li class="sidebar-nav-item"><a href="{{ .  }}/blog">Blog</a></li>{{ end }}
       {{ range .Site.Menus.main }}
       <li class="sidebar-nav-item"><a href="{{ .URL }}">{{ .Name }}</a></li>
       {{end}}

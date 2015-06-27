@@ -1,9 +1,14 @@
 ---
-date: 2015-06-03T22:08:50+02:00
-description: Design of wire format UDP datagram parser to native Erlang format
+description: a lovely design document
 menu: main
-title: Packet Decoder
-weight: 60
+tags: 
+  - page
+  - ui
+draft: true
+categories: 
+  - overview
+  - design
+weight: 0
 ---
 
 This design doc is unintentionally left blank. We're working on more
@@ -19,6 +24,8 @@ documentation all the time.
 - Modules
 - OTP Structure
 - Data types
+
+## Testing
 
 ## References
 
