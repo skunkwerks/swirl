@@ -12,6 +12,8 @@ EDOC_OPTS = {dir, "doc/api"}, \
 		{doclet, edown_doclet}, \
 		{subpackages, false}, \
 		{todo, false}, \
+		{top_level_readme, \
+			{"doc/api/index.md", "http://www.swirl-project.org/api"}}, \
 		{report_missing_types, false}, \
 		{title, "Swirl API documentation"}, \
 		{pretty_printer, erl_pp}
@@ -45,10 +47,17 @@ doc-clean:
 	@rm -rf public doc/api
 
 doc: doc-clean edoc
-	@echo doc: hacking up doc/api/README.md file
-	@mv doc/api/README.md doc/api/index.md
+	@echo doc: hacking up doc/api/index.md file
+	@# add the HTML table header as XML can't handle the <> in overview.edoc
+	@echo '<table width="100%" border="0" summary="list of modules">' >> doc/api/index.md
+	@# spit out a table row for every erlang module found in /src/
+	@perl -e 'map { s!src/(\w+).erl!$$1!g ; print \
+		qq(<tr><td><a href="$$_.md" class="module">$$_</a></td></tr>\n); \
+		} glob("src/*.erl");' \
+		>> doc/api/index.md
+	@# remove the .md suffix on all links to end up with pretty urls again
 	@perl -pi -e 's!href="(\w+)\.md"!href="\1"!g' doc/api/index.md
-	@echo doc: hacking up doc/api typespec links from edown for pretty urls
+	@echo doc: hacking up doc/api/\*.md typespec links from edown for pretty urls
 	@perl -pi -e 's!href="(\w+)\.md(#type-\w+)"!href="../\1\2"!g' doc/api/*.md
 	@echo doc: building site in public/
 	@(cd site && hugo --verbose )
