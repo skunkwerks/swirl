@@ -12,13 +12,21 @@
 %% License for the specific language governing permissions and limitations under
 %% the License.
 
+%% @doc A managed PPSPP Swarm server.
+%%
+%% This modules implements a PPSPP swarm server, including registering
+%% the unique `swarm_id' and associated PPPSPP options, and provides
+%% lookup services to locate the `swarm_worker', and retrieve configuration
+%% such as swarm options.
+%% @type state() = {ppspp_options:swarm_id(), ppspp_options:options()}.
+%% @end
+
 -module(swarm_worker).
 -include("swirl.hrl").
 -behaviour(gen_server).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
--spec test() -> term().
 -endif.
 
 %% api
@@ -42,8 +50,8 @@
 %% api
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc start the server with a given set of options which includes
-%% the root hash.
+%% @doc Start the server with a given set of PPSPP options that must include
+%% the swarm's root hash.
 -spec start_link(ppspp_options:options()) ->
     ignore | {error,_} | {ok,pid()}.
 start_link(Swarm_Options)  ->
@@ -67,13 +75,14 @@ stop(Swarm_id) ->
 
 -spec where_is(ppspp_options:swarm_id()) -> {ok, pid()} | {error,_}.
 where_is(Swarm_id) ->
-    case Pid = gproc:lookup_local_name({?MODULE, Swarm_id}) of
+    case gproc:lookup_local_name({?MODULE, Swarm_id}) of
         undefined -> {error, ppspp_swarm_worker_not_found};
-        _ -> {ok, Pid}
+        Pid -> {ok, Pid}
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc Looks up the swarm options for a given swarm id, either as string or binary.
+%% @doc Given a swarm id, either as string or binary, returns the associated
+%% PPSPP options from the `gproc' registry.
 
 -spec get_swarm_options(ppspp_options:swarm_id()) ->
     {ok, ppspp_options:options() } | {error, any()}.
@@ -86,6 +95,7 @@ get_swarm_options(Swarm_id) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks
 
+%% @doc Starts a `swarm_worker' with given swarm id and PPSPP options.
 -spec init([ppspp_options:swarm_id() | ppspp_options:options()]) -> {ok,state()}.
 init([Swarm_id , Swarm_Options]) ->
     process_flag(trap_exit, true),
@@ -94,54 +104,36 @@ init([Swarm_id , Swarm_Options]) ->
           [self(), Swarm_id , Swarm_Options]),
     {ok, #state{swarm_id = Swarm_id , options= Swarm_Options} }.
 
+%% @doc Default `gen_server' API.
 -spec handle_cast(stop | any(), state()) -> {noreply, state()}.
 handle_cast(stop, State) -> {stop, normal, State};
 handle_cast(Message, State) ->
     ?WARN("~s: unexpected cast ~p~n  in state ~p~n", [?MODULE, Message, State]),
     {noreply, State}.
 
+%% @doc Default `gen_server' API.
 -spec handle_call(any(), {pid(), any()}, state()) -> {reply, ok, state()}.
 handle_call(Message, From, State) ->
     ?WARN("~s: unexpected call from ~p ~p~n  in state ~p~n",
           [?MODULE, From, Message, State]),
     {reply, ok, State}.
 
+%% @doc Default `gen_server' API.
 -spec handle_info(_, state()) ->
     {noreply, state()} | {stop,{error,{unknown_info,_}},_}.
 handle_info(Message, State) ->
     ?WARN("~s: unexpected info ~p~n  in state ~p~n", [?MODULE, Message, State]),
     {noreply, State}.
 
+%% @doc Default `gen_server' API.
 -spec code_change(_,state(),_) -> {ok,state()}.
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
+%% @doc Closes down the `swarm_worker'. Returns reason and brief statistics.
 -spec terminate(_,state()) -> ok.
 terminate(Reason, State=#state{swarm_id=Swarm_id}) ->
     gproc:goodbye(),
     {memory, Bytes} = erlang:process_info(self(), memory),
     ?INFO("swarm: ~p terminating swarm ~p, using ~p bytes, due to reason: ~p~n  with state ~p~n",
           [self(), Swarm_id, Bytes, Reason, State]).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% test
-
--ifdef(TEST).
--spec start_test() -> term().
-start_test() ->
-    application:ensure_all_started(swirl),
-    Root_Hash = "c39e",
-    Swarm_Options = ppspp_options:use_default_options(Root_Hash),
-    {ok, Worker} = ?MODULE:start_link(Swarm_Options),
-    ?assertEqual(true, erlang:is_process_alive(Worker)).
-
--spec stop_test() -> term().
-stop_test() ->
-    Root_Hash = "c39e",
-    Swarm_Options = ppspp_options:use_default_options(Root_Hash),
-    Swarm_id = ppspp_options:get_swarm_id(Swarm_Options),
-    Worker = gproc:lookup_local_name({?MODULE, Swarm_id}),
-    ?MODULE:stop(Swarm_id),
-    io:format("worker is ~p~n", [Worker]),
-    ?assertEqual(false,  erlang:is_process_alive(Worker)).
--endif.

@@ -18,13 +18,35 @@
 
 @doc
 
+## Overview
+
+Swirl is an implementation of the IETF [PPSP] protocol, [RFC7574] in
+Erlang/OTP, and released under the [ALv2] license.
+
 ## Description
 
-Swirl is an Erlang/OTP implementation of the draft IETF [PPSP] protocol,
-under the [ALv2] license.
+> The Peer-to-Peer Streaming Peer Protocol (PPSPP) is a protocol for
+disseminating the same content to a group of interested parties in a
+streaming fashion. PPSPP supports streaming of both prerecorded (on- demand)
+and live audio/video content. It is based on the peer-to- peer paradigm,
+where clients consuming the content are put on equal footing with the
+servers initially providing the content, to create a system where everyone
+can potentially provide upload bandwidth. It has been designed to provide
+short time-till-playback for the end user and to prevent disruption of the
+streams by malicious peers. PPSPP has also been designed to be flexible and
+extensible. It can use different mechanisms to optimize peer uploading,
+prevent freeriding, and work with different peer discovery schemes
+(centralized trackers or Distributed Hash Tables). It supports multiple
+methods for content integrity protection and chunk addressing. Designed as a
+generic protocol that can run on top of various transport protocols, it
+currently runs on top of UDP using Low Extra Delay Background Transport
+(LEDBAT) for congestion control.
+
+> -- http://www.rfc-editor.org/info/rfc7574
 
 [ALv2]: http://www.apache.org/licenses/LICENSE-2.0.html
-[PPSP]: http://datatracker.ietf.org/doc/draft-ietf-ppsp-peer-protocol/
+[PPSP]: https://datatracker.ietf.org/doc/rfc7574/
+[RFC7574]: https://tools.ietf.org/html/rfc7574
 
 ## Modules ##
 

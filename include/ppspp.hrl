@@ -15,7 +15,7 @@
 -ifndef(PPSPP_RELEASE).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% PPSPP_RELEASE must only change wrt IETF RFC status
--define(PPSPP_RELEASE, "d-10").
+-define(PPSPP_RELEASE, "rfc7574-20150710").
 
 %% useful bits and bytes
 -define(QWORD, 64/big).
@@ -44,7 +44,10 @@
 -define(PPSPP_END_OPTION,             255:?BYTE). %% 0. The key alone is sufficient
 %% values used within the option parser
 -define(PPSPP_DEFAULT_CHUNK_SIZE,          1024). %%
+-define(PPSPP_DEFAULT_MERKLE_HASH_FUN,      sha). %% agreed to change in final RFC
 -define(PPSPP_RFC_VERSION,                    1). %% match IETF protocol version
+-define(PPSPP_DEFAULT_CHUNK_METHOD, chunking_32bit_chunks). %% implied
+-define(PPSPP_DEFAULT_INTEGRITY_METHOD,  merkle_hash_tree). %% implied
 
 %% as atoms
 -define(PPSPP_ALL_PROTOCOL_OPTIONS, [supported_version,

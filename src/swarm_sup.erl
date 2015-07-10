@@ -12,12 +12,18 @@
 %% License for the specific language governing permissions and limitations under
 %% the License.
 
+%% @doc Library for PPSPP over UDP, aka Swift protocol
+%%
+%% This module implements a library of functions necessary to
+%% handle the wire-protocol of PPSPP over UDP, including
+%% functions for encoding and decoding messages.
+%% @end
+
 -module(swarm_sup).
 -include("swirl.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
--spec test() -> term().
 -endif.
 
 -behaviour(supervisor).
