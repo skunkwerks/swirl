@@ -244,4 +244,4 @@ The `channel_worker` will maintain its own channel state, and only needs to know
 
 
 [gproc]: https://github.com/uwiger/gproc
-[PPSPP options]: https://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol#section-7
+[PPSPP options]: https://tools.ietf.org/html/rfc7574#section-7

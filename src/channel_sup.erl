@@ -19,7 +19,7 @@
 %% functions for encoding and decoding messages.
 %% @end
 
--module(peer_sup).
+-module(channel_sup).
 -include("swirl.hrl").
 
 -ifdef(TEST).
@@ -30,7 +30,7 @@
 
 %% api
 -export([start_link/0,
-         start_child/1 ]).
+         start_child/1]).
 
 %% callbacks
 -export([init/1]).
@@ -39,20 +39,20 @@
 %% api
 
 -spec start_link() -> {ok, pid()} | ignore | {error, any()}.
-
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
-%%-spec start_child(port()) -> ok.
--spec start_child([inet:port_number()]) ->
+-spec start_child([ppspp_datagram:endpoint() |
+                   ppspp_options:options()]) ->
     {error,_} | {ok, pid()}.
-start_child([Port]) when is_integer(Port) ->
-    supervisor:start_child(?MODULE, [Port]).
+start_child([Peer_endpoint, Swarm_options]) ->
+    supervisor:start_child(?MODULE, [Peer_endpoint, Swarm_options]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% callbacks
 
 -spec init([]) -> {ok,{{simple_one_for_one, 10,60}, [supervisor:child_spec()] }}.
+
 init([])->
     RestartStrategy = simple_one_for_one,
     MaxRestarts = 10,
@@ -62,10 +62,10 @@ init([])->
     Shutdown = 1000,
     Type = worker,
 
-    Worker = {peer_worker, {peer_worker, start_link, []},
+    Worker = {channel_worker, {channel_worker, start_link, []},
               Restart,
               Shutdown,
               Type,
-              [peer_worker]},
+              [channel_worker]},
 
     {ok, {Options, [Worker]}}.

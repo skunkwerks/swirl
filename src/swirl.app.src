@@ -18,7 +18,7 @@
   {vsn, "v0.0.1"},
   {id, "git"},
   {modules, []},
-  {registered, [swirl_sup, peer_sup, swarm_sup]},
+  {registered, [swirl_sup, peer_sup, swarm_sup, channel_sup]},
   {applications, [
                   gproc,
                   kernel,

@@ -43,7 +43,7 @@ Documentation is in markdown format, and is generated using [hugo]. More details
 can be found in the associated [documentation] within the `doc` folder.
 
 The `/include/` directory, contains [headers] that provide the definitions
-and constants extracted from the PPSPP draft itself, used across both swirl
+and constants extracted from the PPSPP RFC itself, used across both swirl
 itself and any other tools or applications that might embed or use it as a
 dependency.
 
@@ -166,5 +166,5 @@ running [swirl] in practice.
 [release]: http://www.erlang.org/doc/design_principles/release_structure.html
 [gen_server]: http://www.erlang.org/doc/man/gen_server.html
 [supervisor]: http://www.erlang.org/doc/man/supervisor.html
-[message type]: https://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol#section-3
+[message type]: https://tools.ietf.org/html/rfc7574#section-3
 [swirl]: http://www.swirl-project.org/

@@ -13,7 +13,8 @@
 %% the License.
 
 %% @doc Library for PPSPP over UDP, aka Swift protocol
-%% <p>Wrapper to support running directly from escript.</p>
+%%
+%% Wrapper to support running directly from escript.
 %% @end
 
 -module(swirl).
@@ -21,7 +22,6 @@
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
--spec test() -> term().
 -endif.
 
 -export([main/1,
@@ -36,7 +36,10 @@
          stop_pool/2,
          start_swarm/1,
          stop_swarm/1,
+         start_channel/2,
+         stop_channel/1,
          start/0,
+         start/1,
          stop/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -48,6 +51,33 @@
 start() ->
     {ok, _} = application:ensure_all_started(?MODULE),
     ok.
+
+%% @doc Start the swirl application and everything ready to peer.
+%% Takes either single `swarm_id' as string or binary and assumes PPSPP
+%% defaults, or a full set of PPSPP options including the `swarm_id'.
+%% It starts a swarm and peer, and returns the URI for connecting to.
+%% @end
+-spec start(string()
+            | ppspp_options:swarm_id()
+            | ppspp_options:options()) ->
+    {ok,
+     pid(),
+     pid(),
+     inet:port_number(),
+     string()}.
+start(Swarm_id) when is_binary(Swarm_id); is_list(Swarm_id) ->
+    start(ppspp_options:use_default_options(Swarm_id));
+start(Swarm_options) ->
+    {ok, Swarm_pid} = start_swarm(Swarm_options),
+    % start a peer on a random port
+    {ok, Peer_pid}  = start_peer(0, Swarm_options),
+    %% retrieve the new port assigned to this peer
+    {ok, Peer_port} = peer_worker:pid_to_port(Peer_pid),
+    %% make a pretty URL for other systems
+    {ok, Peer_url} = peer_worker:get_url(Peer_port),
+    ?INFO("swirl: started swarm ~p and peer ~p at ~s~n",
+          [Swarm_pid, Peer_pid, Peer_url]),
+    {ok,Swarm_pid, Peer_pid, Peer_port, Peer_url}.
 
 %% @doc Stop the swirl application and all dependent swarms and peers.
 %% Allows swirl to terminate any peer connections if necessary.
@@ -126,6 +156,22 @@ stop_pool(First, Last) when is_integer(First), is_integer(Last), First < Last  -
               Ports).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% channel API
+
+%% @doc start a PPSPP channel, using the supplied peer info and swarm.
+-spec start_channel(ppspp_datagram:endpoint(), ppspp_options:options()) ->
+    {ok, pid()} | {error,_}.
+start_channel(Peer_endpoint, Swarm_options) ->
+    channel_worker:start(Peer_endpoint, Swarm_options).
+
+%% @doc stop a PPSPP channel
+%% @end
+-spec stop_channel(ppspp_channel:channel()) ->
+    ok | {error, any()}.
+stop_channel(Channel) ->
+    channel_worker:stop(Channel).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% swarm API
 
 %% @doc start a PPSPP swarm, using the supplied hash and PPSPP swarm options.
@@ -157,32 +203,28 @@ stop_swarm(Swarm) when is_binary(Swarm); is_list(Swarm) ->
 %% @end
 -spec help() -> ok.
 help() ->
-    io:format("~s: online help~n", [?SWIRL_APP]),
+    io:format("~s: online help ~p~n", [?SWIRL_APP, swirl_app:version()]),
     Help =["use any of these commands, prefixed by `swirl:` to run:",
            "",
            "help().                    these help notes",
            "start().                   starts the swirl application, but no peers or swarms",
-           "stop().                    stops the swirl application, active peers and swarms",
-           "start_swarm(Options | Id). starts a swarm using given options or swarm id",
-           "stop_swarm(Options | Id).  stops a swarm using given options or swarm id",
-           "start_peer().              starts a peer with default port & options",
-           "start_peer(Hash).          starts a peer with defaults and given hash",
-           "start_pool(First, Last).   starts peers on consecutive ports from First to Last",
-           "start_peer(Port, Options). starts a peer with given port and options",
+           "stop().                    stops the swirl application and all peers and swarms",
+           "start(Options | Id).       starts a new swarm and peer on OS selected random port",
+           "start_swarm(Opts|Id).      starts a swarm using given options or swarm id",
+           "stop_swarm(Opts|Id).       stops a swarm using given options or swarm id",
+           "start_peer(Opts|Id).       starts a peer with default port, supplied options or id",
+           "start_peer(Port, Opts|Id). starts a peer with given port",
            "stop_peer().               stops a single peer on the default port",
            "stop_peer(Port).           stops a single peer on the given port",
+           "start_pool(First, Last).   starts peers on consecutive ports from First to Last",
            "stop_pool(First, Last).    stops peers on consecutive ports from First to Last",
            "quit().                    immediately terminates the entire BEAM vm",
-           "", "",
-           "e.g. swirl:start_peer(\"c89800bfc82ed01ed6e3bfd5408c51274491f7d4\").",
            "",
+           "e.g. swirl:start(\"c89800bfc82ed01ed6e3bfd5408c51274491f7d4\").",
            "use ^c twice to exit, or type `swirl:quit().` for a graceful shutdown.",
-           ""],
+           "", ""],
 
-    lists:foreach(fun(Line) ->
-                          io:format("~s~n", [Line])
-                  end,
-                  Help),
+    lists:foreach(fun(Line) -> io:format("~s~n", [Line]) end, Help),
     ok.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -193,17 +235,3 @@ main(_) ->
     start(),
     _ = start_peer(),
     timer:sleep(infinity).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% test
-
--ifdef(TEST).
--spec peer_random_port_start_test() -> {ok, pid()}.
-peer_random_port_start_test() ->
-    start(),
-    ?assertMatch({ok, _}, start_peer(0, ppspp_options:use_default_options())).
-
--spec peer_random_port_stop_test() -> ok.
-peer_random_port_stop_test() ->
-    ?assertEqual(ok, stop_peer(0)).
--endif.

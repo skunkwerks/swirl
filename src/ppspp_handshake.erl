@@ -13,9 +13,10 @@
 %% the License.
 
 %% @doc Library for PPSPP over UDP, aka Swift protocol
-%% <p>This module implements a library of functions necessary to
+%%
+%% This module implements a library of functions necessary to
 %% handle the wire-protocol of PPSPP over UDP, including
-%% functions for encoding and decoding messages.</p>
+%% functions for encoding and decoding messages.
 %% @end
 
 -module(ppspp_handshake).
@@ -23,27 +24,25 @@
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
--spec test() -> term().
 -endif.
 
 %% api
 -export([unpack/1,
          pack/1,
-         handle/1]).
+         handle/2]).
 
--opaque handshake() :: {handshake,
-                        ppspp_channel:channel(),
-                        ppspp_options:options()}.
+-type handshake() :: {handshake,
+                      list(ppspp_channel:channel() |
+                           ppspp_options:options())}.
 -export_type([handshake/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% api
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc unpack a handshake message
-%% <p>  Deconstruct PPSPP UDP datagram into multiple erlang terms, including
+%% Deconstruct PPSPP UDP datagram into multiple erlang terms, including
 %% parsing any additional data within the same segment. Any parsing failure
-%% is fatal & will propagate back to the attempted datagram unpacking.
-%% </p>
+%% is fatal and will propagate back to the attempted datagram unpacking.
 %% @end
 
 -spec unpack(binary()) -> {handshake(), binary()}.
@@ -51,28 +50,46 @@
 unpack(Message) ->
     {Channel, Maybe_Options} = ppspp_channel:unpack_with_rest(Message),
     {Maybe_Messages, Options} = ppspp_options:unpack(Maybe_Options),
-    {{handshake, Channel, Options}, Maybe_Messages}.
+    {{handshake, [Channel, Options]}, Maybe_Messages}.
 
 -spec pack(ppspp_message:message()) -> binary().
 pack(_Message) -> <<>>.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%-spec ... handle takes a tuple of {type, message_body} where body is a
-%%    parsed orddict message and returns either
-%%    {error, something} or tagged tuple for the unpacked message
-%%    {ok, reply} where reply is probably an orddict to be sent to the
-%%    alternate peer.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% The payload of the HANDSHAKE message is a channel ID (see
-%  Section 3.11) and a sequence of protocol options.  Example options
-%  are the content integrity protection scheme used and an option to
-%  specify the swarm identifier.  The complete set of protocol options
-%  are specified in Section 7.
--spec handle(ppspp_message:message()) -> any().
-handle({handshake, _Body}) ->
-    {ok, ppspp_message_handler_not_yet_implemented};
-
-handle(Message) ->
-    ?DEBUG("message: handler not yet implemented ~p~n", [Message]),
-    {ok, ppspp_message_handler_not_yet_implemented}.
+%% @doc handle a handshake
+%%
+%% The payload of the HANDSHAKE message is a channel ID (see
+%%  Section 3.11) and a sequence of protocol options.  Example options
+%%  are the content integrity protection scheme used and an option to
+%%  specify the swarm identifier.  The complete set of protocol options
+%%  are specified in Section 7.
+%%
+%% handshake needs the endpoint info, and will set up a new channel if the
+%% requested swarm is available, and the options are compatible. The linking
+%% of the swarm and external peer's address together should be registered
+%% with the swarm handler.
+%%
+%% @end
+-spec handle({handshake, orddict:orddict()},
+             ppspp_datagram:endpoint()) -> ok.
+handle({handshake, Body}, Endpoint) ->
+    % Inbound channel is just the first 4 bytes of the datagram
+    Inbound_channel = ppspp_datagram:get_peer_channel(Endpoint),
+    % Source channel is where the peer would like replies sent to
+    Source_channel = ppspp_channel:get_channel(Body),
+    % These options should match with an available swarm.
+    % The channel_worker checks this on startup by looking up the swarm_id.
+    Requested_swarm_options = ppspp_options:get_options(Body),
+    {ok, Pid} =
+    case ppspp_channel:is_channel_zero(Inbound_channel) of
+        % If inbound channel is zero then we should start a new channel_worker
+        true ->{ok, _Pid} =
+               channel_worker:start(Endpoint, Requested_swarm_options);
+        % if non-zero there should be an existing channel. If not, it might
+        % prove useful to simply create a new channel anyway, which would
+        % allow peers that dropped off for some reason to restart cleanly.
+        false -> {ok, _Pid} =
+                 channel_worker:where_is(Inbound_channel)
+    end,
+    % send handshake message to channel_worker for reply
+    channel_worker:handle(Pid, {handshake, Source_channel}).

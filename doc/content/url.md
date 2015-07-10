@@ -14,8 +14,8 @@ weight: 100
 
 While there is no official PPSPP URL defined yet, the following
 simple structure has been used, based off a quick reading of
-[Guidelines for new URL Schemes](http://tools.ietf.org/html/rfc2718) and
-[URI Generic Syntax](http://tools.ietf.org/html/rfc3986).
+[Guidelines for new URL Schemes](https://tools.ietf.org/html/rfc2718) and
+[URI Generic Syntax](https://tools.ietf.org/html/rfc3986).
 
 - `scheme`: defines the protocol in use, always `ppspp`
 - `authority`: the IP address and port `example.net:7777`
@@ -24,7 +24,7 @@ simple structure has been used, based off a quick reading of
 
 The keys and values used for the optional query string are the lower-case
 versions, with whitespace replaced by underscores, of those referred to in
-[PPSPP section 7] (https://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol-12#section-7) and the canonical [PPSPP IANA registry](https://www.iana.org/assignments/ppspp/ppspp.xhtml).
+[PPSPP section 7] (https://tools.ietf.org/html/rfc7574-12#section-7) and the canonical [PPSPP IANA registry](https://www.iana.org/assignments/ppspp/ppspp.xhtml).
 
 Some examples are:
 

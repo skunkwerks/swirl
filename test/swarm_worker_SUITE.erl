@@ -18,20 +18,18 @@
 %% functions for encoding and decoding messages.</p>
 %% @end
 
--module(swirl_SUITE).
+-module(swarm_worker_SUITE).
 -include("swirl.hrl").
 -include_lib("common_test/include/ct.hrl").
 
 -export([all/0]).
 -export([start_swarm/1,
-         stop_swarm/1,
-         start_and_stop_swarm_with_random_peer/1
+         stop_swarm/1
         ]).
 
 -spec all() -> [atom()].
 all() -> [start_swarm,
-          stop_swarm,
-          start_and_stop_swarm_with_random_peer
+          stop_swarm
          ].
 
 -spec start_swarm(any()) -> true.
@@ -50,19 +48,3 @@ stop_swarm(_Config) ->
     swirl:stop_swarm(Swarm_id),
     timer:sleep(100),
     false = is_process_alive(Worker).
-
--spec start_and_stop_swarm_with_random_peer(any()) -> true.
-start_and_stop_swarm_with_random_peer(_Config) ->
-    Hash = "c898",
-    {ok, Swarm, Peer, Port, _URL} = swirl:start(Hash),
-    %% wait a bit and check the peer is up
-    timer:sleep(100),
-    true = is_process_alive(Peer),
-    swirl:stop_peer(Port),
-    timer:sleep(100),
-    false = is_process_alive(Peer),
-    %% now the swarm
-    true = is_process_alive(Swarm),
-    swirl:stop_swarm(Hash),
-    timer:sleep(100),
-    false = is_process_alive(Swarm).

@@ -31,7 +31,7 @@ Unlike all those other tools, Swirl is both open source and open development,
 built on an open standard, with peer-to-peer scalability and fault-tolerance
 baked in from the beginning.
 
-The application is based on the IETF draft Peer-to-Peer Streaming Peer Protocol,
+The application is based on IETF RFC7574, or Peer-to-Peer Streaming Peer Protocol,
 known as PPSP normally. The protocol includes innovative features for fast
 streaming, security and performance, and is compatible with current network
 infrastructure without rearchitecting or forklift upgrades.

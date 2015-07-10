@@ -12,9 +12,10 @@
 %% License for the specific language governing permissions and limitations under
 %% the License.
 
-%% @doc conversion library
-%% <p>This module implements a set of functions to convert various
-%% erlang or binary formats to human-readable text .</p>
+%% @doc Conversion Helper Functions
+%%
+%% This module implements a set of helper functions to convert various
+%% erlang or binary formats to human-readable text.
 %% @end
 
 -module(convert).
@@ -22,7 +23,6 @@
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
--spec test() -> term().
 -endif.
 
 %% api

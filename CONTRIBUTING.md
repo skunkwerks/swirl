@@ -105,9 +105,9 @@ project member.
 
 # Documentation
 
-Swirl is based on the reference IETF protocol document, still in draft, at
-[Peer-to-Peer Streaming Peer
-Protocol](http://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol)
+Swirl is based on the reference IETF protocol document, `RFC7574`, at
+[RFC7575: Peer-to-Peer Streaming Peer
+Protocol](https://tools.ietf.org/html/rfc7574)
 
 The [documentation] for the project itself is still a work in progress; please
 [let us know](https://github.com/skunkwerks/swirl/issues/new) if you find

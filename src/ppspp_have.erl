@@ -13,9 +13,10 @@
 %% the License.
 
 %% @doc Library for PPSPP over UDP, aka Swift protocol
-%% <p>This module implements a library of functions necessary to
+%%
+%% This module implements a library of functions necessary to
 %% handle the wire-protocol of PPSPP over UDP, including
-%% functions for encoding and decoding messages.</p>
+%% functions for encoding and decoding messages.
 %% @end
 
 -module(ppspp_have).
@@ -23,7 +24,6 @@
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
--spec test() -> term().
 -endif.
 
 %% api
@@ -40,7 +40,7 @@
 %% @doc unpack a have message
 %% <p>  Deconstruct PPSPP UDP datagram into multiple erlang terms, including
 %% parsing any additional data within the same segment. Any parsing failure
-%% is fatal & will propagate back to the attempted datagram unpacking.
+%% is fatal and will propagate back to the attempted datagram unpacking.
 %% </p>
 %% @end
 
@@ -68,8 +68,8 @@ pack(_Message) -> <<>>.
 %  are specified in Section 7.
 -spec handle(ppspp_message:message()) -> any().
 handle({have, _Body}) ->
-    {ok, ppspp_message_handler_not_yet_implemented};
+    {ok, ppspp_have_handler_not_yet_implemented};
 
 handle(Message) ->
-    ?DEBUG("message: handler not yet implemented ~p~n", [Message]),
-    {ok, ppspp_message_handler_not_yet_implemented}.
+    ?DEBUG("~p: handler not yet implemented ~p~n", [?MODULE, Message]),
+    {ok, ppspp_have_handler_not_yet_implemented}.

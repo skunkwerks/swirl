@@ -13,9 +13,10 @@
 %% the License.
 
 %% @doc Library for PPSPP over UDP, aka Swift protocol
-%% <p>This module implements a library of functions necessary to
+%%
+%% This module implements a library of functions necessary to
 %% handle the wire-protocol of PPSPP over UDP, including
-%% functions for encoding and decoding messages.</p>
+%% functions for encoding and decoding messages.
 %% @end
 
 -module(ppspp_chunk).
@@ -23,7 +24,6 @@
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
--spec test() -> term().
 -endif.
 
 % api
@@ -62,7 +62,7 @@ chunk_32bit_bins
 %% @doc unpack a chunk spec from a message, typically a have message
 %% <p>  Deconstruct PPSPP UDP datagram into multiple erlang terms, including
 %% parsing any additional data within the same segment. Any parsing failure
-%% is fatal & will propagate back to the attempted datagram unpacking.
+%% is fatal and will propagate back to the attempted datagram unpacking.
 %% </p>
 %% @end
 

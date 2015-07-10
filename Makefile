@@ -1,7 +1,6 @@
 PROJECT   = swirl
 
 DEPS      = gproc
-dep_gproc = git git://github.com/uwiger/gproc.git master
 
 ERLC_OPTS = +debug_info
 PLT_APPS += crypto public_key compiler asn1 inets tools
@@ -33,7 +32,7 @@ quick: escript
 dev: SWIRL_CONSOLE_OPTS ?= -s observer
 dev: console
 
-console:
+console: deps app
 	@erl -pa ./ebin -pz deps/*/ebin \
 			-I ./include -s crypto -smp \
 			-setcookie swirl -sname swirl \
@@ -51,9 +50,8 @@ doc: doc-clean edoc
 	@# add the HTML table header as XML can't handle the <> in overview.edoc
 	@echo '<table width="100%" border="0" summary="list of modules">' >> doc/api/index.md
 	@# spit out a table row for every erlang module found in /src/
-	@perl -e 'map { s!src/(\w+).erl!$$1!g ; print \
-		qq(<tr><td><a href="$$_.md" class="module">$$_</a></td></tr>\n); \
-		} glob("src/*.erl");' \
+	@# a single line because make/gmake has different behaviour on FreeBSD
+	@perl -e 'map { s!src/(\w+).erl!$$1!g ; print qq(<tr><td><a href="$$_.md" class="module">$$_</a></td></tr>\n); } glob("src/*.erl");' \
 		>> doc/api/index.md
 	@# remove the .md suffix on all links to end up with pretty urls again
 	@perl -pi -e 's!href="(\w+)\.md"!href="\1"!g' doc/api/index.md
