@@ -19,7 +19,7 @@ Params:
   defaultKeywords: p2p,ppspp,streaming
   highlight: monokai_sublime
   tagline: Bringing Peer-to-Peer Streaming to the World
-  copyright: "Copyright (c) 2014 - 2038 Skunkwerks GmbH; all rights reserved."
+  copyright: "Copyright (c) 2014 - 2038 SkunkWerks GmbH; all rights reserved."
   github: https://github.com/skunkwerks/swirl
   twitter: http://twitter.com/swirl_project
 taxonomies:

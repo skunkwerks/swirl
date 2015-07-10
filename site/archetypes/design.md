@@ -3,7 +3,6 @@ description: a lovely design document
 menu: main
 tags: 
   - page
-  - ui
 draft: true
 categories: 
   - overview
