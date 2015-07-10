@@ -4,7 +4,7 @@
 %% use this file except in compliance with the License. You may obtain a copy of
 %% the License at
 %%
-%%  http://www.apache.org/licenses/LICENSE-2.0
+%%   http://www.apache.org/licenses/LICENSE-2.0
 %%
 %% Unless required by applicable law or agreed to in writing, software
 %% distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -12,9 +12,11 @@
 %% License for the specific language governing permissions and limitations under
 %% the License.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc
-%% A wonderful Template Title
+%% @author Dave Cottlehuber <dch@skunkwerks.at>
+%% @copyright 2014-2038 Dave Cottlehuber
+%% @end
+
+%% @doc A wonderful Template Title
 %% 
 %% This description line behaves nicely when used with EDoc/EDown and Hugo.
 %% <div>

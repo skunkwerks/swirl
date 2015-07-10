@@ -18,51 +18,45 @@
 %% functions for encoding and decoding messages.</p>
 %% @end
 
--module(swirl_SUITE).
+-module(peer_worker_SUITE).
 -include("swirl.hrl").
 -include_lib("common_test/include/ct.hrl").
 
 -export([all/0]).
--export([start_swarm/1,
-         stop_swarm/1,
-         start_and_stop_swarm_with_random_peer/1
+-export([start_peer/1,
+         stop_peer/1,
+         start_and_stop_random_peer/1
         ]).
 
 -spec all() -> [atom()].
-all() -> [start_swarm,
-          stop_swarm,
-          start_and_stop_swarm_with_random_peer
+all() -> [start_peer,
+          stop_peer,
+          start_and_stop_random_peer
          ].
 
--spec start_swarm(any()) -> true.
-start_swarm(_Config) ->
+-spec start_peer(any()) -> true.
+start_peer(_Config) ->
     swirl:start(),
-    Swarm_Options = ppspp_options:use_default_options("c39e"),
-    {ok, Worker} = swirl:start_swarm(Swarm_Options),
+    Swarm_Options = ppspp_options:use_default_options(),
+    {ok, Worker} = swirl:start_peer(?SWIRL_PORT, Swarm_Options),
     timer:sleep(100),
     true = is_process_alive(Worker).
 
--spec stop_swarm(any()) -> false.
-stop_swarm(_Config) ->
-    Swarm_Options = ppspp_options:use_default_options("c39e"),
-    Swarm_id = ppspp_options:get_swarm_id(Swarm_Options),
-    {ok, Worker} = swarm_worker:where_is(Swarm_id),
-    swirl:stop_swarm(Swarm_id),
+-spec stop_peer(any()) -> false.
+stop_peer(_Config) ->
+    Worker = gproc:lookup_local_name({peer_worker, ?SWIRL_PORT}),
+    true = is_process_alive(Worker),
+    swirl:stop_peer(?SWIRL_PORT),
     timer:sleep(100),
     false = is_process_alive(Worker).
 
--spec start_and_stop_swarm_with_random_peer(any()) -> true.
-start_and_stop_swarm_with_random_peer(_Config) ->
-    Hash = "c898",
-    {ok, Swarm, Peer, Port, _URL} = swirl:start(Hash),
-    %% wait a bit and check the peer is up
+-spec start_and_stop_random_peer(any()) -> true.
+start_and_stop_random_peer(_Config) ->
+    Swarm_Options = ppspp_options:use_default_options("c89e"),
+    {ok, Worker} = peer_worker:start_link(0, Swarm_Options),
+    timer:sleep(500),
+    true = is_process_alive(Worker),
+    {ok, Port} = peer_worker:pid_to_port(Worker),
+    peer_worker:stop(Port),
     timer:sleep(100),
-    true = is_process_alive(Peer),
-    swirl:stop_peer(Port),
-    timer:sleep(100),
-    false = is_process_alive(Peer),
-    %% now the swarm
-    true = is_process_alive(Swarm),
-    swirl:stop_swarm(Hash),
-    timer:sleep(100),
-    false = is_process_alive(Swarm).
+    false = is_process_alive(Worker).
