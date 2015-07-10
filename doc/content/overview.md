@@ -48,7 +48,7 @@ The protocol itself is quite straightforwards:
 - peers that repeatedly send invalid chunks are eventually ignored, whether
   faulty or malicious, and therefore become excluded from the swarm
 
-See the PPSPP draft, [section 2] for a longer introduction.
+See the PPSPP RFC, [section 2] for a longer introduction.
 
 ## Live Streaming Support
 
@@ -61,15 +61,15 @@ originator of the content.
 
 ## Further Reading
 
-The [PPSPP] draft and related [tracker] specifications are excellent resources.
+The [PPSPP] `RFC75754` and related [tracker] specifications are excellent resources.
 In particular, for the core PPSP protocol, read [section 3] 3.1 - 3.9, skip the
 PEX* stuff, then jump to [section 8], 8.1 - 8.8.  there is a summary on [merkle
 trees](merkle.md) within this documentation. A full list of related
 documentation is available in the IETF [datatracker] tool.
 
-[section 2]: http://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol#section-2
-[section 3]: http://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol#section-3
-[section 8]: http://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol#section-8
+[section 2]: https://tools.ietf.org/html/rfc7574#section-2
+[section 3]: https://tools.ietf.org/html/rfc7574#section-3
+[section 8]: https://tools.ietf.org/html/rfc7574#section-8
 
 # PPSPP Terminology
 
@@ -102,7 +102,7 @@ channel is unique also for remote peers too.
 ### Hash
 
 A cryptographic function that reduces a large chunk to a small digest. In PPSP,
-the hash is usually [SHA1]. By providing hashes of data at the same time as
+the hash is usually [SHA2]. By providing hashes of data at the same time as
 transferring the chunk itself, the received may determine if the data or hash
 was corrupted in transit, and if necessary discard and retrieve the data again.
 
@@ -124,9 +124,9 @@ in this specific swarm's data.
 For more details, refer to this project's [merkle]({{< relref "merkle.md" >}})
 hash tree documentation.
 
-[SHA1]: http://tools.ietf.org/html/rfc3174
+[SHA-256]: https://tools.ietf.org/html/rfc4868
 [tribler]: http://www.tribler.org/
-[tracker]: http://tools.ietf.org/html/draft-ietf-ppsp-base-tracker-protocol
-[PPSPP]: https://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol
-[datatracker]: https://datatracker.ietf.org/doc/draft-ietf-ppsp-peer-protocol
-[live streaming]: http://tools.ietf.org/html/draft-ietf-ppsp-peer-protocol#section-6
+[tracker]: https://tools.ietf.org/html/draft-ietf-ppsp-base-tracker-protocol
+[PPSPP]: https://tools.ietf.org/html/rfc7574
+[datatracker]: https://datatracker.ietf.org/doc/rfc7574
+[live streaming]: https://tools.ietf.org/html/rfc7574#section-6

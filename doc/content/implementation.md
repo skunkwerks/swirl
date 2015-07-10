@@ -69,4 +69,4 @@ Further phases are planned, currently:
 [Erlang/OTP]: http://www.erlang.org/
 [NLNet]: http://nlnet.nl/news/2013/20130901-awards.html
 [IETF]: https://www.ietf.org/
-[Peer-to-Peer Streaming Peer Protocol]: https://datatracker.ietf.org/doc/draft-ietf-ppsp-peer-protocol
+[Peer-to-Peer Streaming Peer Protocol]: https://datatracker.ietf.org/doc/rfc7574
