@@ -137,13 +137,3 @@ get_swarm_id(Channel = {channel, _}) ->
         _ ->
             {error, ppspp_channel_not_registered}
     end.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% test
-
-% -ifdef(TEST).
-% -spec _test() -> {ok, pid()}.
-% _test() ->
-%     start(),
-%     ?assertMatch({ok, _}, ).
-% -endif.

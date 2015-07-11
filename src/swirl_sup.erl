@@ -22,10 +22,6 @@
 -module(swirl_sup).
 -include("swirl.hrl").
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
 -behaviour(supervisor).
 
 %% api

@@ -25,10 +25,6 @@
 -module(ppspp_options).
 -include("swirl.hrl").
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
 %% api
 -export([unpack/1,
          pack/1,

@@ -21,10 +21,6 @@
 -module(convert).
 -include("swirl.hrl").
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
 %% api
 -export([bin_to_hex/1,
          int_to_hex/1,

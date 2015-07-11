@@ -37,7 +37,7 @@ any reports or even patches would make my day/week/year.
 ## Developers
 
 - `make distcheck` cleans all build files out, compiles, and runs all tests,
-  including eunit, common_test, and dialyzer.
+  including common_test, and dialyzer.
 - `make reindent` uses vim to ensure your indentation is consistent.
 - more information is available in [contributing.md]
 
