@@ -1,5 +1,7 @@
 # The Swirl Project
 
+[![Join the chat at https://gitter.im/skunkwerks/swirl](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/skunkwerks/swirl?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ![Swirl Mascot, Messier Spiral Galaxy M74, also known as NGC 628][swirl_m74_small]
 
 Swirl is an implementation of the IETF [PPSP] protocol, `RFC7574` in
