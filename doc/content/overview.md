@@ -102,7 +102,7 @@ channel is unique also for remote peers too.
 ### Hash
 
 A cryptographic function that reduces a large chunk to a small digest. In PPSP,
-the hash is usually [SHA2]. By providing hashes of data at the same time as
+the hash is usually [SHA-256]. By providing hashes of data at the same time as
 transferring the chunk itself, the received may determine if the data or hash
 was corrupted in transit, and if necessary discard and retrieve the data again.
 
