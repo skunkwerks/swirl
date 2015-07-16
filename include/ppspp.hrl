@@ -44,7 +44,7 @@
 -define(PPSPP_END_OPTION,             255:?BYTE). %% 0. The key alone is sufficient
 %% values used within the option parser
 -define(PPSPP_DEFAULT_CHUNK_SIZE,          1024). %%
--define(PPSPP_DEFAULT_MERKLE_HASH_FUN,      sha). %% agreed to change in final RFC
+-define(PPSPP_DEFAULT_MERKLE_HASH_FUN,      sha256). %% Section 7.6
 -define(PPSPP_RFC_VERSION,                    1). %% match IETF protocol version
 -define(PPSPP_DEFAULT_CHUNK_METHOD, chunking_32bit_chunks). %% implied
 -define(PPSPP_DEFAULT_INTEGRITY_METHOD,  merkle_hash_tree). %% implied
