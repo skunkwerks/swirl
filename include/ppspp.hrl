@@ -45,7 +45,8 @@
 %% values used within the option parser
 -define(PPSPP_DEFAULT_CHUNK_SIZE,          1024). %%
 -define(PPSPP_DEFAULT_MERKLE_HASH_FUN,      sha). %% agreed to change in final RFC
--define(PPSPP_RFC_VERSION,                    1). %% match IETF protocol version
+-define(PPSPP_LOWEST_VERSION,                 1). %% this should never change
+-define(PPSPP_RFC_VERSION,                    1). %% match current RFC7574 version
 -define(PPSPP_DEFAULT_CHUNK_METHOD, chunking_32bit_chunks). %% implied
 -define(PPSPP_DEFAULT_INTEGRITY_METHOD,  merkle_hash_tree). %% implied
 
