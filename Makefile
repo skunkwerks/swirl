@@ -33,7 +33,7 @@ dev: SWIRL_CONSOLE_OPTS ?= -s observer
 dev: console
 
 console: deps app
-	@erl -pa ./ebin -pz deps/*/ebin \
+	@erl -pa ./ebin -pz ./deps/*/ebin -pz ./test/ \
 			-I ./include -s crypto -smp \
 			-setcookie swirl -sname swirl \
 			+K true +A 16 \
