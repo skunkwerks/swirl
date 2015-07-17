@@ -37,7 +37,10 @@
 -spec version() -> {string(), string()}.
 version() ->
     %% id key is set in swirl.app.src during build phase
-    {ok, Version} = application:get_key(swirl, id),
+    Version = case application:get_key(swirl, id) of
+        {ok, V} -> V;
+        undefined -> "unknown"
+    end,
     {?PPSPP_RELEASE, Version}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
