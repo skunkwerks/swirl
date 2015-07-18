@@ -227,7 +227,6 @@ help() ->
 %% for escript support
 -spec main(any()) -> no_return().
 main(_) ->
-    help(),
-    start(),
-    _ = start_peer(),
+    ok = start(),
+    {ok, _ } = start_peer(),
     timer:sleep(infinity).
