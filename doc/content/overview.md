@@ -61,7 +61,7 @@ originator of the content.
 
 ## Further Reading
 
-The [PPSPP] `RFC75754` and related [tracker] specifications are excellent resources.
+The [PPSPP] `RFC7574` and related [tracker] specifications are excellent resources.
 In particular, for the core PPSP protocol, read [section 3] 3.1 - 3.9, skip the
 PEX* stuff, then jump to [section 8], 8.1 - 8.8.  there is a summary on [merkle
 trees](merkle.md) within this documentation. A full list of related
