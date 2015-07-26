@@ -17,7 +17,15 @@ simple structure has been used, based off a quick reading of
 [Guidelines for new URL Schemes](https://tools.ietf.org/html/rfc2718) and
 [URI Generic Syntax](https://tools.ietf.org/html/rfc3986).
 
-- `scheme`: defines the protocol in use, always `ppspp`
+- `scheme`: defines the protocol in use, by default `ppspp`. The PPSPP 
+  specification declares protocol to be transport agnostic: it may use UDP or
+  SCTP or something else. While for now only UDP transport is defined as base 
+  one, in future this may change. To handle PPSPP-over-Proto situations, custom
+  transport MUST be defined after `+` character, like: `ppspp+sctp` which reads 
+  as "use PPSPP protocol over SCTP transport".
+  By default UDP protocol is assumed and MUST be used, while `ppspp+udp` is 
+  still valid scheme.
+
 - `authority`: the IP address and port `example.net:7777`
 - `path`: the root hash in use, or requested filename `c89800bf` or `messier74.jpg`
 - optional `query` string: supports passing swarm options such as: `content_integrity_protection_method=merkle_hash_tree &merkle_hash_tree_function=sha-256`
