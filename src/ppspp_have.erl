@@ -31,7 +31,7 @@
          pack/1,
          handle/1]).
 
--opaque have() :: {have, ppspp_chunk:spec()}.
+-opaque have() :: #{have => #{chunk_spec => ppspp_chunk:spec()}}.
 -export_type([have/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -47,8 +47,9 @@
 -spec unpack(ppspp_chunk:addressing_method(), binary()) -> {have(), binary()}.
 
 unpack(Addressing_Method, Message) ->
-    {Chunk_Spec, Maybe_Messages} = ppspp_chunk:unpack(Addressing_Method, Message),
-    {{have, Chunk_Spec}, Maybe_Messages}.
+    {Chunk_Spec, Maybe_Messages} = ppspp_chunk:unpack(Addressing_Method,
+                                                      Message),
+    { #{have => #{chunk_spec => Chunk_Spec}}, Maybe_Messages}.
 
 -spec pack(have()) -> binary().
 pack(_Message) -> <<>>.

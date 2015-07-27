@@ -35,6 +35,6 @@ handshake(_Config) ->
     Root_Hash = <<200,152,0,191,200,46,208,30,214,227,191,213,64,140,81,
                   39,68,145,247,212>>,
     Test = fun({Raw, Expected}) ->
-                   Expected = ppspp_message:unpack(Raw, Root_Hash) end,
+                   [Expected] = ppspp_message:unpack(Raw, Root_Hash) end,
     lists:map(Test, Traces).
 

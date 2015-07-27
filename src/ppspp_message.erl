@@ -27,29 +27,33 @@
 -endif.
 
 %% api
--export([unpack/2,
+-export([
+         unpack/2,
          pack/1,
          get_message_type/1,
          get_messages/1,
-         handle/3]).
+         handle/3
+        ]).
 
--opaque messages() :: {messages, list(message())}.
--opaque message() :: {message_type(), any()} |
-ppspp_handshake:handshake().
+
+-opaque messages() :: list(message()).
+-opaque message()  :: map()
+                    | ppspp_handshake:handshake().
+
 -opaque message_type() :: handshake
-| data
-| ack
-| have
-| integrity
-| pex_resv4
-| pex_req
-| signed_integrity
-| request
-| cancel
-| choke
-| unchoke
-| pex_resv6
-| pex_rescert.
+                        | data
+                        | ack
+                        | have
+                        | integrity
+                        | pex_resv4
+                        | pex_req
+                        | signed_integrity
+                        | request
+                        | cancel
+                        | choke
+                        | unchoke
+                        | pex_resv6
+                        | pex_rescert.
 
 -export_type([messages/0,
               message/0,
@@ -62,12 +66,15 @@ ppspp_handshake:handshake().
 %% @end
 -spec unpack(binary(), ppspp_options:options()) -> message() | messages().
 unpack(Maybe_Messages, Swarm_Options) when is_binary(Maybe_Messages) ->
-    {messages, unpack3(Maybe_Messages, [], Swarm_Options)}.
+    unpack3(Maybe_Messages, [], Swarm_Options).
+    %%{messages, unpack3(Maybe_Messages, [], Swarm_Options)}.
 
 %% @doc convert a list of messages into binary iolist for transmission.
 %% @end
 -spec pack(messages()) -> iolist().
-pack({messages, Messages}) -> pack(Messages, []).
+pack(Messages) -> pack(Messages, []).
+%% -spec pack(messages()) -> iolist().
+%% pack({messages, Messages}) -> pack(Messages, []).
 
 %% private
 -spec pack(list(message()), iolist()) -> iolist().
@@ -103,6 +110,7 @@ unpack3(<<Maybe_Message_Type:?PPSPP_MESSAGE_SIZE, Rest/binary>>,
     unpack3(Maybe_More_Messages,
             [Parsed_Message | Parsed_Messages],
             Swarm_Options).
+
 
 %% @doc dispatch to correct message parser along with swarm options
 %% @end
@@ -143,10 +151,13 @@ get_message_type(Maybe_Message_Type)
     ?DEBUG("message: parser got valid message type ~p~n", [Message_Type]),
     Message_Type.
 
-%% @doc helper unwrapper to pull out messages from a datagram orddict
+%% @doc helper unwrapper to pull out messages from a datagram map
 %% @end
--spec get_messages([any()]) -> any().
-get_messages(Messages) -> orddict:fetch(messages, Messages).
+-spec get_messages(map()) -> ppspp_message:messages().
+get_messages(#{messages := Messages}) -> Messages.
+%% -spec get_messages([any()]) -> any().
+%% get_messages(Messages) -> orddict:fetch(messages, Messages).
+
 
 %% @doc dispatch messages to correct handler in received order
 %% @end
@@ -160,13 +171,14 @@ handle([Message | Messages], Swarm_Options, Endpoint) ->
     ok  = handle_message(Message, Swarm_Options, Endpoint),
     handle(Messages, Swarm_Options, Endpoint).
 
+
 %% @doc does the dirty work of routing each message.
 %% Options and Endpoint are required state for handling many message types.
 %% @end
 -spec handle_message(ppspp_handshake:handshake(),
                      ppspp_options:options(),
                      ppspp_datagram:endpoint()) -> ok | {error, any()}.
-handle_message(Message = {handshake, _Body}, _Swarm_Options, Endpoint) ->
+handle_message(Message = #{handshake := _Body}, _Swarm_Options, Endpoint) ->
     ppspp_handshake:handle(Message, Endpoint);
 
 handle_message(Message, Swarm_Options, Endpoint) ->

@@ -29,11 +29,13 @@
 %% api
 -export([unpack/1,
          pack/1,
-         handle/2]).
+         handle/2
+        ]).
 
--type handshake() :: {handshake,
-                      list(ppspp_channel:channel() |
-                           ppspp_options:options())}.
+
+-opaque handshake() :: #{handshake => #{channel => ppspp_channel:channel(),
+                                        options =>ppspp_options:options()}}.
+
 -export_type([handshake/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -50,7 +52,10 @@
 unpack(Message) ->
     {Channel, Maybe_Options} = ppspp_channel:unpack_with_rest(Message),
     {Maybe_Messages, Options} = ppspp_options:unpack(Maybe_Options),
-    {{handshake, [Channel, Options]}, Maybe_Messages}.
+
+    { #{handshake => #{channel => Channel,
+                       options => Options}}, Maybe_Messages}.
+    %%{{handshake, Channel, Options}, Maybe_Messages}.
 
 -spec pack(ppspp_message:message()) -> binary().
 pack(_Message) -> <<>>.
@@ -70,9 +75,9 @@ pack(_Message) -> <<>>.
 %% with the swarm handler.
 %%
 %% @end
--spec handle({handshake, orddict:orddict()},
+-spec handle(#{handshake => map()},
              ppspp_datagram:endpoint()) -> ok.
-handle({handshake, Body}, Endpoint) ->
+handle(#{handshake := Body}, Endpoint) ->
     % Inbound channel is just the first 4 bytes of the datagram
     Inbound_channel = ppspp_datagram:get_peer_channel(Endpoint),
     % Source channel is where the peer would like replies sent to
@@ -89,7 +94,8 @@ handle({handshake, Body}, Endpoint) ->
         % prove useful to simply create a new channel anyway, which would
         % allow peers that dropped off for some reason to restart cleanly.
         false -> {ok, _Pid} =
-                 channel_worker:where_is(Inbound_channel)
+                 channel_worker:where_is({channel,Inbound_channel})
     end,
     % send handshake message to channel_worker for reply
-    channel_worker:handle(Pid, {handshake, Source_channel}).
+    ok = channel_worker:handle(Pid, #{handshake => #{channel => Source_channel}}),
+    ok.

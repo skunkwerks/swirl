@@ -52,6 +52,7 @@
 %% All PPSPP messages arrive through here, and then are re-dispatched back
 %% into their respective `ppspp_<message_type>.erl' modules to be processed.
 %% @end
+%%-spec handle(pid(), any()) -> ok.
 -spec handle(pid(), any()) -> ok.
 handle(Pid, Message) ->
     gen_server:cast(Pid, Message).
@@ -65,7 +66,7 @@ start(Peer_endpoint, Swarm_options) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Stops the server, given a channel.
 
--spec stop(ppspp_channel:channel()) -> ok | {error, any()}.
+-spec stop({channel, ppspp_channel:channel()}) -> ok | {error, any()}.
 stop(Channel) ->
     case where_is(Channel) of
         {error, Reason} -> {error, Reason};
@@ -75,7 +76,7 @@ stop(Channel) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Looks up the pid for a given channel.
 
--spec where_is(ppspp_channel:channel()) -> {ok, pid()} | {error,_}.
+-spec where_is({channel, ppspp_channel:channel()}) -> {ok, pid()} | {error,_}.
 where_is(Channel)  ->
     case Pid = gproc:lookup_local_name({?MODULE, Channel}) of
         undefined -> {error, ppspp_channel_worker_not_found};
@@ -109,7 +110,7 @@ start_link(Peer, Swarm_id)  ->
 %% address, and therefore multiple swarms on the same IP.
 %% TODO enable updating the registration of the URI to match the acquired
 %% channel that will accommodate all future datagrams from this peer.
--spec init(ppspp_options:swarm_id()) -> {ok, ppspp_channel:channel()}.
+-spec init(ppspp_options:swarm_id()) -> {ok, ppspp_channel:channel_ref()}.
 init(Swarm_id) ->
     {ok, ppspp_channel:acquire(Swarm_id)}.
 

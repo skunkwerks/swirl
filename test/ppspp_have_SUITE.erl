@@ -35,5 +35,6 @@ have(_Config) ->
     Method = chunk_32bit_chunks,
     Garbage = crypto:strong_rand_bytes(10),
     Chunks = <<15:64, Garbage/binary>>,
-    Expected = {{have,{chunk_spec,{chunk_32bit_chunks,0,15}}}, Garbage},
+    Expected = { #{have => #{chunk_spec => {chunk_32bit_chunks,0,15} }},
+                 Garbage},
     Expected = ppspp_have:unpack(Method, Chunks).

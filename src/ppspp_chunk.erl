@@ -36,22 +36,18 @@
               byte_range/0,
               bin_number/0]).
 
--type addressing_method() ::
-chunk_32bit_bins
-| chunk_64bit_bins
-| chunk_64bit_bytes
-| chunk_32bit_chunks
-| chunk_64bit_chunks.
+-type addressing_method() :: chunk_32bit_bins
+                           | chunk_64bit_bins
+                           | chunk_64bit_bytes
+                           | chunk_32bit_chunks
+                           | chunk_64bit_chunks.
 
--opaque spec() :: {chunk_spec, chunk_range() | byte_range() | bin_number()}.
--opaque chunk_range() ::
-{ chunk_32bit_chunks, uint_32bit(), uint_32bit()}
-| { chunk_64bit_chunks, uint_64bit(), uint_64bit()}.
--opaque byte_range() ::
-{ chunk_64bit_bytes,  uint_64bit(), uint_64bit()}.
--opaque bin_number() ::
-{ chunk_32bit_bins, uint_32bit()}
-| { chunk_64bit_bins, uint_64bit()}.
+-opaque spec()         :: chunk_range() | byte_range() | bin_number().
+-opaque chunk_range()  :: { chunk_32bit_chunks, uint_32bit(), uint_32bit()}
+                        | { chunk_64bit_chunks, uint_64bit(), uint_64bit()}.
+-opaque byte_range()   :: { chunk_64bit_bytes,  uint_64bit(), uint_64bit()}.
+-opaque bin_number()   :: { chunk_32bit_bins, uint_32bit()}
+                        | { chunk_64bit_bins, uint_64bit()}.
 
 -type uint_32bit() :: 0..16#ffffffff.
 -type uint_64bit() :: 0..16#ffffffffffffffff.
@@ -71,20 +67,20 @@ chunk_32bit_bins
 -spec unpack(addressing_method(), binary()) -> {spec(), binary()}.
 %% bin numbers use a single field
 unpack(chunk_32bit_bins, <<Bin_Number:?DWORD, Rest/binary>>) ->
-    {{chunk_spec, {chunk_32bit_bins, Bin_Number}}, Rest};
+    {{chunk_32bit_bins, Bin_Number}, Rest};
 unpack(chunk_64bit_bins, <<Bin_Number:?QWORD, Rest/binary>>) ->
-    {{chunk_spec, {chunk_64bit_bins, Bin_Number}}, Rest};
+    {{chunk_64bit_bins, Bin_Number}, Rest};
 % others have a start and end range
 unpack(chunk_64bit_bytes, Range) ->
     {Start, End, Rest} = unpack_uint_64bits(Range),
-    {{chunk_spec, {chunk_64bit_bytes, Start, End}}, Rest};
+    {{chunk_64bit_bytes, Start, End}, Rest};
 %% now the small and large chunk schemes
 unpack(chunk_64bit_chunks, Range) ->
     {Start, End, Rest} = unpack_uint_64bits(Range),
-    {{chunk_spec, {chunk_64bit_chunks, Start, End}}, Rest};
+    {{chunk_64bit_chunks, Start, End}, Rest};
 unpack(chunk_32bit_chunks, Range) ->
     {Start, End, Rest} = unpack_uint_32bits(Range),
-    {{chunk_spec, {chunk_32bit_chunks, Start, End}}, Rest}.
+    {{chunk_32bit_chunks, Start, End}, Rest}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% TODO pack
