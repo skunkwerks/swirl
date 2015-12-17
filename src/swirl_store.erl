@@ -57,8 +57,16 @@
 
 -export_type([store/0]).
 
+%% @doc fetch gets a chunk of data, from the `Store', according to the `Spec'
+%% <p> fetch/2 takes a store() and a spec() and returns the desired binary().
+%% if the desired spec() is out of range, or does not exist in store(), fetch/2
+%% will return an error tuple.
+%% </p>
+-spec fetch(store(), ppspp_chunk:spec()) -> { ok, binary() } | { error, any() }.
+fetch(_Store, _Spec) -> { ok, << "" >> }.
+
 %% @doc confirm presence of chunks either as a range or individual chunkspecs.
-%% <p> exists/1-3 provide further details and more flexible query options.
+%% <p> exists/1-2 provide further details and more flexible query options.
 %% exists/1 only confirms if the chunkspec is full, empty, or partially full,
 %% for the supplied store().
 %% exists/2 takes a store() and a range(), and returns a list of available
@@ -67,8 +75,6 @@
 %% chunks as indexes into the store.
 %% </p>
 %% @end
--spec fetch(store(), ppspp_chunk:spec()) -> binary().
-fetch(_Store, _Spec) -> << "" >>.
 -spec exists(store()) -> {ok, full | empty | incomplete } | {error, any()}.
 exists(_Store) -> {error, swirl_store_not_implemented}.
 -spec exists(store(), ppspp_chunk:spec()) -> {ok, full | empty | incomplete } | {error, any()}.
