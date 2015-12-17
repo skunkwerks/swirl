@@ -16,21 +16,18 @@
 %% @copyright 2014-2038 Dave Cottlehuber
 %% @end
 
-%% @doc Swirl Storage API
+
+%% @doc A Merkle Hash tree store with binmap index support.
 %%
 %% This module provides an API to a generic indexed key value store.
+%% The swirl_store provides a simple API around an `array`-based index. It
+%% should be reasonably memory efficient, but clearly not as efficient as
+%% a byte array. Erlang arrays are actually nested 10-tuples under the hood.
 %%
-%% <div>
-%% ## Nota Bene
-%% You can of course embed [markdown] for hugo to deal with, via divs.
-%% [markdown]: http://daringfireball.net/projects/markdown/syntax
-%% </div>
-%% And code samples just as easily:
-%% <pre lang="erlang">
-%% incr(X) ->
-%%   %% This should be formatted with Erlang syntax highlighting
-%%   X + 1.
-%% </pre>
+%% Some relevant links on byte arrays are:
+%% - [native Erlang/OTP HIPE byte arrays](https://github.com/erlang/otp/blob/master/erts/emulator/hipe/hipe_bif0.tab)
+%% - [@mononcqc's bitarray NIF-based implementation](https://github.com/ferd/bitarray)
+%% - [@kivikakk's](https://kivikakk.ee/2013/05/13/k6_bytea.html) implementation as a NIF is now [hosted elsewhere](https://kivikakk.ee/2013/05/13/k6_bytea.html)
 %% @end
 
 -module(swirl_store).
@@ -43,11 +40,11 @@
 %% api
 -export([fetch/2,       % get a specific chunk
          exists/1,      % confirm or deny presence of complete store
-         exists/2,      % or specify a partial range within the store
-         list_hashes/2,
-         fetch_hashes/2,
-         get_cache_config/1,
-         set_cache_config/2
+         exists/2      % or specify a partial range within the store
+         %list_hashes/2,
+         %fetch_hashes/2,
+         %get_cache_config/1,
+         %set_cache_config/2
         ]).
 
 -opaque store() :: term().
@@ -71,8 +68,11 @@
 %% </p>
 %% @end
 -spec fetch(store(), ppspp_chunk:spec()) -> binary().
+fetch(_Store, _Spec) -> << "" >>.
 -spec exists(store()) -> {ok, full | empty | incomplete } | {error, any()}.
+exists(_Store) -> {error, swirl_store_not_implemented}.
 -spec exists(store(), ppspp_chunk:spec()) -> {ok, full | empty | incomplete } | {error, any()}.
+exists(_Store, _Spec) -> {error, swirl_store_not_implemented}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% test
