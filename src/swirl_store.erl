@@ -40,11 +40,11 @@
 %% api
 -export([fetch/2,       % get a specific chunk
          exists/1,      % confirm or deny presence of complete store
-         exists/2      % or specify a partial range within the store
+         exists/2,      % or specify a partial range within the store
+         get_cache_config/2,
+         set_cache_config/2
          %list_hashes/2,
          %fetch_hashes/2,
-         %get_cache_config/1,
-         %set_cache_config/2
         ]).
 
 -opaque store() :: term().
@@ -62,8 +62,8 @@
 %% if the desired spec() is out of range, or does not exist in store(), fetch/2
 %% will return an error tuple.
 %% </p>
--spec fetch(store(), ppspp_chunk:spec()) -> { ok, binary() } | { error, any() }.
-fetch(_Store, _Spec) -> { ok, << "" >> }.
+-spec fetch(store(), ppspp_chunk:spec()) -> {ok, binary()} | {error, any()}.
+fetch(_Store, _Spec) -> {ok, << >>}.
 
 %% @doc confirm presence of chunks either as a range or individual chunkspecs.
 %% <p> exists/1-2 provide further details and more flexible query options.
@@ -80,6 +80,11 @@ exists(_Store) -> {error, swirl_store_not_implemented}.
 -spec exists(store(), ppspp_chunk:spec()) -> {ok, full | empty | incomplete } | {error, any()}.
 exists(_Store, _Spec) -> {error, swirl_store_not_implemented}.
 
+-spec get_cache_config(store(), ppsp_options:option()) -> any().
+get_cache_config(_Store, _Options) -> ok.
+
+-spec set_cache_config(store(), ppsp_options:option()) -> any().
+set_cache_config(_Store, _Options) -> ok.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% test
 
