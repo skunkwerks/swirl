@@ -57,9 +57,7 @@ in `/deps/gproc/` after the first `make` invocation.
 
 Of course tests are found in `/test/` which contains both the test functionality
 and fixtures in `/test/data/`. These are built using the erlang [common_test]
-framework, to handle testing functionality across and between modules. There are
-some internal tests in many modules in the `/src/` tree using the less flexible
-[eunit] framework.
+framework, to handle testing functionality across and between modules.
 
 [headers]: https://github.com/skunkwerks/swirl/tree/master/include
 [source]: https://github.com/skunkwerks/swirl/tree/master/src
@@ -70,7 +68,6 @@ some internal tests in many modules in the `/src/` tree using the less flexible
 [project]: http://www.swirl-project.org/
 [gproc]: https://github.com/uwiger/gproc
 [common_test]: http://www.erlang.org/doc/man/common_test.html
-[eunit]: http://www.erlang.org/doc/man/eunit.html
 
 ### After `make`
 

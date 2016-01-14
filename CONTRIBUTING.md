@@ -123,7 +123,8 @@ onwards, the same erlang indentation should apply as in emacs. There are a
 number of useful vim plugins at https://github.com/vim-erlang/ as well as
 the canonical `vim-erlang-runtime` plugin if your vim is older than 7.4. Use
 the `gg=G` shortcut in vim to re-indent correctly, and check your `.vimrc`
-includes `filetype plugin indent on`.
+includes `filetype plugin indent on`. There is a handy `make reindent`
+target which uses vim's default indentation to clean up your commits.
 
 If you're creating a new file, please copy `./src/template` which includes
 all the sensible things like license header, emacs and vim tab settings.
@@ -135,9 +136,11 @@ fork or when adding code as a contributor, please add appropriate tests. A
 good place to start is to have a look into the [test
 directory](https://github.com/skunkwerks/swirl/tree/develop/test). As a rule
 of thumb, put API (exported module functions) into a `common_test` module,
-and use `eunit` for internal module tests.
+and only use `eunit` for internal module tests, if these cannot be tested
+from `common_test` already. There's a template in `./test/template_SUITE` to
+help.
 
-Contributions should pass `make distcheck` before being committed to `develop`
+Contributions should pass `make distcheck` before being merged to `develop`
 or release branches. This cleans the repo, and runs all tests (eunit,
 common_test, and dialyzer) checks on your behalf.
 

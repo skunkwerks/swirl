@@ -20,10 +20,6 @@
 -module(swirl).
 -include("swirl.hrl").
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
 -export([main/1,
          help/0,
          quit/0,
@@ -231,7 +227,6 @@ help() ->
 %% for escript support
 -spec main(any()) -> no_return().
 main(_) ->
-    help(),
-    start(),
-    _ = start_peer(),
+    ok = start(),
+    {ok, _ } = start_peer(),
     timer:sleep(infinity).

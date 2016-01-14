@@ -22,10 +22,6 @@
 -module(ppspp_datagram).
 -include("swirl.hrl").
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
 %% api
 -export([handle_packet/1,
          handle_datagram/2,
@@ -197,13 +193,3 @@ unpack(Raw_Datagram, Endpoint, Swarm_Options) ->
 
 -spec pack(datagram()) -> binary().
 pack(_Datagram) -> <<>>.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% test
-
-% -ifdef(TEST).
-% -spec _test() -> {ok, pid()}.
-% _test() ->
-%     start(),
-%     ?assertMatch({ok, _}, ).
-% -endif.

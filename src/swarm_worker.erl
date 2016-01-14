@@ -25,10 +25,6 @@
 -include("swirl.hrl").
 -behaviour(gen_server).
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
 %% api
 -export([start_link/1,
          where_is/1,

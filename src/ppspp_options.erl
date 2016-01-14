@@ -25,10 +25,6 @@
 -module(ppspp_options).
 -include("swirl.hrl").
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
 %% api
 -export([unpack/1,
          pack/1,
@@ -36,6 +32,7 @@
          get_content_integrity_check_method/1,
          get_merkle_hash_tree_function/1,
          get_minimum_version/1,
+         get_chunk_size/1,
          get_swarm_id/1,
          get_maximum_supported_version/1,
          get_options/1,
@@ -205,15 +202,6 @@ unpack( <<>>, _Options) -> {error, ppspp_invalid_options}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Provides a clean interfaces to retrieve a given option from the
 %% opaque store.
-%% The options are:
-%% <ul>
-%% <li>chunk_addressing_method</li>
-%% <li>ppspp_content_integrity_check_method</li>
-%% <li>ppspp_merkle_hash_function</li>
-%% <li>ppspp_minimum_version</li>
-%% <li>ppspp_swarm_id</li>
-%% <li>ppspp_version</li>
-%% </ul>
 %% @end
 -spec get(option(), options()) -> any().
 get(Option, {options, Options_Dict}) ->
@@ -250,6 +238,11 @@ get_minimum_version(Options) ->
 get_swarm_id(Options) ->
     get(swarm_id, Options).
 
+%% @doc Returns the swarm chunk size
+-spec get_chunk_size(options()) -> pos_integer().
+get_chunk_size(Options) ->
+    get(chunk_size, Options).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Returns the highest accepted PPSP version for the swarm.
 -spec get_maximum_supported_version(options()) -> any().
@@ -276,7 +269,7 @@ get_options(Dict) -> {options, orddict:fetch(options, Dict)}.
 %%           {merkle_hash_tree_function,sha},
 %%           {minimum_version,1},
 %%           {swarm_id, your_swarm_id_here },
-%%           {version,1}]}.
+%%           {supported_version,1}]}.
 %% </pre>
 -spec use_default_options() -> options().
 use_default_options() ->
@@ -294,7 +287,7 @@ use_default_options(Swarm_id) when is_binary(Swarm_id) ->
                          {content_integrity_check_method, ?PPSPP_DEFAULT_INTEGRITY_METHOD},
                          {merkle_hash_tree_function, ?PPSPP_DEFAULT_MERKLE_HASH_FUN},
                          {minimum_version, ?PPSPP_RFC_VERSION},
-                         {version, ?PPSPP_RFC_VERSION}])}.
+                         {supported_version, ?PPSPP_RFC_VERSION}])}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Provides standard options from the PPSPP RFC as erlang terms.
@@ -311,19 +304,3 @@ use_minimum_options() ->
 -spec pack(options()) -> binary().
 
 pack(_) -> <<>>.
-
--ifdef(TEST).
--spec defaults_test() -> term().
-defaults_test() ->
-    Root_Hash ="c39e",
-    Swarm_id = convert:hex_string_to_padded_binary(Root_Hash),
-    Expected = {options,
-                [{chunk_addressing_method,chunking_32bit_chunks},
-                 {chunk_size,1024},
-                 {content_integrity_check_method,merkle_hash_tree},
-                 {merkle_hash_tree_function,sha},
-                 {minimum_version,1},
-                 {swarm_id, Swarm_id},
-                 {version,1}]},
-    ?assertEqual( Expected, use_default_options(Swarm_id)).
--endif.
