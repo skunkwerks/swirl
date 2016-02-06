@@ -22,18 +22,13 @@
 -module(ppspp_handshake).
 -include("swirl.hrl").
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
 %% api
 -export([unpack/1,
          pack/1,
          handle/2]).
 
--type handshake() :: {handshake,
-                      list(ppspp_channel:channel() |
-                           ppspp_options:options())}.
+-type handshake() :: #{channel => ppspp_channel:channel(),
+                       options => ppspp_options:options()}.
 -export_type([handshake/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -50,7 +45,8 @@
 unpack(Message) ->
     {Channel, Maybe_Options} = ppspp_channel:unpack_with_rest(Message),
     {Maybe_Messages, Options} = ppspp_options:unpack(Maybe_Options),
-    {{handshake, [Channel, Options]}, Maybe_Messages}.
+    Handshake = #{channel => Channel, options => Options},
+    {Handshake, Maybe_Messages}.
 
 -spec pack(ppspp_message:message()) -> binary().
 pack(_Message) -> <<>>.
@@ -70,26 +66,24 @@ pack(_Message) -> <<>>.
 %% with the swarm handler.
 %%
 %% @end
--spec handle({handshake, orddict:orddict()},
-             ppspp_datagram:endpoint()) -> ok.
-handle({handshake, Body}, Endpoint) ->
+-spec handle(handshake(), ppspp_datagram:endpoint()) -> ok.
+handle(Handshake, Endpoint) ->
     % Inbound channel is just the first 4 bytes of the datagram
     Inbound_channel = ppspp_datagram:get_peer_channel(Endpoint),
     % Source channel is where the peer would like replies sent to
-    Source_channel = ppspp_channel:get_channel(Body),
+    Source_channel = ppspp_channel:get_channel(Handshake),
     % These options should match with an available swarm.
     % The channel_worker checks this on startup by looking up the swarm_id.
-    Requested_swarm_options = ppspp_options:get_options(Body),
-    {ok, Pid} =
-    case ppspp_channel:is_channel_zero(Inbound_channel) of
-        % If inbound channel is zero then we should start a new channel_worker
-        true ->{ok, _Pid} =
-               channel_worker:start(Endpoint, Requested_swarm_options);
-        % if non-zero there should be an existing channel. If not, it might
-        % prove useful to simply create a new channel anyway, which would
-        % allow peers that dropped off for some reason to restart cleanly.
-        false -> {ok, _Pid} =
-                 channel_worker:where_is(Inbound_channel)
-    end,
-    % send handshake message to channel_worker for reply
+    Requested_swarm_options = ppspp_options:get_options(Handshake),
+    {ok, Pid} = case ppspp_channel:is_channel_zero(Inbound_channel) of
+                    % If inbound channel is zero then we should start a new channel_worker
+                    true ->{ok, _Pid} =
+                           channel_worker:start(Endpoint, Requested_swarm_options);
+                    % if non-zero there should be an existing channel. If not, it might
+                    % prove useful to simply create a new channel anyway, which would
+                    % allow peers that dropped off for some reason to restart cleanly.
+                    false -> {ok, _Pid} =
+                             channel_worker:where_is(Inbound_channel)
+                end,
+    % send handshake message to channel_worker for reply FIXME
     channel_worker:handle(Pid, {handshake, Source_channel}).
