@@ -171,25 +171,25 @@ Eshell V7.0.2  (abort with ^G)
 =INFO REPORT==== 10-Jul-2015::13:59:30 ===
 swarm: <0.73.0> started with swarm_id:<<200,152,0,191,200,46,208,30,214,227,
                                         191,213,64,140,81,39,68,145,247,212>>
- and options: {options,[{chunk_addressing_method,chunking_32bit_chunks},
-                        {chunk_size,1024},
-                        {content_integrity_check_method,merkle_hash_tree},
-                        {merkle_hash_tree_function,sha},
-                        {minimum_version,1},
-                        {swarm_id,<<200,152,0,191,200,46,208,30,214,227,191,
-                                    213,64,140,81,39,68,145,247,212>>},
-                        {version,1}]}
+  options: #{chunk_addressing_method => chunking_32bit_chunks,
+             chunk_size => 1024,
+             content_integrity_check_method => merkle_hash_tree,
+             merkle_hash_tree_function => sha256,
+             minimum_version => 1,
+             supported_version => 1,
+             swarm_id => <<200,152,0,191,200,46,208,30,214,227,191,
+                          213,64,140,81,39,68, 145,247,212>>}
 
 =INFO REPORT==== 10-Jul-2015::13:59:30 ===
 peer: <0.74.0> listening on udp:60421
-  options: {options,[{chunk_addressing_method,chunking_32bit_chunks},
-                     {chunk_size,1024},
-                     {content_integrity_check_method,merkle_hash_tree},
-                     {merkle_hash_tree_function,sha},
-                     {minimum_version,1},
-                     {swarm_id,<<200,152,0,191,200,46,208,30,214,227,191,213,
-                                 64,140,81,39,68,145,247,212>>},
-                     {version,1}]}
+  options: #{chunk_addressing_method => chunking_32bit_chunks,
+             chunk_size => 1024,
+             content_integrity_check_method => merkle_hash_tree,
+             merkle_hash_tree_function => sha256,
+             minimum_version => 1,
+             supported_version => 1,
+             swarm_id => <<200,152,0,191,200,46,208,30,214,227,191,
+                          213,64,140,81,39,68, 145,247,212>>}
 
 =INFO REPORT==== 10-Jul-2015::13:59:30 ===
 swirl: started swarm <0.73.0> and peer <0.74.0> on port 60421
@@ -199,20 +199,18 @@ swirl: started swarm <0.73.0> and peer <0.74.0> on port 60421
 
 =INFO REPORT==== 10-Jul-2015::13:59:37 ===
 swarm: <0.73.0> terminating swarm <<200,152,0,191,200,46,208,30,214,227,191,
-                                    213,64,140,81,39,68,145,247,212>>, using 2928 bytes, due to reason: shutdown
-  with state {state,
-                 <<200,152,0,191,200,46,208,30,214,227,191,213,64,140,81,39,68,
-                   145,247,212>>,
-                 {options,
-                     [{chunk_addressing_method,chunking_32bit_chunks},
-                      {chunk_size,1024},
-                      {content_integrity_check_method,merkle_hash_tree},
-                      {merkle_hash_tree_function,sha},
-                      {minimum_version,1},
-                      {swarm_id,
-                          <<200,152,0,191,200,46,208,30,214,227,191,213,64,
-                            140,81,39,68,145,247,212>>},
-                      {version,1}]}}
+                                    213,64,140,81,39,68,145,247,212>>,
+                                   using 2928 bytes, due to reason: shutdown
+  with state {state,<<200,152,0,191,200,46,208,30,214,227,191,213,64,
+                      140,81,39,68,145,247,212>>,
+                    #{chunk_addressing_method => chunking_32bit_chunks,
+                      chunk_size => 1024,
+                      content_integrity_check_method => merkle_hash_tree,
+                      merkle_hash_tree_function => sha256,
+                      minimum_version => 1,
+                      supported_version => 1,
+                      swarm_id => <<200,152,0,191,200,46,208,30,214,227,191,
+                        213,64,140,81,39,68,145,247,212>>}}
 
 =INFO REPORT==== 10-Jul-2015::13:59:37 ===
 peer: <0.74.0> terminating port 60421, using 7080 bytes, due to reason: shutdown
