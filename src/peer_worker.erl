@@ -167,8 +167,7 @@ handle_call(Message, From, State) ->
 
 %% @doc Receives UDP datagrams from `gen_udp' server and spawns a subsidiary
 %% process to manage it. Returns `noreply' tuple.
--spec handle_info(_,[state()]) -> {noreply,[state()]}
-| {stop,{error,{unknown_info,_}},_}.
+-spec handle_info(_,[state()]) -> {noreply,[state()]} | {stop,{error,_},_}.
 handle_info(Packet={udp, _Socket, _Peer, _Port, _Maybe_Datagram}, State) ->
     proc_lib:spawn(ppspp_datagram, handle_packet, [Packet]),
     {noreply, State}.
