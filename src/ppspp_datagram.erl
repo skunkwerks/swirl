@@ -25,26 +25,25 @@
 %% api
 -export([handle_packet/1,
          handle_datagram/2,
+         get_messages/1,
          get_peer_uri/1,
          get_endpoint/1,
-         get_messages/1,
          get_peer_channel/1,
          get_swarm_options/1,
          unpack/3,
          pack/1]).
 
--opaque endpoint() :: {endpoint, list(endpoint_option())}.
--opaque uri() :: {uri, string()}.
--opaque endpoint_option() :: {ip, inet:ip_address()}
-| {socket, inet:socket()}
-| {port, inet:port_number()}
-| {transport, udp}
-| uri()
-| ppspp_channel:channel().
--opaque datagram() :: {datagram, list(endpoint() | ppspp_message:messages())}.
+-opaque endpoint() :: #{ uri => string(),
+                         ip => inet:ip_address(),
+                         socket => inet:socket(),
+                         port => inet:port_number(),
+                         transport => udp,
+                         channel => ppspp_channel:channel()}.
+-opaque datagram() :: #{ endpoint => endpoint(),
+                         messages =>
+                         ppspp_message:messages()}.
+-type uri() :: string().
 -export_type([endpoint/0,
-              endpoint_option/0,
-              uri/0,
               datagram/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -66,12 +65,12 @@ build_endpoint(udp, Socket, IP, Port, Channel) ->
     Channel_Name = convert:int_to_hex(ppspp_channel:get_channel_id(Channel)),
     Peer_as_String = peer_to_string(IP, Port),
     Endpoint_as_URI = lists:concat([ Peer_as_String, "#", Channel_Name]),
-    {endpoint, orddict:from_list([{ip, IP},
-                                  Channel,
-                                  {port, Port},
-                                  {uri, Endpoint_as_URI},
-                                  {transport, udp},
-                                  {socket, Socket} ])}.
+    #{ip        => IP,
+      channel   => Channel,
+      port      => Port,
+      uri       => Endpoint_as_URI,
+      transport => udp,
+      socket    => Socket}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc given an endpoint, returns the associated data e.g. uri or channel
@@ -84,10 +83,10 @@ get_peer_uri(Peer) -> get_peer_info(uri, Peer).
 get_peer_channel(Peer) -> get_peer_info(channel, Peer).
 
 -spec get_peer_info( uri | endpoint | channel, endpoint()) ->
-    ppspp_channel:channel() |
-    uri().
-get_peer_info(Option, {endpoint, Peer_Dict}) ->
-    {Option, orddict:fetch(Option, Peer_Dict)}.
+    ppspp_datagram:endpoint() |
+    ppspp_channel:channel() | uri().
+get_peer_info(Option, Endpoint) ->
+    maps:get(Option, Endpoint).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc receives datagram from peer_worker, parses and delivers to matching
@@ -132,7 +131,9 @@ unpack_on_channel_zero(_Channel, Maybe_Datagram, Endpoint) ->
     Peer_Requested_Swarm_Options = get_swarm_options(Datagram),
     {Datagram, Peer_Requested_Swarm_Options}.
 
--spec unpack_on_existing_channel(ppspp_channel:channel(), binary(), endpoint()) ->
+-spec unpack_on_existing_channel(ppspp_channel:channel(),
+                                 binary(),
+                                 endpoint()) ->
     {datagram(), ppspp_options:options()}.
 unpack_on_existing_channel(Channel, Maybe_Datagram, Endpoint) ->
     {ok, Swarm_id} = ppspp_channel:get_swarm_id(Channel),
@@ -143,6 +144,7 @@ unpack_on_existing_channel(Channel, Maybe_Datagram, Endpoint) ->
 %% @doc Requested Swarm options should match Available swarm options
 -spec get_swarm_options(datagram()) -> ppspp_options:options().
 get_swarm_options(_Datagram) ->
+    _Messages = get_messages(_Datagram),
     %% TODO remove the hard wired hack
     %% look for the handshake in the messages
     %% grab the options from there
@@ -152,14 +154,12 @@ get_swarm_options(_Datagram) ->
 %% @doc get endpoint from datagram
 %% @end
 -spec get_endpoint(datagram()) -> endpoint().
-get_endpoint({datagram, Datagram}) ->
-    {endpoint, orddict:fetch(endpoint, Datagram)}.
+get_endpoint(#{endpoint := Endpoint}) -> Endpoint.
 
 %% @doc get messages from datagram
-%% major TODO
 %% @end
 -spec get_messages(datagram()) -> ppspp_message:messages().
-get_messages({datagram, Datagram}) -> ppspp_message:get_messages(Datagram).
+get_messages(#{messages := Messages}) -> Messages.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Handle a fully unpacked datagram.
@@ -188,8 +188,7 @@ unpack(Raw_Datagram, Endpoint, Swarm_Options) ->
     ?DEBUG("dgram: received on channel ~p~n",
            [convert:int_to_hex(ppspp_channel:get_channel_id(Channel))]),
     Parsed_Messages = ppspp_message:unpack(Maybe_Messages, Swarm_Options),
-    Parsed_Datagram = orddict:from_list([Endpoint, Parsed_Messages]),
-    {datagram, Parsed_Datagram}.
+    #{endpoint => Endpoint, messages => Parsed_Messages}.
 
 -spec pack(datagram()) -> binary().
 pack(_Datagram) -> <<>>.

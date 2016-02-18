@@ -17,7 +17,7 @@
 %% @end
 
 %% @doc A wonderful Template Title
-%% 
+%%
 %% This description line behaves nicely when used with EDoc/EDown and Hugo.
 %% <div>
 %% ## Nota Bene
@@ -48,7 +48,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
 %% A Beautiful Function.
-%% 
+%%
 %% The same elements can be used for functions, too. So let's
 %% document a beautiful function, including:
 %% <ul>

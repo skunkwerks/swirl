@@ -22,17 +22,17 @@
 %% chunk_32bit_chunks
 %% chunk_64bit_chunks
 [{{chunk_32bit_chunks,<<0,0,0,0,0,0,0,15>>},
-  {{chunk_spec,{chunk_32bit_chunks,0,15}},<<>>}},
+  {#{chunk_32bit_chunks => {0,15}},<<>>}},
  {{chunk_32bit_chunks,<<0,0,0,16,0,0,0,23>>},
-  {{chunk_spec,{chunk_32bit_chunks,16,23}},<<>>}},
+  {#{chunk_32bit_chunks => {16,23}},<<>>}},
  {{chunk_32bit_chunks,<<0,0,0,24,0,0,0,25>>},
-  {{chunk_spec,{chunk_32bit_chunks,24,25}},<<>>}},
+  {#{chunk_32bit_chunks => {24,25}},<<>>}},
  {{chunk_32bit_chunks,<<0,0,0,0,0,0,0,0>>},
-  {{chunk_spec,{chunk_32bit_chunks,0,0}},<<>>}},
+  {#{chunk_32bit_chunks => {0,0}},<<>>}},
  {{chunk_32bit_chunks,<<0,0,0,0,0,0,0,4>>},
-  {{chunk_spec,{chunk_32bit_chunks,0,4}},<<>>}},
+  {#{chunk_32bit_chunks => {0,4}},<<>>}},
  {{chunk_32bit_chunks,<<0,0,0,0,0,0,0,16>>},
-  {{chunk_spec,{chunk_32bit_chunks,0,16}},<<>>}},
+  {#{chunk_32bit_chunks => {0,16}},<<>>}},
  {{chunk_32bit_chunks,<<0,0,0,0,0,0,0,24>>},
-  {{chunk_spec,{chunk_32bit_chunks,0,24}},<<>>}}]
+  {#{chunk_32bit_chunks => {0,24}},<<>>}}]
 .

@@ -12,3 +12,4 @@ _rel
 test/*.beam
 .erlang.mk
 doc/api
+_build/
