@@ -54,9 +54,6 @@ getters(_Config) ->
     Root_Hash ="c39e",
     Swarm_id = convert:hex_string_to_padded_binary(Root_Hash),
     Options = ppspp_options:use_default_options(Swarm_id),
-    %% confirm that we can unwrap options from within a datagram structure
-    Datagram = maps:put(foo, bar, #{options => Options}),
-    Options = ppspp_options:get_options(Datagram),
     % check returned values against header file defaults
     ?PPSPP_DEFAULT_CHUNK_METHOD = ppspp_options:get_chunk_addressing_method(Options),
     ?PPSPP_DEFAULT_INTEGRITY_METHOD = ppspp_options:get_content_integrity_check_method(Options),

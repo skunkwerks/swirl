@@ -74,7 +74,7 @@ handle(Handshake, Endpoint) ->
     Source_channel = ppspp_channel:get_channel(Handshake),
     % These options should match with an available swarm.
     % The channel_worker checks this on startup by looking up the swarm_id.
-    Requested_swarm_options = ppspp_options:get_options(Handshake),
+    Requested_swarm_options = maps:get(options, Handshake),
     {ok, Pid} = case ppspp_channel:is_channel_zero(Inbound_channel) of
                     % If inbound channel is zero then we should start a new channel_worker
                     true ->{ok, _Pid} =

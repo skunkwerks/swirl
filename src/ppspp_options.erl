@@ -35,7 +35,6 @@
          get_chunk_size/1,
          get_swarm_id/1,
          get_maximum_supported_version/1,
-         get_options/1,
          use_minimum_options/0,
          use_default_options/0,
          use_default_options/1]).
@@ -232,13 +231,6 @@ get_chunk_size(Options) ->
 -spec get_maximum_supported_version(options()) -> any().
 get_maximum_supported_version(Options) ->
     maps:get(supported_version, Options).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc helper unwrapper to pull out components from a datagram map
-%% @end
-%% FIXME this can probably be deleted in its entirety
--spec get_options(#{}) -> options().
-get_options(#{options := Options}) -> Options.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Provides standard options from the PPSPP RFC as erlang terms.
