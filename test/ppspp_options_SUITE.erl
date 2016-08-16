@@ -32,20 +32,19 @@ all() -> [defaults,
 -spec defaults(any()) -> true.
 defaults(_Config) ->
     % minimal options should only include the RFC7574 version
-    {options,
-     [{minimum_version, ?PPSPP_LOWEST_VERSION}]} =
-    ppspp_options:use_minimum_options(),
-    % options must be a simple orddict using defaults from RFC7574
+    Map = #{minimum_version => ?PPSPP_LOWEST_VERSION},
+    Map = ppspp_options:use_minimum_options(),
+    % options must be a simple map using defaults from RFC7574
     Root_Hash ="c39e",
     Swarm_id = convert:hex_string_to_padded_binary(Root_Hash),
-    Res = {options,
-           [{chunk_addressing_method, ?PPSPP_DEFAULT_CHUNK_METHOD},
-            {chunk_size, ?PPSPP_DEFAULT_CHUNK_SIZE},
-            {content_integrity_check_method, ?PPSPP_DEFAULT_INTEGRITY_METHOD},
-            {merkle_hash_tree_function, ?PPSPP_DEFAULT_MERKLE_HASH_FUN},
-            {minimum_version, ?PPSPP_LOWEST_VERSION},
-            {supported_version, ?SWIRL_MAX_PPSPP_VERSION},
-            {swarm_id, Swarm_id}]},
+    Res = #{
+      chunk_addressing_method => ?PPSPP_DEFAULT_CHUNK_METHOD,
+      chunk_size => ?PPSPP_DEFAULT_CHUNK_SIZE,
+      content_integrity_check_method => ?PPSPP_DEFAULT_INTEGRITY_METHOD,
+      merkle_hash_tree_function => ?PPSPP_DEFAULT_MERKLE_HASH_FUN,
+      minimum_version => ?PPSPP_LOWEST_VERSION,
+      supported_version => ?SWIRL_MAX_PPSPP_VERSION,
+      swarm_id => Swarm_id},
     Res = ppspp_options:use_default_options(Swarm_id).
 
 -spec getters(any()) -> true.
@@ -55,13 +54,11 @@ getters(_Config) ->
     Root_Hash ="c39e",
     Swarm_id = convert:hex_string_to_padded_binary(Root_Hash),
     Options = ppspp_options:use_default_options(Swarm_id),
-    %% confirm that we can unwrap options from within a Datagram-style orddict
-    Options = ppspp_options:get_options([{foo, bar}, {fu, baa}, Options]),
     % check returned values against header file defaults
     ?PPSPP_DEFAULT_CHUNK_METHOD = ppspp_options:get_chunk_addressing_method(Options),
     ?PPSPP_DEFAULT_INTEGRITY_METHOD = ppspp_options:get_content_integrity_check_method(Options),
     ?PPSPP_DEFAULT_MERKLE_HASH_FUN = ppspp_options:get_merkle_hash_tree_function(Options),
-    % NB as above, when v2 is released this macro must change
+    % NB as above, when v2 of the PPSPP RFC is released this macro must change
     ?PPSPP_LOWEST_VERSION = ppspp_options:get_minimum_version(Options),
     ?PPSPP_DEFAULT_CHUNK_SIZE = ppspp_options:get_chunk_size(Options),
     Swarm_id = ppspp_options:get_swarm_id(Options),

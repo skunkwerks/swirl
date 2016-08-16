@@ -22,16 +22,12 @@
 -module(ppspp_have).
 -include("swirl.hrl").
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
 %% api
 -export([unpack/2,
          pack/1,
          handle/1]).
 
--opaque have() :: {have, ppspp_chunk:spec()}.
+-opaque have() :: ppspp_chunk:spec().
 -export_type([have/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -48,28 +44,21 @@
 
 unpack(Addressing_Method, Message) ->
     {Chunk_Spec, Maybe_Messages} = ppspp_chunk:unpack(Addressing_Method, Message),
-    {{have, Chunk_Spec}, Maybe_Messages}.
+    { Chunk_Spec, Maybe_Messages}.
 
 -spec pack(have()) -> binary().
 pack(_Message) -> <<>>.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%-spec ... handle takes a tuple of {type, message_body} where body is a
-%%    parsed orddict message and returns either
+%%-spec ... handle takes a tuple of {type, message_body} where body is TODO
 %%    {error, something} or tagged tuple for the unpacked message
 %%    {ok, reply} where reply is probably an orddict to be sent to the
 %%    alternate peer.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The payload of the have message is a channel ID (see
-%  Section 3.11) and a sequence of protocol options.  Example options
-%  are the content integrity protection scheme used and an option to
-%  specify the swarm identifier.  The complete set of protocol options
-%  are specified in Section 7.
--spec handle(ppspp_message:message()) -> any().
-handle({have, _Body}) ->
-    {ok, ppspp_have_handler_not_yet_implemented};
-
+%  Section 3.11) and a chunk specification.
+-spec handle(have()) -> any().
 handle(Message) ->
     ?DEBUG("~p: handler not yet implemented ~p~n", [?MODULE, Message]),
     {ok, ppspp_have_handler_not_yet_implemented}.

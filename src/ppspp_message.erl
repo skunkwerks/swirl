@@ -22,20 +22,17 @@
 -module(ppspp_message).
 -include("swirl.hrl").
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
 %% api
 -export([unpack/2,
          pack/1,
          get_message_type/1,
-         get_messages/1,
          handle/3]).
 
--opaque messages() :: {messages, list(message())}.
--opaque message() :: {message_type(), any()} |
-ppspp_handshake:handshake().
+-opaque messages() :: list(message()).
+%% TODO once all messages are defined then tighten the message() spec
+-opaque message() :: #{message_type() => any()}
+| ppspp_handshake:handshake()
+| ppspp_have:have().
 -opaque message_type() :: handshake
 | data
 | ack
@@ -62,15 +59,15 @@ ppspp_handshake:handshake().
 %% @end
 -spec unpack(binary(), ppspp_options:options()) -> message() | messages().
 unpack(Maybe_Messages, Swarm_Options) when is_binary(Maybe_Messages) ->
-    {messages, unpack3(Maybe_Messages, [], Swarm_Options)}.
+    unpack3(Maybe_Messages, [], Swarm_Options).
 
 %% @doc convert a list of messages into binary iolist for transmission.
 %% @end
 -spec pack(messages()) -> iolist().
-pack({messages, Messages}) -> pack(Messages, []).
+pack(Messages) -> pack(Messages, []).
 
 %% private
--spec pack(list(message()), iolist()) -> iolist().
+-spec pack(messages(), iolist()) -> iolist().
 %% Try to pack another valid message, peeling off and parsing
 %% recursively the remainder, accumulating valid (packed) messages.
 %% A failure anywhere in a message ultimately causes the entire iolist
@@ -88,8 +85,8 @@ pack([], Messages) -> lists:reverse(Messages).
 pack_message(_Message) -> <<>>.
 
 %% if the binary is empty, all messages were parsed successfully
--spec unpack3(binary(), message() | list(message()), ppspp_options:options()) ->
-    list(message()) | { message(), binary()}.
+-spec unpack3(binary(), message() | messages(), ppspp_options:options()) ->
+    messages() | { message(), binary()}.
 unpack3( <<>>, Parsed_Messages, _) ->
     lists:reverse(Parsed_Messages);
 %% otherwise try to unpack another valid message, peeling off and parsing
@@ -100,8 +97,9 @@ unpack3(<<Maybe_Message_Type:?PPSPP_MESSAGE_SIZE, Rest/binary>>,
         Parsed_Messages, Swarm_Options) ->
     Type = get_message_type(Maybe_Message_Type),
     {Parsed_Message, Maybe_More_Messages} = parse_message(Type, Rest, Swarm_Options),
+    New_Message = #{ Type => Parsed_Message},
     unpack3(Maybe_More_Messages,
-            [Parsed_Message | Parsed_Messages],
+            [ New_Message | Parsed_Messages],
             Swarm_Options).
 
 %% @doc dispatch to correct message parser along with swarm options
@@ -143,33 +141,31 @@ get_message_type(Maybe_Message_Type)
     ?DEBUG("message: parser got valid message type ~p~n", [Message_Type]),
     Message_Type.
 
-%% @doc helper unwrapper to pull out messages from a datagram orddict
-%% @end
--spec get_messages([any()]) -> any().
-get_messages(Messages) -> orddict:fetch(messages, Messages).
-
 %% @doc dispatch messages to correct handler in received order
 %% @end
--spec handle(messages() | list(message()),
+-spec handle(messages(),
              ppspp_options:options(),
              ppspp_datagram:endpoint()) -> ok.
-handle({messages, Messages}, Swarm_Options, Endpoint) ->
-    handle(Messages, Swarm_Options, Endpoint);
 handle([], _, _ ) -> ok;
 handle([Message | Messages], Swarm_Options, Endpoint) ->
     ok  = handle_message(Message, Swarm_Options, Endpoint),
+    handle(Messages, Swarm_Options, Endpoint);
+handle(Messages, Swarm_Options, Endpoint) ->
     handle(Messages, Swarm_Options, Endpoint).
 
 %% @doc does the dirty work of routing each message.
 %% Options and Endpoint are required state for handling many message types.
 %% @end
--spec handle_message(ppspp_handshake:handshake(),
+-spec handle_message(message(),
                      ppspp_options:options(),
                      ppspp_datagram:endpoint()) -> ok | {error, any()}.
-handle_message(Message = {handshake, _Body}, _Swarm_Options, Endpoint) ->
-    ppspp_handshake:handle(Message, Endpoint);
+handle_message(#{handshake := Handshake}, _Swarm_Options, Endpoint) ->
+    ppspp_handshake:handle(Handshake, Endpoint);
+handle_message(#{have := Have}, _Swarm_Options, _Endpoint) ->
+    ppspp_have:handle(Have);
 
 handle_message(Message, Swarm_Options, Endpoint) ->
     ?DEBUG("~p: handler not yet implemented ~n~p~n~p~n~p~n",
            [?MODULE, Message, Swarm_Options, Endpoint]),
-    {error, ppspp_message_handler_not_yet_implemented}.
+    %{error, ppspp_message_handler_not_yet_implemented}.
+    ok.

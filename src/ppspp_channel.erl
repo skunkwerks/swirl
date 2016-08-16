@@ -22,9 +22,7 @@
 -module(ppspp_channel).
 -include("swirl.hrl").
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
+-define(MAX_FREE_CHANNEL_TRIES, 30).
 
 %% api
 -export([unpack_channel/1,
@@ -38,9 +36,8 @@
          get_channel/1,
          get_swarm_id/1]).
 
--opaque channel() :: {channel, channel_option()}.
--opaque channel_option() :: 0..16#ffffffff.
--export_type([channel/0, channel_option/0]).
+-opaque channel() :: 0..16#ffffffff.
+-export_type([channel/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% api
@@ -52,7 +49,7 @@
 
 -spec unpack_with_rest(binary()) -> {channel(), binary()}.
 unpack_with_rest(<<Channel:?PPSPP_CHANNEL_SIZE, Rest/binary>>) ->
-    {{channel, Channel}, Rest}.
+    {Channel, Rest}.
 
 -spec unpack_channel(binary()) -> channel().
 unpack_channel(Binary) ->
@@ -60,35 +57,37 @@ unpack_channel(Binary) ->
     Channel.
 
 -spec get_channel_id(channel()) -> non_neg_integer().
-get_channel_id(_Channel = {channel, Channel}) -> Channel.
+get_channel_id(Channel) -> Channel.
 
 -spec pack(ppspp_channel:channel()) -> binary().
 pack(_Message) -> <<>>.
 
-%% @doc helper unwrapper to pull out components from a datagram orddict
+%% @doc helper unwrapper to pull out components from a datagram map
 %% @end
--spec get_channel(orddict:orddict()) -> channel().
-get_channel(Dict) -> {channel, orddict:fetch(channel, Dict)}.
+%% TODO fix -spec get_channel(ppspp_datagram:datagram()) -> channel().
+-spec get_channel(#{}) -> pos_integer().
+get_channel(#{channel := Channel}) -> Channel.
 
 %% @doc allow requesting channel_worker to register an unused channel
 %% Ensure that the channel can  be searched for using the swarm id.
 %% @end
 -spec acquire(ppspp_options:swarm_id()) -> channel().
 acquire(Swarm_id) ->
-    {channel, _Channel} = find_free_channel(Swarm_id, 0).
+    {ok, Channel} = find_free_channel(Swarm_id, 0),
+    Channel.
 
 -spec find_free_channel(ppspp_options:swarm_id(), non_neg_integer()) ->
-    channel() | {error, any()}.
-find_free_channel(_, 30) -> {error, ppspp_channel_no_channels_free};
-find_free_channel(Swarm_id, Failed_Tries) when Failed_Tries < 30 ->
+    {ok, channel()} | {error, any()}.
+find_free_channel(_, ?MAX_FREE_CHANNEL_TRIES) -> {error, ppspp_channel_no_channels_free};
+find_free_channel(Swarm_id, Failed_Tries) when
+      Failed_Tries < ?MAX_FREE_CHANNEL_TRIES ->
     <<Maybe_Free_Channel:?DWORD>> = crypto:strong_rand_bytes(4),
-    Channel = {channel, Maybe_Free_Channel},
-    Key = {n, l, Channel},
+    Key = {n, l, {?MODULE, Maybe_Free_Channel}},
     Self = self(),
     %% channel is unique only when returned pid matches self, otherwise
     %% just try again for a new random channel and increased counter
     case gproc:reg_or_locate(Key, Swarm_id) of
-        {Self, Swarm_id} -> Channel;
+        {Self, Swarm_id} -> {ok, Maybe_Free_Channel};
         {_, _ } -> find_free_channel(Swarm_id, Failed_Tries + 1)
     end.
 
@@ -98,7 +97,7 @@ find_free_channel(Swarm_id, Failed_Tries) when Failed_Tries < 30 ->
 %% @end
 -spec release(channel()) -> ok.
 release(Channel) ->
-    case gproc:unreg({n,l, Channel}) of
+    case gproc:unreg({n,l, {?MODULE, Channel}}) of
         true -> ok;
         _ -> {error, ppspp_channel_free_unassigned_channel}
     end.
@@ -109,8 +108,8 @@ release(Channel) ->
 %% handshaking to negotiate and agree a dedicated channel.
 %% @end
 -spec is_channel_zero(channel()) -> true | false.
-is_channel_zero({channel, 0}) -> true;
-is_channel_zero({channel, _}) -> false.
+is_channel_zero(0) -> true;
+is_channel_zero(_) -> false.
 
 
 %% @doc looks up pid of the owning swarm for a given channel.
@@ -120,8 +119,8 @@ is_channel_zero({channel, _}) -> false.
 %% @end
 
 -spec where_is(channel()) -> {ok, pid()} | {error, any()}.
-where_is(Channel = {channel, _}) ->
-    case gproc:lookup_local_name(Channel) of
+where_is(Channel) ->
+    case gproc:lookup_local_name({?MODULE, Channel}) of
         undefined -> {error, ppspp_channel_not_found};
         Pid -> {ok, Pid}
     end.
@@ -130,8 +129,8 @@ where_is(Channel = {channel, _}) ->
 %% @end
 -spec get_swarm_id(channel()) ->
     {ok, ppspp_options:swarm_id() } | {error, any()}.
-get_swarm_id(Channel = {channel, _}) ->
-    try gproc:lookup_value({n,l,Channel}) of
+get_swarm_id(Channel) ->
+    try gproc:lookup_value({n,l,{?MODULE, Channel}}) of
         Swarm_id -> {ok, Swarm_id}
     catch
         _ ->
