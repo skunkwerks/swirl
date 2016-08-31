@@ -20,7 +20,7 @@ escript::
 
 include erlang.mk
 
-.PHONY : doc publish quick console reindent
+.PHONY : draftdoc doc publish quick console reindent
 
 distcheck: distclean all plt dialyze tests escript
 	@echo "*** check indentation before git push ***"
@@ -45,20 +45,24 @@ doc-clean:
 	@echo " GEN    clean-doc"
 	@rm -rf public doc/api
 
-doc: doc-clean edoc
+doc: doc-clean hackdoc gohugo
+
+hackdoc: edoc
 	@echo doc: hacking up doc/api/index.md file
-	@# add the HTML table header as XML can't handle the <> in overview.edoc
-	@echo '<table width="100%" border="0" summary="list of modules">' >> doc/api/index.md
-	@# spit out a table row for every erlang module found in /src/
-	@# a single line because make/gmake has different behaviour on FreeBSD
-	@perl -e 'map { s!src/(\w+).erl!$$1!g ; print qq(<tr><td><a href="$$_.md" class="module">$$_</a></td></tr>\n); } glob("src/*.erl");' \
-		>> doc/api/index.md
-	@# remove the .md suffix on all links to end up with pretty urls again
+	@mv doc/api/README.md doc/api/index.md
 	@perl -pi -e 's!href="(\w+)\.md"!href="\1"!g' doc/api/index.md
+	$(eval GITVERSION := $(shell git describe --dirty --abbrev=7 --tags --always --first-parent 2>/dev/null || true))
+	@echo doc: splicing in doc build details $(GITVERSION)
+	@perl -pi -e 's!GITVERSION!$(GITVERSION)!g' doc/api/index.md
 	@echo doc: hacking up doc/api/\*.md typespec links from edown for pretty urls
 	@perl -pi -e 's!href="(\w+)\.md(#type-\w+)"!href="../\1\2"!g' doc/api/*.md
 	@echo doc: building site in public/
+
+gohugo: hackdoc
 	@(cd site && hugo --verbose )
+
+draftdoc: doc-clean hackdoc
+	@(cd site && hugo --verbose --buildDrafts)
 
 newpost:
 	@echo doc: creating ./doc/blog/$(name).md

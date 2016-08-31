@@ -247,7 +247,7 @@ get_maximum_supported_version(Options) ->
 %%        merkle_hash_tree_function => sha256,
 %%        minimum_version => 1,
 %%        supported_version => 1,
-%%        swarm_id => << ... >>}.
+%%        swarm_id => your_swarm_id_here }.
 %% </pre>
 -spec use_default_options() -> options().
 use_default_options() ->

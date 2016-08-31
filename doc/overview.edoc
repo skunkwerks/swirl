@@ -13,7 +13,7 @@
 %% the License.
 
 @copyright 2014-2038 SkunkWerks GmbH
-@version 0.0.1
+@version GITVERSION
 @title Swirl -- a Multi-Peer Streaming Media Platform
 
 @doc
@@ -47,7 +47,5 @@ currently runs on top of UDP using Low Extra Delay Background Transport
 [ALv2]: http://www.apache.org/licenses/LICENSE-2.0.html
 [PPSP]: https://datatracker.ietf.org/doc/rfc7574/
 [RFC7574]: https://tools.ietf.org/html/rfc7574
-
-## Modules ##
 
 @end
