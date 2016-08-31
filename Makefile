@@ -45,14 +45,21 @@ doc-clean:
 	@echo " GEN    clean-doc"
 	@rm -rf public doc/api
 
-doc: doc-clean edoc
+doc: doc-clean hackdoc gohugo
+
+hackdoc: edoc
 	@echo doc: hacking up doc/api/index.md file
 	@mv doc/api/README.md doc/api/index.md
 	@perl -pi -e 's!href="(\w+)\.md"!href="\1"!g' doc/api/index.md
 	@echo doc: hacking up doc/api/\*.md typespec links from edown for pretty urls
 	@perl -pi -e 's!href="(\w+)\.md(#type-\w+)"!href="../\1\2"!g' doc/api/*.md
 	@echo doc: building site in public/
+
+gohugo: hackdoc
 	@(cd site && hugo --verbose )
+
+draftdoc: doc-clean hackdoc
+	@(cd site && hugo --verbose --buildDrafts)
 
 newpost:
 	@echo doc: creating ./doc/blog/$(name).md
