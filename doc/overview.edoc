@@ -48,6 +48,4 @@ currently runs on top of UDP using Low Extra Delay Background Transport
 [PPSP]: https://datatracker.ietf.org/doc/rfc7574/
 [RFC7574]: https://tools.ietf.org/html/rfc7574
 
-## Modules ##
-
 @end
