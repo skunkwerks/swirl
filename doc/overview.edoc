@@ -13,7 +13,7 @@
 %% the License.
 
 @copyright 2014-2038 SkunkWerks GmbH
-@version 0.0.1
+@version GITVERSION
 @title Swirl -- a Multi-Peer Streaming Media Platform
 
 @doc

@@ -20,7 +20,7 @@ escript::
 
 include erlang.mk
 
-.PHONY : doc publish quick console reindent
+.PHONY : draftdoc doc publish quick console reindent
 
 distcheck: distclean all plt dialyze tests escript
 	@echo "*** check indentation before git push ***"
@@ -51,6 +51,9 @@ hackdoc: edoc
 	@echo doc: hacking up doc/api/index.md file
 	@mv doc/api/README.md doc/api/index.md
 	@perl -pi -e 's!href="(\w+)\.md"!href="\1"!g' doc/api/index.md
+	$(eval GITVERSION := $(shell git describe --dirty --abbrev=7 --tags --always --first-parent 2>/dev/null || true))
+	@echo doc: splicing in doc build details $(GITVERSION)
+	@perl -pi -e 's!GITVERSION!$(GITVERSION)!g' doc/api/index.md
 	@echo doc: hacking up doc/api/\*.md typespec links from edown for pretty urls
 	@perl -pi -e 's!href="(\w+)\.md(#type-\w+)"!href="../\1\2"!g' doc/api/*.md
 	@echo doc: building site in public/
