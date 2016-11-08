@@ -24,7 +24,7 @@ simple structure has been used, based off a quick reading of
 
 The keys and values used for the optional query string are the lower-case
 versions, with whitespace replaced by underscores, of those referred to in
-[PPSPP section 7] (https://tools.ietf.org/html/rfc7574-12#section-7) and the canonical [PPSPP IANA registry](https://www.iana.org/assignments/ppspp/ppspp.xhtml).
+[PPSPP section 7] (https://tools.ietf.org/html/rfc7574#section-7) and the canonical [PPSPP IANA registry](https://www.iana.org/assignments/ppspp/ppspp.xhtml).
 
 Some examples are:
 
